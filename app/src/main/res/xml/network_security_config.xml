@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All traffic is HTTPS (euroklic.odjezdy.online, api.mapy.com, nominatim.openstreetmap.org,
+     tile.openstreetmap.org fallback). Cleartext is denied everywhere. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

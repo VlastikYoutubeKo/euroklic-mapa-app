@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press launcher shortcut: jumps straight into the "Nejbližší WC" flow.
+     MainActivity maps the custom action to a pending flag; MapScreen consumes it
+     (permission dialog if needed, then nearest-place search + camera recenter). -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="nearest_wc"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_near_me"
+        android:shortcutShortLabel="@string/shortcut_nearest_short"
+        android:shortcutLongLabel="@string/shortcut_nearest_long">
+        <intent
+            android:action="cz.euroklicmapa.action.NEAREST_WC"
+            android:targetPackage="cz.euroklicmapa"
+            android:targetClass="cz.euroklicmapa.MainActivity" />
+    </shortcut>
+</shortcuts>

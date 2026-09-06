@@ -1,0 +1,26 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.kotlin
+
+# Agent/tooling private files (not part of the app)
+.claude/
+.agents/
+.agent/
+skills-lock.json
+
+# iOS (XcodeGen generates .xcodeproj from project.yml â€” don't commit generated)
+ios/DerivedData/
+ios/**/xcuserdata/
+*.xcuserstate
+ios/*.xcodeproj
+
+# Secrets - injected at build time (see ios/Secrets.xcconfig.example)
+ios/Secrets.xcconfig

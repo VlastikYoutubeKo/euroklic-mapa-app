@@ -1,0 +1,52 @@
+name: EuroklicMapa
+options:
+  bundleIdPrefix: cz.euroklicmapa
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: 1.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: "5.9"
+  configFiles:
+    Debug: Secrets.xcconfig
+    Release: Secrets.xcconfig
+targets:
+  EuroklicMapa:
+    type: application
+    platform: iOS
+    sources:
+      - EuroklicMapa
+    info:
+      path: EuroklicMapa/Info.plist
+      properties:
+        CFBundleDisplayName: Euroklíč Mapa
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleURLTypes:
+          - CFBundleURLName: cz.euroklicmapa.auth
+            CFBundleURLSchemes:
+              - euroklicmapa
+        NSLocationWhenInUseUsageDescription: >-
+          Polohu použijeme jen k seřazení míst podle vzdálenosti a k vycentrování
+          mapy na vás. Nikam mimo aplikaci ji neposíláme.
+        NSPhotoLibraryAddUsageDescription: >-
+          Fotku vašeho zařízení připojíme k novému místu, které odešlete ke schválení.
+        ITSAppUsesNonExemptEncryption: false
+        MapyApiKey: $(MAPY_APIKEY)
+  EuroklicMapaTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - EuroklicMapaTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/EuroklicMapa.app/EuroklicMapa"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: EuroklicMapa

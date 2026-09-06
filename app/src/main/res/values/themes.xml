@@ -1,0 +1,9 @@
+<resources>
+
+    <!-- Only the launch window uses this; all UI is Compose (see EuroklicTheme). -->
+    <style name="Theme.MyApplication" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

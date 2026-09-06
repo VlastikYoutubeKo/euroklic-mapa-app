@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <!-- Everything is backed up EXCEPT the auth token store. The token is AES-GCM encrypted with
+         a device-bound Keystore key that never leaves the device, so a restored copy is useless
+         anyway, but excluding it keeps the ciphertext off Google's servers entirely. -->
+    <cloud-backup>
+        <exclude domain="file" path="datastore/auth.preferences_pb" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="datastore/auth.preferences_pb" />
+    </device-transfer>
+</data-extraction-rules>
