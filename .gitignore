@@ -10,10 +10,13 @@
 local.properties
 .kotlin
 
-# Agent/tooling private files (not part of the app)
+# Agent/tooling: .agent/ je privátní KROMĚ tří sdílených docs (plan.md zůstává private)
 .claude/
 .agents/
-.agent/
+.agent/*
+!.agent/BACKLOG.md
+!.agent/TODO-IDEAS.md
+!.agent/prompt_read.md
 skills-lock.json
 
 # iOS (XcodeGen generates .xcodeproj from project.yml â€” don't commit generated)
