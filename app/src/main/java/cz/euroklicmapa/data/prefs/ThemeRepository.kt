@@ -9,7 +9,11 @@ import kotlinx.coroutines.flow.map
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-private val Context.settingsDataStore by preferencesDataStore(name = "settings")
+/**
+ * The one and only `"settings"` DataStore declaration. Declaring `preferencesDataStore("settings")`
+ * a second time anywhere in the process crashes at first access — [NotificationPrefs] reuses this.
+ */
+internal val Context.settingsDataStore by preferencesDataStore(name = "settings")
 private val THEME_KEY = stringPreferencesKey("theme_mode")
 
 class ThemeRepository(private val appContext: Context) {

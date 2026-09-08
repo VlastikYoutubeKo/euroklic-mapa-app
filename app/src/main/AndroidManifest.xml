@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Local notifications (WorkManager, phase 1). Requested lazily on the first opt-in in
+         More → Notifikace, never at startup (same philosophy as location). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- API 30+ package visibility: without this, resolveActivity() for these intents returns
          null and "Navigovat" / web links silently do nothing. -->

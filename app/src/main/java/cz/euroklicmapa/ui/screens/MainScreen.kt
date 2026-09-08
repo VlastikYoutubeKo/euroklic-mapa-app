@@ -13,7 +13,9 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaul
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -30,8 +32,19 @@ fun MainScreen() {
     val backStack = rememberNavBackStack(Destinations.Map)
 
     val context = LocalContext.current
+    val app = context.applicationContext as EuroklicApplication
+
+    // Set by a tap on the "Čeká na schválení" notification (MainActivity → nav=admin_queue).
+    // Consumed once here so warm-start re-navigation doesn't loop.
+    val adminNavPending by app.pendingAdminQueueNav.collectAsStateWithLifecycle()
+    LaunchedEffect(adminNavPending) {
+        if (adminNavPending) {
+            app.consumeAdminQueueNav()
+            if (backStack.lastOrNull() !is Destinations.AdminQueue) backStack.add(Destinations.AdminQueue)
+        }
+    }
+
     LaunchedEffect(Unit) {
-        val app = context.applicationContext as EuroklicApplication
         app.authRepository.events.collect { ev ->
             val msg = when (ev) {
                 is AuthEvent.SignedIn ->

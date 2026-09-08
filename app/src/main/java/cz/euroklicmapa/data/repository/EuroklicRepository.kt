@@ -35,6 +35,10 @@ interface EuroklicRepository {
     suspend fun getLocation(id: Int): WcLocationEntity?
     fun observeLocation(id: Int): Flow<WcLocationEntity?>
     suspend fun getPickupPoint(id: Int): PickupPointEntity?
+    /** One-shot ids of every cached WC (no refresh side effect) — for the notification poll worker. */
+    suspend fun getAllLocationIds(): List<Int>
+    /** One-shot fetch of the cached WC rows for [ids] (no refresh side effect). */
+    suspend fun getLocationsByIds(ids: List<Int>): List<WcLocationEntity>
     suspend fun refreshLocations()
     suspend fun refreshPickupPoints()
     /** Anonymous vote via `/api_csrf.php` + `/api_vote.php`. Updates the Room row on success. */
@@ -72,6 +76,11 @@ class EuroklicRepositoryImpl(
     override fun observeLocation(id: Int): Flow<WcLocationEntity?> = dao.observeLocationById(id)
 
     override suspend fun getPickupPoint(id: Int): PickupPointEntity? = dao.getPickupPointById(id)
+
+    override suspend fun getAllLocationIds(): List<Int> = dao.getAllLocationIds()
+
+    override suspend fun getLocationsByIds(ids: List<Int>): List<WcLocationEntity> =
+        if (ids.isEmpty()) emptyList() else dao.getLocationsByIds(ids)
 
     override suspend fun refreshLocations() {
         try {

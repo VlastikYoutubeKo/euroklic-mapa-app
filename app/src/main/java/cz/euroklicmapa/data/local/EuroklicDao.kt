@@ -29,6 +29,13 @@ interface EuroklicDao {
     @Query("SELECT * FROM locations WHERE id = :id")
     suspend fun getLocationById(id: Int): WcLocationEntity?
 
+    /** One-shot snapshot of every cached WC id — used by the notification poll worker (no Flow). */
+    @Query("SELECT id FROM locations")
+    suspend fun getAllLocationIds(): List<Int>
+
+    @Query("SELECT * FROM locations WHERE id IN (:ids)")
+    suspend fun getLocationsByIds(ids: List<Int>): List<WcLocationEntity>
+
     @Query("SELECT * FROM locations WHERE id = :id")
     fun observeLocationById(id: Int): Flow<WcLocationEntity?>
 

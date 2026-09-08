@@ -7,6 +7,7 @@ import cz.euroklicmapa.data.auth.AuthTokenHolder
 import cz.euroklicmapa.data.auth.SecureTokenStore
 import cz.euroklicmapa.data.location.LocationRepository
 import cz.euroklicmapa.data.local.EuroklicDatabase
+import cz.euroklicmapa.data.prefs.NotificationPrefs
 import cz.euroklicmapa.data.prefs.ThemeRepository
 import cz.euroklicmapa.data.remote.AuthInterceptor
 import cz.euroklicmapa.data.remote.EuroklicApi
@@ -16,6 +17,13 @@ import cz.euroklicmapa.data.repository.AdminRepository
 import cz.euroklicmapa.data.repository.EuroklicRepository
 import cz.euroklicmapa.data.repository.EuroklicRepositoryImpl
 import cz.euroklicmapa.data.repository.FavoritesRepository
+import cz.euroklicmapa.notifications.NotificationChannels
+import cz.euroklicmapa.notifications.QueuePollWorker
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -58,8 +66,13 @@ class EuroklicApplication : Application() {
     lateinit var adminRepository: AdminRepository
         private set
 
+    /** Exposed for [QueuePollWorker] (no ViewModel layer in a background worker). */
+    lateinit var api: EuroklicApi
+        private set
+
     val geocodingRepository: GeocodingRepository by lazy { GeocodingRepository() }
     val themeRepository: ThemeRepository by lazy { ThemeRepository(applicationContext) }
+    val notificationPrefs: NotificationPrefs by lazy { NotificationPrefs(applicationContext) }
 
     /**
      * Set by the "Nejbližší WC" launcher shortcut (static intent action handled in
@@ -74,6 +87,22 @@ class EuroklicApplication : Application() {
 
     fun consumeNearestShortcut() {
         _pendingNearestShortcut.value = false
+    }
+
+    /**
+     * Set when the "Čeká na schválení" notification is tapped (routed through [MainActivity] with
+     * an `nav=admin_queue` extra); consumed once by [ui.screens.MainScreen], which pushes
+     * [ui.navigation.Destinations.AdminQueue].
+     */
+    private val _pendingAdminQueueNav = MutableStateFlow(false)
+    val pendingAdminQueueNav: StateFlow<Boolean> = _pendingAdminQueueNav.asStateFlow()
+
+    fun requestAdminQueueNav() {
+        _pendingAdminQueueNav.value = true
+    }
+
+    fun consumeAdminQueueNav() {
+        _pendingAdminQueueNav.value = false
     }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -132,7 +161,7 @@ class EuroklicApplication : Application() {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
 
-        val api = retrofit.create(EuroklicApi::class.java)
+        api = retrofit.create(EuroklicApi::class.java)
 
         locationRepository = LocationRepository(applicationContext)
         repository = EuroklicRepositoryImpl(api, database.dao(), locationRepository)
@@ -140,6 +169,27 @@ class EuroklicApplication : Application() {
         authRepository = AuthRepository(applicationContext, api, tokenHolder, secureTokenStore, appScope)
         addPlaceRepository = AddPlaceRepository(api, applicationContext)
         adminRepository = AdminRepository(api)
+
+        NotificationChannels.register(this)
+        schedulePolling()
+    }
+
+    /**
+     * One periodic worker (15 min). All the gating — prefs on/off, admin vs. not, location known —
+     * lives inside [QueuePollWorker.doWork], so login/logout needs no reschedule; KEEP keeps the
+     * existing schedule across restarts.
+     */
+    private fun schedulePolling() {
+        val request = PeriodicWorkRequestBuilder<QueuePollWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(
+                Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build(),
+            )
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "queue_poll",
+            ExistingPeriodicWorkPolicy.KEEP,
+            request,
+        )
     }
 }
 

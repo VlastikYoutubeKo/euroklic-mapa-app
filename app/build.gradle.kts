@@ -93,6 +93,7 @@ dependencies {
     implementation(libs.osmdroid.android)
     implementation(libs.play.services.location)
     implementation(libs.retrofit)
+    implementation(libs.androidx.work.runtime.ktx)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.junit)

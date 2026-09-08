@@ -15,12 +15,17 @@ import cz.euroklicmapa.ui.theme.EuroklicTheme
 /** Static app-shortcut action — must match the intent in res/xml/shortcuts.xml. */
 private const val ACTION_NEAREST_WC = "cz.euroklicmapa.action.NEAREST_WC"
 
+/** Notification tap routing — keys must match [cz.euroklicmapa.notifications.QueuePollWorker]. */
+private const val EXTRA_NAV = "nav"
+private const val NAV_ADMIN_QUEUE = "admin_queue"
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         handleAuthCallback(intent)
         handleShortcutIntent(intent)
+        handleNavIntent(intent)
         val themeRepository = (application as EuroklicApplication).themeRepository
         setContent {
             val mode by themeRepository.mode.collectAsState(initial = ThemeMode.SYSTEM)
@@ -40,6 +45,18 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         handleAuthCallback(intent)
         handleShortcutIntent(intent)
+        handleNavIntent(intent)
+    }
+
+    /**
+     * Notification tap routing. The "Čeká na schválení" notification carries `nav=admin_queue`;
+     * a pending flag on the Application is consumed once by [MainScreen], mirroring the launcher
+     * shortcut pattern above. The "nearby" notification has no extra — it just opens the app.
+     */
+    private fun handleNavIntent(intent: Intent?) {
+        if (intent?.getStringExtra(EXTRA_NAV) == NAV_ADMIN_QUEUE) {
+            (application as EuroklicApplication).requestAdminQueueNav()
+        }
     }
 
     /**

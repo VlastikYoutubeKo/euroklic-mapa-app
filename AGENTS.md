@@ -18,8 +18,10 @@ Target users are people with reduced mobility, seniors, and parents with strolle
 - ~~v1 is read-only browse.~~ **Superseded 2026-09-04 (user OK'd full scope):** the app now
   does Discord/Google **login** (token-based), **add-place with photo**, and an **admin
   moderation queue** — see "Auth & write features" below. Anonymous voting was already in.
-  Still no notifications/widgets, no Play Store publishing. Favor the "nearest suitable
-  toilet" use case; drop anything that only complicates the browse UI.
+  **Superseded 2026-09-06 (user):** local notifications (WorkManager, phase 1) are in — see
+  "Local notifications" below. Still no widgets, no FCM/push (phase 2, BACKLOG 2.2), no Play
+  Store publishing. Favor the "nearest suitable toilet" use case; drop anything that only
+  complicates the browse UI.
 - Accessibility requirements that code must uphold: 48dp min touch targets; WCAG AA contrast
   (the color tokens in `ui/theme/Color.kt` are pre-verified — recompute if you change them);
   TalkBack content descriptions on every icon/marker (include distance + point type);
@@ -187,6 +189,44 @@ on-disk `auth.preferences_pb` is ciphertext, not the raw token) + survives an ap
 link with a mismatched/shell-split `&state=` is rejected. **Not emulator-testable:** the actual
 `code`→`token` exchange (needs a real 60-s OAuth `code`) and `X-Refreshed-Token` (only fires
 past 60 d) — both verified by the backend via curl.
+
+### Local notifications (2026-09-06, phase 1 — WorkManager only, no backend / no FCM)
+
+`notifications/` package. `androidx.work:work-runtime-ktx` (default `androidx.startup`
+initializer — no `Configuration.Provider`, no `hilt-work`). One `enqueueUniquePeriodicWork`
+(`"queue_poll"`, `KEEP`, 15 min, `NetworkType.CONNECTED`) scheduled from
+`EuroklicApplication.onCreate()`; `NotificationChannels.register()` (API 26+ guard) makes 3
+channels there too: `"moderation"` (HIGH, admin only), `"nearby"` (DEFAULT),
+`"favorites"` (LOW, reserved — no sender yet).
+
+`QueuePollWorker : CoroutineWorker` casts `applicationContext as EuroklicApplication` for its
+deps (`api` is now `public` on the Application for this). `doWork()` runs two independent,
+try/caught parts and always returns `Result.success()` (no retry storm — next period is 15 min):
+- **Admin** — gated on `notif_admin_queue` pref + `authRepository.state` being `LoggedIn` with
+  `me.is_admin`. Polls `api.adminList()`; if `count + photo_count > 0` and either differs from
+  the stored last-known counts → `"moderation"` notification ("Čeká na schválení" / "N míst ·
+  M fotek"), tap → admin queue. Counts always stored back.
+- **Nearby** — gated on `notif_nearby` pref (default **off**, user opts in). Reads cached WC
+  ids one-shot from the DAO (`EuroklicRepository.getAllLocationIds()` / `getLocationsByIds()` —
+  no `refresh()` side effect). Empty `known_place_ids` → seed silently (no notification). Else
+  new ids within ~10 km of `locationRepository.lastKnown` (skipped if null) and ≥ 24 h since
+  `last_nearby_notif_epoch` → one `"nearby"` notification, tap → app (Map). Snapshot always
+  updated; epoch only when notified.
+
+Prefs live in `data/prefs/NotificationPrefs.kt`, reusing the single `"settings"` DataStore
+(`settingsDataStore` is now `internal` in `ThemeRepository.kt` — **never** a second
+`preferencesDataStore("settings")`). Keys: `notif_admin_queue` (default true),
+`notif_nearby` (default false), `last_admin_place_count`, `last_admin_photo_count`,
+`known_place_ids` (comma-joined), `last_nearby_notif_epoch`.
+
+`POST_NOTIFICATIONS` is in the manifest but requested **lazily** — only when a toggle in
+More → "Notifikace" is switched on (API 33+; `rememberLauncherForActivityResult`). Denial
+keeps the toggle state, notifications just won't show. That section also has a non-toggle
+"Notifikace nechodí?" card → `Settings.ACTION_APPLICATION_DETAILS_SETTINGS` (OEM battery
+optimisation note for Honor/Xiaomi/Samsung). Tap routing mirrors the launcher-shortcut
+pattern: notification `PendingIntent` → `MainActivity` `nav=admin_queue` extra →
+`EuroklicApplication.requestAdminQueueNav()` pending flag → `MainScreen` consumes it once →
+`Destinations.AdminQueue`. Phase 2 (FCM/push) stays deferred — BACKLOG 2.2.
 
 ## Build & test
 
@@ -449,7 +489,8 @@ Still open:
   the map is a possible optimisation, not done.
 
 Not done (deferred): launcher icon (user said ignore for now), splash / Glance widget /
-QS tile / deep links, map camera state across process death, tests for the new code.
+QS tile / deep links, map camera state across process death, tests for the new code
+(incl. the notification poll worker), FCM/push (notifications phase 2, BACKLOG 2.2).
 
 ### Running on the emulator
 

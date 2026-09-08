@@ -74,23 +74,26 @@ Zbývá k funkční smyčce → sekce 1.
 
 ### 2.1 [app-android+app-ios] FÁZE 1 — lokální notifikace bez backendu (doporučeno hned)
 Zero infrastruktury, žádné tokeny, funguje hned:
-- [ ] **Přidat závislost** `androidx.work:work-runtime-ktx` (WorkManager zatím
+(app-android FÁZE 1 hotová 2026-09-08 — `notifications/` package, `QueuePollWorker`,
+3 kanály, `NotificationPrefs`. app-ios ekvivalent zatím čeká.)
+- [x] **Přidat závislost** `androidx.work:work-runtime-ktx` (WorkManager zatím
       v projektu vůbec není!) + `androidx.hilt:hilt-work` NE — ruční factory
-- [ ] **`POST_NOTIFICATIONS` runtime permission** (Android 13+) — žádat až při
+      — `work-runtime-ktx 2.10.1`, default `androidx.startup` initializer, žádná ruční factory potřeba
+- [x] **`POST_NOTIFICATIONS` runtime permission** (Android 13+) — žádat až při
       prvním opt-in, ne při startu (stejná filozofie jako poloha: lazily + rationale)
-- [ ] **Admin „fronta čeká"**: `WorkManager` periodic (15 min), když existuje Bearer token s `is_admin=true` → poll
+      — `rememberLauncherForActivityResult` při zapnutí přepínače ve Více → Notifikace
+- [x] **Admin „fronta čeká"**: `WorkManager` periodic (15 min), když existuje Bearer token s `is_admin=true` → poll
       `api_admin_list.php` → pokud `count + photo_count` > 0 → notifikace
       „X míst a Y fotek čeká na schválení" (tap → AdminQueue). Dedup: uložit
       poslední známé počty.
-- [ ] **„Nové místo v okolí"**: po každém feed refreshi diff id oproti poslednímu
-      známému snapshotu; nová id do ~10 km od poslední polohy → notifikace
-      (max 1/den, opt-in přepínač ve Více, default zapnuté jen pro přihlášené)
-- [ ] Kanály (Android): „Moderace" (high, admin only), „Nové v okolí" (default),
-      „Stav oblíbených" (low)
-- [ ] **OEM poznámka pro uživatele** (Honor/EMUI/Samsung killují background work):
-      v sekci Více krátká karta „Notifikace mi přestaly chodit?" → návod vypnout
-      optimalizaci baterie pro appku (nebo appku připnout) — jinak to bude vypadat
-      jako bug appky
+- [x] **„Nové místo v okolí"**: diff id oproti poslednímu známému snapshotu
+      (jednorázové čtení z Room DAO); nová id do ~10 km od poslední polohy → notifikace
+      (max 1/den, opt-in přepínač ve Více, default vypnuto — první běh snapshot jen zaseje)
+- [x] Kanály (Android): „Moderace" (high, admin only), „Nové v okolí" (default),
+      „Stav oblíbených" (low — rezervováno, zatím bez odesílatele)
+- [x] **OEM poznámka pro uživatele** (Honor/EMUI/Samsung killují background work):
+      v sekci Více krátká karta „Notifikace nechodí?" → otevře nastavení aplikace
+      (`ACTION_APPLICATION_DETAILS_SETTINGS`) s návodem vypnout optimalizaci baterie
 - **Hotovo =** admin bez otevřené appky se dozví o novém místě do 15 minut;
       běžný uživatel dostane max 1 notifikaci denně o novinkách v okolí
 - Omezení (říct uživateli): Doze/Battery saver může 15 min protáhnout na ~hodinu;

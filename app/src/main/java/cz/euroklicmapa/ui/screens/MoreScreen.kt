@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -25,6 +26,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,8 +39,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import cz.euroklicmapa.EuroklicApplication
@@ -77,6 +86,18 @@ fun MoreScreen(
     val isAdmin = (authState as? AuthState.LoggedIn)?.me?.is_admin == true
 
     val version = remember(context) { appVersionName(context) }
+
+    val nearbyNotif by app.notificationPrefs.nearbyEnabled.collectAsStateWithLifecycle(initialValue = false)
+    val adminNotif by app.notificationPrefs.adminQueueEnabled.collectAsStateWithLifecycle(initialValue = true)
+    // POST_NOTIFICATIONS is requested lazily, only when a toggle is switched ON (API 33+).
+    val notifPermLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { /* granted or not — the toggle keeps its state either way */ }
+    fun maybeAskNotifPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notifPermLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -128,6 +149,40 @@ fun MoreScreen(
                     )
                 }
             }
+
+            SectionLabel("Notifikace")
+            SwitchRow(
+                title = "Nové místo v okolí",
+                subtitle = "Občas (max 1×/den) upozornění na nově přidané bezbariérové WC blízko tebe",
+                checked = nearbyNotif,
+                onCheckedChange = { on ->
+                    scope.launch { app.notificationPrefs.setNearbyEnabled(on) }
+                    if (on) maybeAskNotifPermission()
+                },
+            )
+            if (isAdmin) {
+                SwitchRow(
+                    title = "Fronta ke schválení",
+                    subtitle = "Když čeká nové místo nebo návrh fotky (kontrola každých 15 min)",
+                    checked = adminNotif,
+                    onCheckedChange = { on ->
+                        scope.launch { app.notificationPrefs.setAdminQueueEnabled(on) }
+                        if (on) maybeAskNotifPermission()
+                    },
+                )
+            }
+            BatteryNote(
+                onOpenSettings = {
+                    runCatching {
+                        context.startActivity(
+                            Intent(
+                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.fromParts("package", context.packageName, null),
+                            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        )
+                    }
+                },
+            )
 
             if (isAdmin) {
                 SectionLabel("Moderace")
@@ -291,6 +346,73 @@ private fun AuthCard(
             }
         }
       }
+    }
+}
+
+@Composable
+private fun SwitchRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                // Whole row is the 48dp+ touch target; the Text pair is the accessible label.
+                .toggleable(
+                    value = checked,
+                    role = Role.Switch,
+                    onValueChange = onCheckedChange,
+                )
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.size(12.dp))
+            Switch(checked = checked, onCheckedChange = null)
+        }
+    }
+}
+
+@Composable
+private fun BatteryNote(onOpenSettings: () -> Unit) {
+    Surface(
+        onClick = onOpenSettings,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "Notifikace nechodí?",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                "Některé telefony (Honor, Xiaomi, Samsung) zastavují aplikace na pozadí. " +
+                    "Klepnutím otevřeš nastavení aplikace — vypni tam pro Euroklíč Mapa optimalizaci baterie.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
