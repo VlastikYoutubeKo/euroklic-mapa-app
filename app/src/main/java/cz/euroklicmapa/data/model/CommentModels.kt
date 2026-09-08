@@ -22,3 +22,13 @@ data class CommentsResponse(
     val message: String? = null,
     val comments: List<WcComment> = emptyList(),
 )
+
+/**
+ * `POST /api_comments.php` body (JSON, not multipart). Bearer required (attached by
+ * `AuthInterceptor`); the author is taken from the token — do not send a nickname.
+ * Never publishes directly — the row lands in a moderation queue (`status='pending'`).
+ * Response reuses [cz.euroklicmapa.data.model.ApiResult] (`success`/`error`/`message`; the
+ * always-present `status` key is ignored by `Json { ignoreUnknownKeys = true }`).
+ */
+@Serializable
+data class PostCommentRequest(val location_id: Int, val text: String)

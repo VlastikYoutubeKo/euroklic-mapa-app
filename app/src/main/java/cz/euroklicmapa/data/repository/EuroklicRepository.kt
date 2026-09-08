@@ -7,16 +7,25 @@ import cz.euroklicmapa.data.local.SyncMetadataEntity
 import cz.euroklicmapa.data.local.WcLocationEntity
 import cz.euroklicmapa.data.location.LocationRepository
 import cz.euroklicmapa.data.mapper.toEntity
+import cz.euroklicmapa.data.model.ApiResult
+import cz.euroklicmapa.data.model.PostCommentRequest
 import cz.euroklicmapa.data.model.WcComment
 import cz.euroklicmapa.data.remote.EuroklicApi
 import cz.euroklicmapa.util.nowUtcTimestamp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 import retrofit2.HttpException
 
 object SyncKeys {
     const val LOCATIONS = "locations"
     const val PICKUP_POINTS = "pickup_points"
+}
+
+sealed interface PostCommentResult {
+    data object Success : PostCommentResult
+    data class Error(val message: String) : PostCommentResult
 }
 
 sealed interface VoteOutcome {
@@ -44,8 +53,14 @@ interface EuroklicRepository {
     /** Anonymous vote via `/api_csrf.php` + `/api_vote.php`. Updates the Room row on success. */
     suspend fun vote(locationId: Int, like: Boolean): VoteOutcome
 
-    /** Read-only community notes (`GET /api_comments.php`). Empty list on any failure. */
+    /** Community notes (`GET /api_comments.php`, approved only). Empty list on any failure. */
     suspend fun getComments(locationId: Int): List<WcComment>
+
+    /**
+     * Post a comment (`POST /api_comments.php`, Bearer). Server-side it goes to a moderation
+     * queue — success means "queued", not "visible". Maps HTTP codes to Czech messages.
+     */
+    suspend fun postComment(locationId: Int, text: String): PostCommentResult
 }
 
 class EuroklicRepositoryImpl(
@@ -180,5 +195,44 @@ class EuroklicRepositoryImpl(
         // (kotlinx turns that into a parse exception). Either way: no comments, not a crash.
         Log.w("EuroklicRepo", "getComments failed", e)
         emptyList()
+    }
+
+    private val errorJson = Json { ignoreUnknownKeys = true }
+
+    /** Best-effort pull of the server's own message out of a non-2xx JSON error body. */
+    private fun serverMessage(e: HttpException): String? = try {
+        e.response()?.errorBody()?.string()
+            ?.takeIf { it.isNotBlank() }
+            ?.let { errorJson.decodeFromString<ApiResult>(it) }
+            ?.let { it.error ?: it.message }
+            ?.takeIf { it.isNotBlank() }
+    } catch (_: Exception) {
+        null
+    }
+
+    override suspend fun postComment(locationId: Int, text: String): PostCommentResult = try {
+        val resp = api.postComment(PostCommentRequest(locationId, text.trim()))
+        when {
+            resp.success -> PostCommentResult.Success
+            !resp.error.isNullOrBlank() -> PostCommentResult.Error(resp.error)
+            !resp.message.isNullOrBlank() -> PostCommentResult.Error(resp.message)
+            else -> PostCommentResult.Error("Komentář se nepodařilo odeslat.")
+        }
+    } catch (e: HttpException) {
+        PostCommentResult.Error(
+            when (e.code()) {
+                401, 403 -> "Přihlášení vypršelo. Přihlaste se prosím znovu."
+                400 -> serverMessage(e)
+                    ?: "Komentář se nepodařilo odeslat (zkontrolujte délku 3–2000 znaků, max 1 odkaz)."
+                404 -> "Tohle místo se nepodařilo najít."
+                409 -> "Tenhle komentář jste už přidali."
+                429 -> "Za poslední dobu jste přidali hodně příspěvků. Zkuste to později."
+                else -> "Chyba serveru (${e.code()})."
+            },
+        )
+    } catch (e: SerializationException) {
+        PostCommentResult.Error("Odpověď serveru se nepodařilo zpracovat.")
+    } catch (e: Exception) {
+        PostCommentResult.Error("Bez připojení. Zkuste to znovu, až budete online.")
     }
 }

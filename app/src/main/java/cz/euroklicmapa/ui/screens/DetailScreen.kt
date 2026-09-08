@@ -29,6 +29,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,6 +125,7 @@ fun DetailScreen(
     val isFavorite by viewModel.isFavorite.collectAsStateWithLifecycle()
     val photoUploading by viewModel.photoUploading.collectAsStateWithLifecycle()
     val comments by viewModel.comments.collectAsStateWithLifecycle()
+    val commentPosting by viewModel.commentPosting.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val app = context.applicationContext as EuroklicApplication
     val authState by app.authRepository.state.collectAsStateWithLifecycle()
@@ -180,6 +184,10 @@ fun DetailScreen(
                     onAddPhoto = {
                         if (loggedIn) imagePicker.request() else showLoginDialog = true
                     },
+                    loggedIn = loggedIn,
+                    commentPosting = commentPosting,
+                    onSubmitComment = viewModel::postComment,
+                    onRequestLogin = { showLoginDialog = true },
                 )
                 is DetailState.PickupDetail -> PickupBody(s.pp, userLocation)
             }
@@ -292,6 +300,10 @@ private fun WcBody(
     photoUploading: Boolean,
     comments: List<WcComment>?,
     onAddPhoto: () -> Unit,
+    loggedIn: Boolean,
+    commentPosting: Boolean,
+    onSubmitComment: (String) -> Unit,
+    onRequestLogin: () -> Unit,
 ) {
     Hero(photoUrl = wc.photoUrl, isPickup = false, name = wc.name)
     Column(
@@ -324,10 +336,13 @@ private fun WcBody(
         Section("Původní zdroj", originalSourceLabel(wc.source))
         wc.lastVerified?.let { Section("Naposledy ověřeno", it.substringBefore(" ")) }
 
-        val visibleComments = comments
-        if (visibleComments != null && visibleComments.isNotEmpty()) {
-            CommentsSection(visibleComments)
-        }
+        CommentsSection(
+            comments = comments,
+            loggedIn = loggedIn,
+            posting = commentPosting,
+            onSubmit = onSubmitComment,
+            onRequestLogin = onRequestLogin,
+        )
 
         AddPhotoRow(
             hasPhoto = !wc.photoUrl.isNullOrBlank(),
@@ -562,19 +577,33 @@ private fun DistanceCard(target: GeoPoint, userLocation: GeoPoint?) {
 }
 
 /**
- * Read-only mirror of the website's community notes (web renders the same list in the map
- * popup). Deliberately hidden when there are none — the app can't write them, so an empty
- * state with "buďte první!" would be a dead end.
+ * Community notes — mirrors the website's list (web renders the same in the map popup). Read
+ * is approved-only; the composer at the bottom posts through the moderation queue, so a fresh
+ * comment won't show here immediately. Logged-out users get a "log in" button instead.
  */
 @Composable
-private fun CommentsSection(comments: List<WcComment>) {
+private fun CommentsSection(
+    comments: List<WcComment>?,
+    loggedIn: Boolean,
+    posting: Boolean,
+    onSubmit: (String) -> Unit,
+    onRequestLogin: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             "Komentáře",
             style = MaterialTheme.typography.titleMedium,
             color = EuroklicTheme.extended.textStrong,
         )
-        comments.forEach { c ->
+        val list = comments.orEmpty()
+        if (list.isEmpty()) {
+            Text(
+                "Zatím žádné komentáře.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        list.forEach { c ->
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 shape = RoundedCornerShape(14.dp),
@@ -606,11 +635,71 @@ private fun CommentsSection(comments: List<WcComment>) {
                 }
             }
         }
-        Text(
-            "Komentáře se přidávají na webu (odkaz níže).",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        CommentComposer(
+            loggedIn = loggedIn,
+            posting = posting,
+            onSubmit = onSubmit,
+            onRequestLogin = onRequestLogin,
         )
+    }
+}
+
+@Composable
+private fun CommentComposer(
+    loggedIn: Boolean,
+    posting: Boolean,
+    onSubmit: (String) -> Unit,
+    onRequestLogin: () -> Unit,
+) {
+    if (!loggedIn) {
+        OutlinedButton(
+            onClick = onRequestLogin,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) {
+            Text("Přihlásit se a přidat komentář")
+        }
+        return
+    }
+    var text by rememberSaveable { mutableStateOf("") }
+    val trimmedLen = text.trim().length
+    val lenError = text.isNotEmpty() && trimmedLen !in 3..2000
+    val canSend = trimmedLen in 3..2000 && !posting
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2,
+            label = { Text("Přidat komentář") },
+            isError = lenError,
+            enabled = !posting,
+        )
+        Text(
+            "$trimmedLen/2000",
+            style = MaterialTheme.typography.labelSmall,
+            color = if (lenError) MaterialTheme.colorScheme.error
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Button(
+            onClick = {
+                onSubmit(text)
+                text = ""
+            },
+            enabled = canSend,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) {
+            if (posting) {
+                CircularProgressIndicator(
+                    strokeWidth = 2.dp,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .semantics { contentDescription = "Odesílání komentáře" },
+                )
+            } else {
+                Text("Odeslat")
+            }
+        }
     }
 }
 

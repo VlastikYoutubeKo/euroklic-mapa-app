@@ -84,7 +84,17 @@ screen layout, and rationale.
   (not device); repeat same vote → `{"success":false,"message":"Už jste takto hlasovali."}`;
   success → `{"success":true,"likes":N,"dislikes":N}`. Refetch the token only on `403`.
 - `POST /api_add.php` (new place) still needs a real OAuth session → out of scope for v1
-  (link to the web in Custom Tabs). `GET /api_comments.php` is auth-free but also deferred.
+  (link to the web in Custom Tabs). **`/api_comments.php` is now login-gated read + write
+  (2026-09-08):** `GET ?location_id=` returns approved rows only; `POST` (JSON body
+  `{"location_id":<int>,"text":"<3–2000 chars, max 1 URL>"}`, Bearer required, no
+  author/nickname field — author comes from the token) queues a `status='pending'` row in a
+  moderation queue (never publishes directly). Response always `{status, success, error?,
+  message}` (`message` always populated → use `error ?: message`). HTTP: 200 · 403 no auth ·
+  400 validation · 404 place unknown/unapproved · 409 duplicate (same normalized text/user) ·
+  429 rate limit (new acct 1/day+3/week; any acct 5/hour; 10/day/IP). Wired app-side:
+  `EuroklicApi.postComment()` → `EuroklicRepository.postComment()` → `PostCommentResult`,
+  `DetailViewModel.postComment()` + `commentPosting`, composer in `DetailScreen.CommentsSection`
+  (login-gated like `AddPhotoRow`; the section always shows for WC now).
 - No CORS / `Last-Modified` / rate-limit headers. **`ETag` (2026-09-05):** the two GeoJSON
   feeds (`/api_locations.php`, `/api_pickup_points.php`) now send `ETag: "<md5hex>[-gzip]"` +
   `Cache-Control: no-cache` (revalidate every time). The ETag is computed from *data signature

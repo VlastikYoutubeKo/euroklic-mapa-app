@@ -161,14 +161,23 @@ Zero infrastruktury, žádné tokeny, funguje hned:
 - [ ] JSON-LD `Place` na `/lokace/*`, detaily v sitemap, `FAQPage`, og:image (1.6)
 - **Hotovo =** Google Rich Results Test na detailu bez errorů
 
-### 3.4 Komentáře write — uživatel schválil 2026-09-08, čeká na backend endpoint
-- [ ] [backend] `POST` endpoint pro psaní komentáře (Bearer) → moderační fronta
-      (`approved=0` + Discord ping), anti-spam vrstvy z TODO-IDEAS B3 (login povinný,
-      denní limity nového účtu, rate limit per token/IP, plain-text only, délka,
-      dedup po user id, report tlačítko, audit log). **Přeposláno backend session 2026-09-08.**
-- [ ] [app-android] po nasazení: pole „Přidat komentář" v `DetailScreen.CommentsSection`
-      (login-gated jako `AddPhotoRow`), `EuroklicApi` + `DetailViewModel.postComment()`,
-      optimistic „čeká na schválení" stav.
+### 3.4 Komentáře write — uživatel schválil 2026-09-08
+- [x] [backend] `POST /api_comments.php` (JSON body `{location_id, text}`, Bearer) →
+      moderační fronta (`status='pending'` + Discord ping), anti-spam vrstvy z TODO-IDEAS B3
+      (login povinný, denní limity nového účtu 1/den+3/týden, 5/h/účet, 10/den/IP, max 1 URL,
+      délka 3–2000, dedup normalizovaného textu per user, 409). Odpověď vždy
+      `{status, success, error?, message}`. **LIVE 2026-09-08.**
+- [x] [app-android] `PostCommentRequest` + `EuroklicApi.postComment()` (`@Body`, reuse
+      `ApiResult`); `EuroklicRepository.postComment(locationId, text)` → `PostCommentResult`
+      (per-HTTP-code CZ hlášky 401/403/400/404/409/429, 400 zkusí server `message` z error
+      body). `DetailViewModel.postComment()` + `commentPosting` StateFlow → po úspěchu
+      „Komentář odeslán ke schválení." toast + `loadComments()` (pending se nezobrazí, ok).
+      `DetailScreen.CommentsSection` teď u WC **vždy** vidět: seznam (nebo „Zatím žádné
+      komentáře.") + composer — odhlášený = `OutlinedButton` „Přihlásit se a přidat
+      komentář" → `LoginDialog`; přihlášený = `OutlinedTextField` (minLines 2) + počítadlo
+      „N/2000" (error barva <3 / >2000) + `Button` „Odeslat" (48dp, spinner při odesílání).
+      Smazán dead-end text „Komentáře se přidávají na webu". `./gradlew :app:assembleDebug
+      :app:testDebugUnitTest` → 61 testů, 0 failures.
 - **Hotovo =** komentář z appky projde moderační frontou jako na webu
 
 ### 3.5 [app-ios] První build + test na Macu (uživatel chce koupit/zařídit Mac)

@@ -7,6 +7,7 @@ import cz.euroklicmapa.data.model.CommentsResponse
 import cz.euroklicmapa.data.model.FeatureCollection
 import cz.euroklicmapa.data.model.MeResponse
 import cz.euroklicmapa.data.model.PickupPointProperties
+import cz.euroklicmapa.data.model.PostCommentRequest
 import cz.euroklicmapa.data.model.TokenResponse
 import cz.euroklicmapa.data.model.WcProperties
 import okhttp3.MultipartBody
@@ -129,13 +130,24 @@ interface EuroklicApi {
     ): ApiResult
 
     /**
-     * Read-only community notes on one place (auth-free). HTTP 200 even on error — check
-     * [CommentsResponse.status]. A missing path serves homepage HTML with 200, which the
-     * kotlinx.serialization converter turns into an exception; the repository maps that to
-     * an empty list.
+     * Community notes on one place. **Login-gated read + write since 2026-09-08.** `GET`
+     * returns only approved rows; HTTP 200 even on error — check [CommentsResponse.status].
+     * A missing path serves homepage HTML with 200, which the kotlinx.serialization converter
+     * turns into an exception; the repository maps that to an empty list.
      */
     @GET("api_comments.php")
     suspend fun comments(@Query("location_id") locationId: Int): CommentsResponse
+
+    /**
+     * Post one comment (JSON body, **not** multipart). Bearer required (added by
+     * `AuthInterceptor`) — no auth → 403. Author comes from the token; do not send a nickname.
+     * Never publishes directly — the row goes to a moderation queue (`status='pending'`).
+     * HTTP codes: 200 OK · 403 no auth · 400 validation (text 3–2000 chars, max 1 URL, missing
+     * `location_id`) · 404 place unknown/unapproved · 409 duplicate · 429 rate limit. Response
+     * shape: `{status, success, error?, message}` — `message` is always populated.
+     */
+    @POST("api_comments.php")
+    suspend fun postComment(@retrofit2.http.Body body: PostCommentRequest): ApiResult
 
     companion object {
         const val BASE_URL = "https://euroklic.odjezdy.online/"

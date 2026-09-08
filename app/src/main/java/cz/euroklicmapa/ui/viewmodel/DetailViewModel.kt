@@ -11,6 +11,7 @@ import cz.euroklicmapa.data.repository.AddPhotoResult
 import cz.euroklicmapa.data.repository.AddPlaceRepository
 import cz.euroklicmapa.data.repository.EuroklicRepository
 import cz.euroklicmapa.data.repository.FavoritesRepository
+import cz.euroklicmapa.data.repository.PostCommentResult
 import cz.euroklicmapa.data.mapper.toPickupPointEntity
 import cz.euroklicmapa.data.mapper.toWcLocationEntity
 import cz.euroklicmapa.data.repository.VoteOutcome
@@ -108,6 +109,9 @@ class DetailViewModel(
     private val _comments = MutableStateFlow<List<WcComment>?>(null)
     val comments: StateFlow<List<WcComment>?> = _comments.asStateFlow()
 
+    private val _commentPosting = MutableStateFlow(false)
+    val commentPosting: StateFlow<Boolean> = _commentPosting.asStateFlow()
+
     init {
         locationRepository.refresh()
         if (type == "WC") loadComments()
@@ -119,6 +123,30 @@ class DetailViewModel(
 
     fun consumeMessage() {
         _message.value = null
+    }
+
+    /**
+     * Post a community comment for this WC. Server-side it goes to a moderation queue, so on
+     * success we just tell the user it's queued and re-load the (approved-only) list — the
+     * pending one won't appear yet, which is expected.
+     */
+    fun postComment(text: String) {
+        if (type != "WC" || _commentPosting.value) return
+        if (text.trim().length !in 3..2000) return
+        viewModelScope.launch {
+            _commentPosting.value = true
+            try {
+                when (val r = repository.postComment(id, text)) {
+                    PostCommentResult.Success -> {
+                        _message.value = "Komentář odeslán ke schválení."
+                        loadComments()
+                    }
+                    is PostCommentResult.Error -> _message.value = r.message
+                }
+            } finally {
+                _commentPosting.value = false
+            }
+        }
     }
 
     /** Upload a user-supplied photo for this place. Goes through the moderation queue server-side. */
