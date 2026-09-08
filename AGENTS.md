@@ -53,7 +53,9 @@ screen layout, and rationale.
   **falls back to the full feed if the scoped fetch is empty** (user abroad). The feed
   **intentionally spans beyond CZ/SK** — do not re-add a client-side geo clamp.
 - WC features (`/api_locations.php`, `/api_app_places.php` toilets) also carry: **`web_url`**
-  (`/lokace/{id}-{slug}` — real route), **`opening_hours`** (free text, ČD stations only),
+  (`/lokace/{id}-{slug}` — real route), **`opening_hours`** (free text, ČD stations only —
+  this is the **ticket-counter** schedule, NOT hall/WC availability; feed only serves the
+  first `Po–Pá` line, dropping `So–Ne` + temporary changes),
   **`access`** (`"eurokey"` for `cd`+`osm`, `"unknown"` for `mapotic`+`user`),
   **`wheelchair`** (`yes|no|unknown` — real ČD-station building accessibility, `unknown`
   elsewhere), **`accessibility_note`** (raw multi-line text, ČD only), **`country`**

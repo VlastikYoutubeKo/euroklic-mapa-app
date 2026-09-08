@@ -60,18 +60,23 @@
 - Bez výsledku (žádná poloha / prázdná cache) → toast.
   Ověřeno naživo (Praha 797 m; po `geo fix` na Hradec 0 m).
 
-### A6. Otevírací doba / `opening_hours` — parser
-- [x] HOTOVO (2026-09-08) — `util/OpeningHours.kt`: lenient/konzervativní parser
-  (`parseOpeningHours` → `OpeningHours.statusAt(Calendar)` → `OPEN/CLOSED/UNKNOWN`),
-  pure-JVM (`java.util.Calendar`, desugaring není zapnuté). Zvládá nonstop/24h/0-24,
-  „Po–Pá 6:00–22:00", víc klauzulí (`,`/`;`/newline), Po,St,Pá výčty, „denně",
-  přes půlnoc (end ≤ start). Cokoli nejednoznačného → `null`. `DetailScreen`
-  `OpeningHoursSection` ukazuje chip „Otevřeno"/„Zavřeno" (success/error) + vždy
-  syrový text; `null`/UNKNOWN → původní `Section`. `OpeningHoursTest` (13 testů).
-- `opening_hours` je free text (ČD stanice). Nápad: lehký parser
-  „po–pá 6–22" formátů → „Otevřeno / Zavřeno" badge v detailu
-  (nemít, pokud data nekonzistentní — projít všech ~109 řádků cURL-em
-  a rozhodnout).
+### A6. Otevírací doba / `opening_hours`
+- [x] Parser `util/OpeningHours.kt` napsán (2026-09-08) — lenient, pure-JVM
+  (`parseOpeningHours` → `statusAt(Calendar)` → `OPEN/CLOSED/UNKNOWN`),
+  `OpeningHoursTest` (13). **Zůstává v repu, ale zatím se nepoužívá pro UI stav.**
+- [x] **Chip „Otevřeno/Zavřeno" ZRUŠEN (2026-09-08, uživatel).** Zjištěno, že
+  `opening_hours` z ČD je **provozní doba pokladny** („Vnitrostátní pokladní
+  přepážka"), ne doba přístupnosti haly/WC — pokladna zavírá na 2–3h poledních
+  pauzy, ale hala i Euroklíč WC bývají přístupné i mimo ně. Odvozený stav by
+  falešným „Zavřeno" odrazoval od použitelného WC. `DetailScreen.OpeningHoursSection`
+  teď: label „PROVOZNÍ DOBA POKLADNY (ČD)" + syrový text + caption „Doba pokladny,
+  ne WC…". Bez chipu.
+- [ ] **[backend] otevřené:** feed servíruje jen první `Po–Pá` řádek — zahazuje
+  `So–Ne` i „Mimořádné změny provozní doby" (mají date-range). Ideál: (a) vracet
+  celý blok vč. So–Ne, (b) rozlišit „pokladna" vs. „hala/WC" pokud to ČD dává,
+  (c) přezvat pole tak, ať je zřejmé co je zač. **Přeposláno backend session
+  2026-09-08.** Reálná doba otevření haly (nádraží zavírá ~23:50 po posledním
+  vlaku, krátce v ~1:30, pak ~3:00) není v ČD strukturovaně — nutno prozkoumat.
 
 ### A7. Testy (dlouhodobě zanedbané) — ČÁSTEČNĚ HOTOVO (2026-09-08)
 - [x] `PlaceStatus.placeStatus()` + `voteBadge()` + `VoteBadge.label()` +

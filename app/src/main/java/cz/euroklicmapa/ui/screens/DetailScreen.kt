@@ -75,7 +75,6 @@ import cz.euroklicmapa.ui.theme.EuroklicTheme
 import cz.euroklicmapa.ui.viewmodel.DetailState
 import cz.euroklicmapa.ui.viewmodel.DetailViewModel
 import cz.euroklicmapa.ui.viewmodel.DetailViewModelFactory
-import cz.euroklicmapa.util.OpenState
 import cz.euroklicmapa.util.PlaceStatus
 import cz.euroklicmapa.util.countryName
 import cz.euroklicmapa.util.distanceBetween
@@ -84,10 +83,8 @@ import cz.euroklicmapa.util.formatDistance
 import cz.euroklicmapa.util.formatWalkingTime
 import cz.euroklicmapa.util.launchNavigation
 import cz.euroklicmapa.util.openUrl
-import cz.euroklicmapa.util.parseOpeningHours
 import cz.euroklicmapa.util.placeStatus
 import org.osmdroid.util.GeoPoint
-import java.util.Calendar
 
 private const val KEY_STATUS_URL = "https://euroklic.odjezdy.online/clanky/jak-vybavit-euroklic/"
 
@@ -726,41 +723,28 @@ private fun Section(label: String, value: String?) {
 }
 
 /**
- * "Otevírací doba" section (ČD stations only). When [parseOpeningHours] is confident about the
- * string we show a small "Otevřeno" / "Zavřeno" state chip; the raw hours text is always shown
- * below it. On an unrecognised / ambiguous string it degrades to a plain [Section].
+ * ČD stations only. The backend's `opening_hours` is the **ticket-counter** schedule
+ * ("Vnitrostátní pokladní přepážka"), which closes for 2–3 h gaps midday — it is NOT the
+ * station-hall / WC availability. So we show the raw text under an honest label and a caveat,
+ * and deliberately do NOT derive an "Otevřeno / Zavřeno" state from it (a wrong "Zavřeno"
+ * during a counter gap would steer someone away from a usable toilet). `util/OpeningHours.kt`
+ * stays in the tree for if/when the feed carries real hall hours — see BACKLOG A6.
  */
 @Composable
 private fun OpeningHoursSection(raw: String?) {
     if (raw.isNullOrBlank()) return
-    val parsed = remember(raw) { parseOpeningHours(raw) }
-    val state = remember(parsed) { parsed?.statusAt(Calendar.getInstance()) ?: OpenState.UNKNOWN }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                "OTEVÍRACÍ DOBA",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (state != OpenState.UNKNOWN) {
-                val open = state == OpenState.OPEN
-                Text(
-                    if (open) "Otevřeno" else "Zavřeno",
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = if (open) EuroklicTheme.extended.onSuccess else MaterialTheme.colorScheme.onError,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(
-                            if (open) EuroklicTheme.extended.success else MaterialTheme.colorScheme.error,
-                        )
-                        .padding(horizontal = 10.dp, vertical = 3.dp),
-                )
-            }
-        }
+        Text(
+            "PROVOZNÍ DOBA POKLADNY (ČD)",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         Text(raw, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+        Text(
+            "Doba pokladny, ne WC. Nádražní hala i WC bývají přístupné i mimo tyto hodiny.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
