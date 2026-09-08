@@ -198,7 +198,12 @@ rotation) — `/uploads/` caps at 8 MB. Server sets `source='user'`, `approved=0
 `EuroklicApi.adminList()` (`GET /api_admin_list.php` → `{"locations": [...], "count": N}`,
 `AdminPlace` = raw DB row, `description` not `desc`) + `adminReview(action, id)` (`POST
 /api_admin.php`, `action` ∈ `approve|reject`). More → "Ke schválení" row, shown only when
-`me.is_admin`. Approve/reject per card, row drops from the list on success.
+`me.is_admin`. Approve/reject per card, row drops from the list on success. Also surfaces
+`photo_suggestions` (`PhotoSuggestionCard`) and, since 2026-09-08, `comment_suggestions`
+(`CommentSuggestionCard` — text + author + place, `adminReview(action=approve_comment|
+reject_comment, commentId=)`, `AdminListState.Loaded.comments`, `AdminQueueViewModel.reviewComment`
++ `actingCommentId`). Section headers ("Nová místa" / "Návrhy fotek" / "Návrhy komentářů")
+show only when more than one of the three lists is non-empty.
 
 **Verified live on the Pixel 10 AVD (2026-09-04, with backend test tokens):** admin login →
 LoggedIn card + `is_admin` → Moderace section; queue list renders; reject removes the row;

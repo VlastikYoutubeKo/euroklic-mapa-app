@@ -48,6 +48,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import cz.euroklicmapa.EuroklicApplication
 import cz.euroklicmapa.data.model.AdminPlace
+import cz.euroklicmapa.data.model.CommentSuggestion
 import cz.euroklicmapa.data.model.PhotoSuggestion
 import cz.euroklicmapa.data.repository.AdminListState
 import cz.euroklicmapa.ui.components.EmptyState
@@ -103,14 +104,18 @@ fun AdminQueueScreen(
                 }
             }
 
-            is AdminListState.Loaded -> if (s.pending.isEmpty() && s.photos.isEmpty()) {
+            is AdminListState.Loaded -> if (s.pending.isEmpty() && s.photos.isEmpty() && s.comments.isEmpty()) {
                 EmptyState(
                     icon = Icons.Rounded.Inbox,
                     title = "Fronta je prázdná",
                     subtitle = "Žádné nové návrhy ke schválení.",
                 )
             } else {
-                val showHeaders = s.pending.isNotEmpty() && s.photos.isNotEmpty()
+                val showHeaders = listOf(
+                    s.pending.isNotEmpty(),
+                    s.photos.isNotEmpty(),
+                    s.comments.isNotEmpty(),
+                ).count { it } > 1
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
@@ -138,6 +143,16 @@ fun AdminQueueScreen(
                             enabled = viewModel.actingPhotoId == null,
                             onApprove = { viewModel.reviewPhoto(photo.id, approve = true) },
                             onReject = { viewModel.reviewPhoto(photo.id, approve = false) },
+                        )
+                    }
+                    if (s.comments.isNotEmpty() && showHeaders) item("h_comments") { SectionHeader("Návrhy komentářů") }
+                    items(s.comments, key = { "c_${it.id}" }) { c ->
+                        CommentSuggestionCard(
+                            comment = c,
+                            busy = viewModel.actingCommentId == c.id,
+                            enabled = viewModel.actingCommentId == null,
+                            onApprove = { viewModel.reviewComment(c.id, approve = true) },
+                            onReject = { viewModel.reviewComment(c.id, approve = false) },
                         )
                     }
                 }
@@ -186,6 +201,58 @@ private fun PhotoSuggestionCard(
                 listOfNotNull(
                     photo.author_name?.takeIf { it.isNotBlank() },
                     String.format(java.util.Locale.US, "%.5f, %.5f", photo.location_lat, photo.location_lon),
+                ).joinToString(" · "),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = onReject,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) {
+                    Icon(Icons.Rounded.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text("Zamítnout")
+                }
+                Button(onClick = onApprove, enabled = enabled, modifier = Modifier.weight(1f)) {
+                    if (busy) {
+                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                    } else {
+                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text("Schválit")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommentSuggestionCard(
+    comment: CommentSuggestion,
+    busy: Boolean,
+    enabled: Boolean,
+    onApprove: () -> Unit,
+    onReject: () -> Unit,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                comment.text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 8,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                listOfNotNull(
+                    comment.displayAuthor,
+                    comment.location_name?.takeIf { it.isNotBlank() } ?: "Místo #${comment.location_id}",
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

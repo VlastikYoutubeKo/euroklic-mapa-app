@@ -30,6 +30,9 @@ class AdminQueueViewModel(private val adminRepository: AdminRepository) : ViewMo
     var actingPhotoId by mutableStateOf<Int?>(null)
         private set
 
+    var actingCommentId by mutableStateOf<Int?>(null)
+        private set
+
     init { load() }
 
     fun load() {
@@ -70,6 +73,23 @@ class AdminQueueViewModel(private val adminRepository: AdminRepository) : ViewMo
                 is AdminActionResult.Failed -> _snack.trySend(result.message)
             }
             actingPhotoId = null
+        }
+    }
+
+    fun reviewComment(commentId: Int, approve: Boolean) {
+        if (actingCommentId != null) return
+        actingCommentId = commentId
+        viewModelScope.launch {
+            when (val result = adminRepository.reviewComment(commentId, approve)) {
+                is AdminActionResult.Ok -> {
+                    _snack.trySend(result.message)
+                    (_state.value as? AdminListState.Loaded)?.let { loaded ->
+                        _state.value = loaded.copy(comments = loaded.comments.filterNot { it.id == commentId })
+                    }
+                }
+                is AdminActionResult.Failed -> _snack.trySend(result.message)
+            }
+            actingCommentId = null
         }
     }
 }

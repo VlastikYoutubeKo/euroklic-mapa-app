@@ -38,6 +38,8 @@ data class AdminListResponse(
     val locations: List<AdminPlace> = emptyList(),
     val photo_count: Int = 0,
     val photo_suggestions: List<PhotoSuggestion> = emptyList(),
+    val comment_count: Int = 0,
+    val comment_suggestions: List<CommentSuggestion> = emptyList(),
 )
 
 /** One pending `photo_suggestions` row, JOINed with its target place for a preview. */
@@ -52,6 +54,24 @@ data class PhotoSuggestion(
     val location_lat: Double = 0.0,
     val location_lon: Double = 0.0,
 )
+
+/**
+ * One pending `comment_suggestions` row, JOINed with its target place for context.
+ * `author_name` is a backend alias; the underlying column is `author` — accept either.
+ */
+@Serializable
+data class CommentSuggestion(
+    val id: Int,
+    val location_id: Int,
+    val text: String = "",
+    val author_name: String? = null,
+    val author: String? = null,
+    val status: String? = null,
+    val location_name: String? = null,
+) {
+    val displayAuthor: String?
+        get() = author_name?.takeIf { it.isNotBlank() } ?: author?.takeIf { it.isNotBlank() }
+}
 
 @Serializable
 data class AdminPlace(

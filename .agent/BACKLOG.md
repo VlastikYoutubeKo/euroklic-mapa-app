@@ -178,6 +178,13 @@ Zero infrastruktury, žádné tokeny, funguje hned:
       „N/2000" (error barva <3 / >2000) + `Button` „Odeslat" (48dp, spinner při odesílání).
       Smazán dead-end text „Komentáře se přidávají na webu". `./gradlew :app:assembleDebug
       :app:testDebugUnitTest` → 61 testů, 0 failures.
+- [x] [app-android] Moderace komentářů v appce (2026-09-08) — `api_admin_list.php` teď vrací
+      i `comment_suggestions`/`comment_count`; `AdminListResponse` + `CommentSuggestion`,
+      `AdminListState.Loaded.comments`, `AdminRepository.reviewComment(commentId, approve)` →
+      `adminReview(action=approve_comment|reject_comment, commentId=)`,
+      `AdminQueueViewModel.reviewComment` + `actingCommentId`, `AdminQueueScreen`
+      `CommentSuggestionCard` sekce „Návrhy komentářů" (text + autor + místo + Schválit/
+      Zamítnout). Komentáře jde teď schvalovat z „Ke schválení" v appce, ne jen Discord/web.
 - **Hotovo =** komentář z appky projde moderační frontou jako na webu
 
 ### 3.5 [app-ios] První build + test na Macu (uživatel chce koupit/zařídit Mac)

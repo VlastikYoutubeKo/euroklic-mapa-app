@@ -118,8 +118,9 @@ interface EuroklicApi {
 
     /**
      * Admin (Bearer). New places: `action` ∈ `approve | reject` + `id`. Photo suggestions:
-     * `action` ∈ `approve_photo | reject_photo` + `photoId` (`id` unused, kept separate so the
-     * two id spaces don't mix).
+     * `action` ∈ `approve_photo | reject_photo` + `photoId`. Comment suggestions: `action` ∈
+     * `approve_comment | reject_comment` + `commentId`. The three id fields are kept separate
+     * so the id spaces don't mix.
      */
     @FormUrlEncoded
     @POST("api_admin.php")
@@ -127,6 +128,7 @@ interface EuroklicApi {
         @Field("action") action: String,
         @Field("id") id: Int? = null,
         @Field("photo_id") photoId: Int? = null,
+        @Field("comment_id") commentId: Int? = null,
     ): ApiResult
 
     /**
