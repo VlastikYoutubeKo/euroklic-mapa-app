@@ -37,6 +37,7 @@ fun MainScreen() {
                 is AuthEvent.SignedIn ->
                     if (ev.username.isBlank()) "Přihlášeno" else "Přihlášen jako ${ev.username}"
                 is AuthEvent.Error -> ev.message
+                is AuthEvent.Info -> ev.message
             }
             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
         }

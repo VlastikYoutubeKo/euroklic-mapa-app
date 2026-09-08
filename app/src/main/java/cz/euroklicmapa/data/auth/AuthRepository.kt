@@ -32,6 +32,7 @@ sealed interface AuthState {
 sealed interface AuthEvent {
     data class SignedIn(val username: String) : AuthEvent
     data class Error(val message: String) : AuthEvent
+    data class Info(val message: String) : AuthEvent
 }
 
 /** Separate DataStore file from "settings" — a second `preferencesDataStore("settings")` would crash. */
@@ -206,6 +207,36 @@ class AuthRepository(
             clearLocal()
             _state.value = AuthState.LoggedOut
         }
+    }
+
+    /**
+     * GDPR: ask the server to delete + anonymise the account, then wipe the local session.
+     * Returns true once we're logged out (a 401/403 means the token is already dead → treat as
+     * done). Emits an [AuthEvent] either way for the toast.
+     */
+    suspend fun deleteAccount(): Boolean {
+        val ok = try {
+            api.deleteAccount().success
+        } catch (e: HttpException) {
+            if (e.code() == 401 || e.code() == 403) {
+                true // token already invalid server-side
+            } else {
+                _events.tryEmit(AuthEvent.Error("Smazání účtu se nezdařilo (${e.code()})."))
+                return false
+            }
+        } catch (e: Exception) {
+            Log.w("AuthRepository", "deleteAccount failed", e)
+            _events.tryEmit(AuthEvent.Error("Bez připojení. Zkuste to prosím znovu."))
+            return false
+        }
+        if (!ok) {
+            _events.tryEmit(AuthEvent.Error("Smazání účtu se nezdařilo."))
+            return false
+        }
+        clearLocal()
+        _state.value = AuthState.LoggedOut
+        _events.tryEmit(AuthEvent.Info("Účet a osobní údaje byly smazány."))
+        return true
     }
 
     /** Invoked from the OkHttp interceptor when an authed request comes back 401. */

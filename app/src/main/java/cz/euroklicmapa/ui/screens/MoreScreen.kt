@@ -18,7 +18,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -69,6 +71,8 @@ fun MoreScreen(
 
     val authState by app.authRepository.state.collectAsStateWithLifecycle()
     var showLoginDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
     val loggedIn = authState is AuthState.LoggedIn
     val isAdmin = (authState as? AuthState.LoggedIn)?.me?.is_admin == true
 
@@ -100,6 +104,7 @@ fun MoreScreen(
                 state = authState,
                 onRequestLogin = { showLoginDialog = true },
                 onLogout = { app.authRepository.logout() },
+                onDeleteAccount = { showDeleteDialog = true },
             )
 
             SectionLabel("Vzhled")
@@ -152,6 +157,41 @@ fun MoreScreen(
             onContinue = { openUrl(context, app.authRepository.buildLoginUri().toString()) },
         )
     }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!deleting) showDeleteDialog = false },
+            title = { Text("Smazat účet a data?") },
+            text = {
+                Text(
+                    "Odhlásíme tě a server smaže tvůj účet. Tvé jméno se odpojí od míst a fotek, " +
+                        "které jsi přidal — samotné příspěvky na mapě zůstanou. Tuto akci nelze vzít zpět.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !deleting,
+                    onClick = {
+                        scope.launch {
+                            deleting = true
+                            val done = app.authRepository.deleteAccount()
+                            deleting = false
+                            if (done) showDeleteDialog = false
+                        }
+                    },
+                ) {
+                    if (deleting) {
+                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                    } else {
+                        Text("Smazat účet", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(enabled = !deleting, onClick = { showDeleteDialog = false }) { Text("Zrušit") }
+            },
+        )
+    }
 }
 
 @Composable
@@ -159,14 +199,15 @@ private fun AuthCard(
     state: AuthState,
     onRequestLogin: () -> Unit,
     onLogout: () -> Unit,
+    onDeleteAccount: () -> Unit,
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
+      Column(modifier = Modifier.padding(16.dp)) {
         Row(
-            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -241,6 +282,15 @@ private fun AuthCard(
                 }
             }
         }
+
+        if (state is AuthState.LoggedIn) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onDeleteAccount) {
+                    Text("Smazat účet a data", color = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
+      }
     }
 }
 

@@ -72,6 +72,15 @@ interface EuroklicApi {
     suspend fun logout(): ApiResult
 
     /**
+     * GDPR account deletion (Bearer). Server-side (live 2026-09-08): revokes **all** the user's
+     * tokens + auth codes, and **anonymises** their contributed content — `author_name` and
+     * `discord_user_id` are cleared from `locations` / `photo_suggestions` (the rows stay, it's
+     * public map content). Irreversible. `{success, message?}`.
+     */
+    @POST("api_account_delete.php")
+    suspend fun deleteAccount(): ApiResult
+
+    /**
      * Submit a new place (Bearer auth; no CSRF needed with a token). `photo` part name is
      * `photo_file`. Server fills `source='user'`, `approved=0`, `country`, author from auth.
      */
