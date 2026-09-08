@@ -27,6 +27,7 @@ class FavoriteMapperTest {
         lastVerified = "2026-08-01 10:00:00",
         webUrl = "https://euroklic.odjezdy.online/lokace/42-wc",
         openingHours = "Po–Pá 6:00–22:00",
+        wcOpeningHours = "Po–Pá 7:00–19:00",
         access = "eurokey",
         wheelchair = "yes",
         accessibilityNote = "Bezbariérový vstup z boční strany.\nRampa 1:12.",
@@ -69,6 +70,7 @@ class FavoriteMapperTest {
         assertEquals(wc.lastVerified, restored.lastVerified)
         assertEquals(wc.webUrl, restored.webUrl)
         assertEquals(wc.openingHours, restored.openingHours)
+        assertEquals(wc.wcOpeningHours, restored.wcOpeningHours)
         assertEquals(wc.access, restored.access)
         assertEquals(wc.wheelchair, restored.wheelchair)
         assertEquals(wc.accessibilityNote, restored.accessibilityNote)
@@ -91,7 +93,7 @@ class FavoriteMapperTest {
     fun wc_nullSnapshotStrings_roundTripToNull() {
         val bare = wc.copy(
             description = null, note = null, photoUrl = null, webUrl = null,
-            openingHours = null, access = null, wheelchair = null,
+            openingHours = null, wcOpeningHours = null, access = null, wheelchair = null,
             accessibilityNote = null, country = null, floorPlanUrl = null,
             lastVerified = null,
         )
@@ -101,6 +103,7 @@ class FavoriteMapperTest {
         assertNull(restored.photoUrl)
         assertNull(restored.webUrl)
         assertNull(restored.openingHours)
+        assertNull(restored.wcOpeningHours)
         assertNull(restored.access)
         assertNull(restored.wheelchair)
         assertNull(restored.accessibilityNote)

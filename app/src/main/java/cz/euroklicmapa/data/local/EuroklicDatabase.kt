@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SyncMetadataEntity::class,
         FavoriteEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = false,
 )
 abstract class EuroklicDatabase : RoomDatabase() {
@@ -89,6 +89,15 @@ abstract class EuroklicDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE favorites ADD COLUMN kraj TEXT")
                 db.execSQL("ALTER TABLE favorites ADD COLUMN precision TEXT")
                 db.execSQL("ALTER TABLE favorites ADD COLUMN sourceUrl TEXT")
+            }
+        }
+
+        /** `wc_opening_hours` — WC-specific ČD hours, added to the feed 2026-09-08. Carried on
+         *  both the live cache row and the favourites detail snapshot. */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE locations ADD COLUMN wcOpeningHours TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN wcOpeningHours TEXT")
             }
         }
     }

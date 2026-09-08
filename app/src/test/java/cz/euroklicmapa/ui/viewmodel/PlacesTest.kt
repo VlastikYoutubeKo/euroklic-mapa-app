@@ -37,6 +37,7 @@ class PlacesTest {
         lastVerified = lastVerified,
         webUrl = null,
         openingHours = null,
+        wcOpeningHours = null,
         access = null,
         wheelchair = null,
         accessibilityNote = null,

@@ -4,10 +4,11 @@ import java.text.Normalizer
 import java.util.Calendar
 
 /**
- * Lenient, **conservative** parser for the free-text `opening_hours` string that the backend
- * carries for ČD stations only (~109 rows; `null` everywhere else). Pure JVM — no Android
- * imports — so it is unit-testable and safe on API 24 (`java.time` is not desugared here, so
- * we speak [Calendar]).
+ * Lenient, **conservative** parser for the free-text station-hours strings the backend carries
+ * for ČD stations only (`opening_hours` = station-hall hours, ~38 rows; `wc_opening_hours` =
+ * WC-specific hours, ~6 rows; both `null` everywhere else). Pure JVM — no Android imports — so
+ * it is unit-testable and safe on API 24 (`java.time` is not desugared here, so we speak
+ * [Calendar]).
  *
  * The contract is deliberately narrow: recognise only the handful of Czech formats we can be
  * confident about and return `null` (or a model whose [OpeningHours.statusAt] yields
@@ -16,16 +17,21 @@ import java.util.Calendar
  * Recognised:
  *  - always-open markers: `nonstop`, `nepřetržitě`, `24 hodin`, `0–24`, `00:00–24:00`,
  *    `denně 0-24`, `24/7`
- *  - day-range + time-range clauses: `Po–Pá 6:00–22:00`, `Po-Pá 5:30-23:00`,
- *    `Po–Ne 4:00–00:30`, `Po, St, Pá 8–16`
- *  - several clauses separated by `,` `;` or newlines: `Po–Pá 6:00–20:00; So–Ne 8:00–18:00`
- *  - day tokens Po Út/Ut St Čt/Ct Pá/Pa So Ne (case- and diacritics-insensitive), plus
- *    `denně` / `každý den` = Po–Ne
- *  - times `H`, `H:MM`, `HH`, `HH:MM`, `HH.MM`; an end `<=` start (or `00:xx`) runs past midnight
+ *  - a run of `<day-spec> <time>-<time>[ <time>-<time>…]` groups, the groups separated by a
+ *    `;` / newline **or just by whitespace before the next day token** — the real feed writes
+ *    `"Po-Pá 03:50-21:35 So-Ne 04:50-21:35"` (two clauses, space-separated) and
+ *    `"Po,St,Pá 03:50-19:30 Čt 03:50-21:00 So,Ne 04:50-21:00"` (comma day-lists)
+ *  - `<day-spec>` = a day range (`Po–Pá`, `Po-Ne`), a comma list (`Po, St, Pá`), a single day,
+ *    or `denně` / `každý den` (= Po–Ne); day tokens Po Út/Ut St Čt/Ct Pá/Pa So Ne, case- and
+ *    diacritics-insensitive. An unknown / garbled token inside a day list is **skipped** (a
+ *    scrape quirk shouldn't sink the whole parse); if a clause ends up with no usable day it
+ *    is dropped, and if nothing usable remains the parse is `null`.
+ *  - a day-spec-less leading time run applies to every day (`"0:00-1:30 2:30-24:00"`)
+ *  - times `H`, `H:MM`, `HH`, `HH:MM`, `HH.MM`; an end `<=` start (or `24:xx`) runs past midnight
  *
  * Explicitly treated as UNKNOWN (not guessed): `od 6:00 do 22:00` phrasing, seasonal /
- * conditional notes ("v létě", "dle vlaků", "o víkendu zavřeno" as prose), anything with a
- * leftover word the grammar below does not consume.
+ * conditional notes ("v létě", "dle vlaků", "o víkendu zavřeno" as prose), any trailing prose
+ * the grammar below does not consume.
  */
 enum class OpenState { OPEN, CLOSED, UNKNOWN }
 
@@ -65,15 +71,9 @@ class OpeningHours internal constructor(
     private fun calendarToIndex(dow: Int): Int = if (dow == Calendar.SUNDAY) 6 else dow - 2
 }
 
-private const val DAY = "(?:po|ut|st|ct|pa|so|ne|denne|kazdy den)"
-private const val DAY_RANGE = "$DAY\\s*-\\s*$DAY"
-private const val DAY_PART = "(?:$DAY_RANGE|$DAY)(?:\\s*,\\s*(?:$DAY_RANGE|$DAY))*"
 private const val TIME = "\\d{1,2}(?:[:.]\\d{2})?"
 private const val TIME_RANGE = "$TIME\\s*-\\s*$TIME"
-private const val TIME_PART = "$TIME_RANGE(?:\\s*,\\s*$TIME_RANGE)*"
 
-private val CLAUSE_REGEX = Regex("($DAY_PART)?\\s*($TIME_PART)")
-private val DAY_TOKEN_REGEX = Regex("$DAY_RANGE|$DAY")
 private val TIME_RANGE_REGEX = Regex(TIME_RANGE)
 private val TIME_REGEX = Regex("^(\\d{1,2})(?:[:.](\\d{2}))?$")
 
@@ -84,6 +84,12 @@ private val DAY_INDEX = mapOf(
     "po" to 0, "ut" to 1, "st" to 2, "ct" to 3, "pa" to 4, "so" to 5, "ne" to 6,
 )
 private val ALL_DAYS = (0..6).toSet()
+
+/** Tokens the day-spec parser silently ignores rather than treating as a garbled day. */
+private val DAY_FILLER_TOKENS = setOf("hod", "hodin", "h")
+
+/** Result of reading the text that sits where a clause's day-spec is expected. */
+private class DaySpec(val days: Set<Int>, val hadForeignWord: Boolean)
 
 /**
  * @return an [OpeningHours] model, or `null` when the string is blank or anything about it is
@@ -96,28 +102,57 @@ fun parseOpeningHours(raw: String?): OpeningHours? {
 
     if (isAlwaysOpen(norm)) return OpeningHours(alwaysOpen = true, clauses = emptyList())
 
+    // Every HH:MM-HH:MM range, in order, with its position in `norm`.
+    val ranges = TIME_RANGE_REGEX.findAll(norm).toList()
+    if (ranges.isEmpty()) return null
+
+    // Group consecutive ranges whose only separation is comma / whitespace — those share one
+    // day-spec ("Po-Pá 6-20, 21-23"). A gap that carries a ';' or a letter opens a new clause,
+    // which is exactly what splits "Po-Pá 3:50-21:35 So-Ne 4:50-21:35" into two.
+    val groups = mutableListOf<MutableList<MatchResult>>()
+    for (m in ranges) {
+        val prev = groups.lastOrNull()
+        if (prev != null) {
+            val gap = norm.substring(prev.last().range.last + 1, m.range.first)
+            if (gap.all { it == ' ' || it == ',' }) {
+                prev += m
+                continue
+            }
+        }
+        groups += mutableListOf(m)
+    }
+
     val clauses = mutableListOf<OpeningHours.Clause>()
-    val leftover = StringBuilder(norm)
-    var matchedAny = false
+    var cursor = 0
+    for (g in groups) {
+        val daySpecText = norm.substring(cursor, g.first().range.first)
+        val spec = parseDaySpec(daySpecText)
+        val days = when {
+            spec.days.isNotEmpty() -> spec.days
+            spec.hadForeignWord -> return null // prose where a day-spec was expected
+            else -> ALL_DAYS                   // no day-spec at all -> every day
+        }
 
-    for (m in CLAUSE_REGEX.findAll(norm)) {
-        val dayPart = m.groupValues[1].trim()
-        val timePart = m.groupValues[2].trim()
-
-        val days = if (dayPart.isEmpty()) ALL_DAYS else parseDayPart(dayPart) ?: return null
-        if (days.isEmpty()) return null
-
-        val intervals = parseTimePart(timePart) ?: return null
+        val intervals = mutableListOf<OpeningHours.Interval>()
+        for (r in g) {
+            val parts = r.value.split('-', limit = 2).map { it.trim() }
+            if (parts.size != 2) return null
+            val start = parseMinutes(parts[0]) ?: return null
+            var end = parseMinutes(parts[1]) ?: return null
+            if (start >= 1440) return null // a start of 24:00 makes no sense
+            if (end <= start) end += 1440  // runs past midnight ("4:00-00:30", "22-6")
+            intervals += OpeningHours.Interval(start, end)
+        }
         if (intervals.isEmpty()) return null
 
         clauses += OpeningHours.Clause(days, intervals)
-        matchedAny = true
-        // Blank out this match so the coverage check below only sees filler.
-        for (idx in m.range) leftover.setCharAt(idx, ' ')
+        cursor = g.last().range.last + 1
     }
 
-    if (!matchedAny) return null
-    if (FILLER_REGEX.replace(leftover.toString(), "").isNotEmpty()) return null
+    // Anything after the last time range must be pure filler — trailing prose ("kromě svátků",
+    // "jinak dle dohody") still fails the whole parse.
+    if (FILLER_REGEX.replace(norm.substring(cursor), "").isNotEmpty()) return null
+    if (clauses.isEmpty()) return null
 
     return OpeningHours(alwaysOpen = false, clauses = clauses)
 }
@@ -147,44 +182,53 @@ private fun isAlwaysOpen(norm: String): Boolean {
     return Regex("^0{1,2}([:.]00)?-24([:.]00)?$").matches(s)
 }
 
-/** `"po-pa, ne"` -> set of internal day indices, or `null` if any token is unrecognised. */
-private fun parseDayPart(dayPart: String): Set<Int>? {
-    val result = mutableSetOf<Int>()
-    for (token in DAY_TOKEN_REGEX.findAll(dayPart).map { it.value.trim() }) {
-        if (token == "denne" || token == "kazdy den") {
-            result += ALL_DAYS
-            continue
+/**
+ * Read the text sitting where a clause's day-spec is expected. Day tokens (single, `Po-Pá`
+ * ranges, comma lists, `denně`/`každý den`) are collected; punctuation and the `hod`/`h`/`od`
+ * filler words are ignored; **any other alphabetic token is treated as garbled** — skipped so
+ * a scrape quirk doesn't sink the parse, but flagged via [DaySpec.hadForeignWord] so a
+ * day-spec that is *nothing but* prose can still be rejected by the caller.
+ */
+private fun parseDaySpec(text: String): DaySpec {
+    val t = text.trim()
+    if (t.isEmpty()) return DaySpec(emptySet(), hadForeignWord = false)
+
+    // "denně" / "každý den" anywhere -> every day.
+    var body = t
+    var everyDay = false
+    for (marker in listOf("kazdy den", "denne")) {
+        if (body.contains(marker)) {
+            everyDay = true
+            body = body.replace(marker, " ")
         }
-        if (token.contains('-')) {
-            val (a, b) = token.split('-', limit = 2).map { it.trim() }
-            val from = DAY_INDEX[a] ?: return null
-            val to = DAY_INDEX[b] ?: return null
-            var d = from
-            while (true) {
-                result += d
-                if (d == to) break
-                d = (d + 1) % 7
+    }
+
+    val days = mutableSetOf<Int>()
+    var hadForeignWord = false
+    for (tok in body.split(Regex("[\\s,]+")).filter { it.isNotBlank() }) {
+        if (tok in DAY_FILLER_TOKENS) continue
+        if (tok.none { it.isLetterOrDigit() }) continue // pure punctuation
+        if (tok.contains('-')) {
+            val ends = tok.split('-', limit = 2)
+            val from: Int? = DAY_INDEX[ends[0].trim()]
+            val to: Int? = DAY_INDEX[ends.getOrElse(1) { "" }.trim()]
+            if (from != null && to != null) {
+                var d: Int = from
+                while (true) {
+                    days.add(d)
+                    if (d == to) break
+                    d = (d + 1) % 7
+                }
+            } else {
+                hadForeignWord = true
             }
         } else {
-            result += DAY_INDEX[token] ?: return null
+            val idx: Int? = DAY_INDEX[tok]
+            if (idx != null) days.add(idx) else hadForeignWord = true
         }
     }
-    return if (result.isEmpty()) null else result
-}
-
-/** `"6:00-20:00, 21:00-23:00"` -> intervals, or `null` if any range is malformed / ambiguous. */
-private fun parseTimePart(timePart: String): List<OpeningHours.Interval>? {
-    val out = mutableListOf<OpeningHours.Interval>()
-    for (range in TIME_RANGE_REGEX.findAll(timePart).map { it.value }) {
-        val parts = range.split('-', limit = 2).map { it.trim() }
-        if (parts.size != 2) return null
-        val start = parseMinutes(parts[0]) ?: return null
-        var end = parseMinutes(parts[1]) ?: return null
-        if (start >= 1440) return null // a start of 24:00 makes no sense
-        if (end <= start) end += 1440  // runs past midnight ("4:00-00:30", "22-6")
-        out += OpeningHours.Interval(start, end)
-    }
-    return if (out.isEmpty()) null else out
+    if (everyDay) days += ALL_DAYS
+    return DaySpec(days, hadForeignWord)
 }
 
 private fun parseMinutes(t: String): Int? {

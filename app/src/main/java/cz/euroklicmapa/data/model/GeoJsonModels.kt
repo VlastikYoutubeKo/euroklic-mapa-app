@@ -38,8 +38,17 @@ data class WcProperties(
     val last_verified: String? = null,
     /** Canonical web page for this place (`/lokace/{id}-{slug}`). */
     val web_url: String? = null,
-    /** Free text; present mostly for ČD stations. */
+    /**
+     * Free text station-hall opening hours; ČD stations only (~38 rows), `null` elsewhere.
+     * Corrected 2026-09-08 — the backend now scrapes the "Prostory pro cestující" (hall)
+     * block, not the ticket-counter one.
+     */
     val opening_hours: String? = null,
+    /**
+     * WC-specific opening hours when cd.cz lists them separately from the hall (~6 rows,
+     * usually narrower). Free text; `null` elsewhere. Added 2026-09-08.
+     */
+    val wc_opening_hours: String? = null,
     /** `"eurokey"` = locked, Euroklíč required. `"unknown"` = origin doesn't say. */
     val access: String? = null,
     /** `"yes" | "no" | "unknown"` — building accessibility, real data for ČD stations only. */

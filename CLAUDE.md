@@ -53,20 +53,29 @@ screen layout, and rationale.
   **falls back to the full feed if the scoped fetch is empty** (user abroad). The feed
   **intentionally spans beyond CZ/SK** — do not re-add a client-side geo clamp.
 - WC features (`/api_locations.php`, `/api_app_places.php` toilets) also carry: **`web_url`**
-  (`/lokace/{id}-{slug}` — real route), **`opening_hours`** (free text, ČD stations only —
-  this is the **ticket-counter** schedule, NOT hall/WC availability; feed only serves the
-  first `Po–Pá` line, dropping `So–Ne` + temporary changes),
+  (`/lokace/{id}-{slug}` — real route), **`opening_hours`** (free text, ČD stations only, ~38
+  rows — **corrected 2026-09-08**: the backend now scrapes the "Prostory pro cestující"
+  station-hall block, not the ticket-counter one it had been reading, so this is real hall
+  hours you can trust; multi-day-range clauses space-separated, e.g.
+  `"Po-Pá 03:50-21:35 So-Ne 04:50-21:35"`), **`wc_opening_hours`** (**new 2026-09-08**,
+  `String?`, WC-specific hours for the ~6 stations that list them separately from the hall,
+  usually narrower; `description` no longer duplicates any of this),
   **`access`** (`"eurokey"` for `cd`+`osm`, `"unknown"` for `mapotic`+`user`),
   **`wheelchair`** (`yes|no|unknown` — real ČD-station building accessibility, `unknown`
   elsewhere), **`accessibility_note`** (raw multi-line text, ČD only), **`country`**
   (ISO-2 point-in-polygon, or `null`; DE has more rows than CZ — feed is OSM-global),
   **`floor_plan_url`** (direct link to the ČD station `/planek/{planekId}` page — note
   `planekId` ≠ station id; ~60/109 ČD rows, `null` elsewhere).
-  All wired: DTO → entity (DB **v7**, `MIGRATION_5_6` + `MIGRATION_6_7`), shown in
-  `DetailScreen.WcBody` (`WheelchairCard`, `ExpandableSection` for the note, `ForeignBadge`,
-  `FloorPlanLink`) and as a country tag on `PlaceCard` (`util/Countries.kt`,
-  `isForeignCountry`/`countryName`). `photo_url` may be `""` not just `null` for a few old
-  rows — the app already tests `isNullOrBlank()` (`DetailScreen.Hero`).
+  All wired: DTO → entity (DB **v7**, `MIGRATION_5_6` + `MIGRATION_6_7`; `wc_opening_hours`
+  added at DB **v9**, `MIGRATION_8_9` — `wcOpeningHours` on both `locations` and `favorites`),
+  shown in `DetailScreen.WcBody` (`WheelchairCard`, `ExpandableSection` for the note,
+  `ForeignBadge`, `FloorPlanLink`) and as a country tag on `PlaceCard` (`util/Countries.kt`,
+  `isForeignCountry`/`countryName`). `DetailScreen.OpeningHoursSection(hall, wc)` shows the
+  WC-specific hours when present (label "OTEVÍRACÍ DOBA WC") else the station-hall hours
+  ("OTEVÍRACÍ DOBA STANICE"), plus an "Otevřeno"/"Zavřeno" chip when `util/OpeningHours.kt`
+  (`parseOpeningHours` → `statusAt`) is confident — the chip is back now that the data is
+  trustworthy. `photo_url` may be `""` not just `null` for a few old rows — the app already
+  tests `isNullOrBlank()` (`DetailScreen.Hero`).
 
 - `GET /api_locations.php` → GeoJSON `FeatureCollection` (`count` ~1580), `approved=1` only,
   server-side deduped. No query params, no pagination. `properties.source` ∈ `cd | osm |

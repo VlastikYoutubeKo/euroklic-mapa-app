@@ -62,21 +62,24 @@
 
 ### A6. Otevírací doba / `opening_hours`
 - [x] Parser `util/OpeningHours.kt` napsán (2026-09-08) — lenient, pure-JVM
-  (`parseOpeningHours` → `statusAt(Calendar)` → `OPEN/CLOSED/UNKNOWN`),
-  `OpeningHoursTest` (13). **Zůstává v repu, ale zatím se nepoužívá pro UI stav.**
-- [x] **Chip „Otevřeno/Zavřeno" ZRUŠEN (2026-09-08, uživatel).** Zjištěno, že
-  `opening_hours` z ČD je **provozní doba pokladny** („Vnitrostátní pokladní
-  přepážka"), ne doba přístupnosti haly/WC — pokladna zavírá na 2–3h poledních
-  pauzy, ale hala i Euroklíč WC bývají přístupné i mimo ně. Odvozený stav by
-  falešným „Zavřeno" odrazoval od použitelného WC. `DetailScreen.OpeningHoursSection`
-  teď: label „PROVOZNÍ DOBA POKLADNY (ČD)" + syrový text + caption „Doba pokladny,
-  ne WC…". Bez chipu.
-- [ ] **[backend] otevřené:** feed servíruje jen první `Po–Pá` řádek — zahazuje
-  `So–Ne` i „Mimořádné změny provozní doby" (mají date-range). Ideál: (a) vracet
-  celý blok vč. So–Ne, (b) rozlišit „pokladna" vs. „hala/WC" pokud to ČD dává,
-  (c) přezvat pole tak, ať je zřejmé co je zač. **Přeposláno backend session
-  2026-09-08.** Reálná doba otevření haly (nádraží zavírá ~23:50 po posledním
-  vlaku, krátce v ~1:30, pak ~3:00) není v ČD strukturovaně — nutno prozkoumat.
+  (`parseOpeningHours` → `statusAt(Calendar)` → `OPEN/CLOSED/UNKNOWN`). Přepracováno
+  2026-09-08 pro reálné formáty feedu: víc klauzulí oddělených **mezerou před dnem**
+  (`"Po-Pá 03:50-21:35 So-Ne 04:50-21:35"`), čárkové výčty dnů
+  (`"Po,St,Pá … Čt … So,Ne …"`), noční mezery (`"0:00-1:30 2:30-24:00"`), garbled
+  den v seznamu se přeskočí (nespadne celý parse). `OpeningHoursTest` = 19.
+- [x] **Chip „Otevřeno/Zavřeno" ZPĚT (2026-09-08).** Backend opravil scrape:
+  `opening_hours` teď bere blok „Prostory pro cestující" (hala), ne pokladnu —
+  je to reálná doba haly, které se dá věřit. Přidáno nové pole
+  **`wc_opening_hours`** (`String?`, ~6 stanic, doba přímo pro WC).
+  `DetailScreen.OpeningHoursSection(hall, wc)`: zobrazí WC dobu když je
+  (label „OTEVÍRACÍ DOBA WC"), jinak dobu haly („OTEVÍRACÍ DOBA STANICE"),
+  + chip Otevřeno/Zavřeno z `parseOpeningHours(...)?.statusAt(...)`.
+  Wired DTO → entity → DB **v9** (`MIGRATION_8_9`: `wcOpeningHours` na `locations`
+  i `favorites`) → `Mappers` round-trip.
+- [ ] **[backend] otevřené:** dedup — u některých stanic bohatší `cd` řádek prohrává
+  s chudším `mapotic` bodem. Necháváme jako otevřenou `[backend]` poznámku,
+  neřešíme app-side. (`opening_hours` teď nese celý multi-day-range blok vč. So–Ne,
+  takže původní „zahazuje So–Ne" už neplatí.)
 
 ### A7. Testy (dlouhodobě zanedbané) — ČÁSTEČNĚ HOTOVO (2026-09-08)
 - [x] `PlaceStatus.placeStatus()` + `voteBadge()` + `VoteBadge.label()` +

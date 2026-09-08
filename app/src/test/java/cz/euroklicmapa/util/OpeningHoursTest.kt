@@ -142,6 +142,68 @@ class OpeningHoursTest {
         assertNull(parseOpeningHours("Po-Pá 6:70-22:00"))
     }
 
+    // ---- real feed formats (2026-09-08 backend scrape fix) ----------------------------------
+
+    @Test
+    fun realFeed_singleDayRange_openClosedByClock() {
+        val oh = parseOpeningHours("Po-Ne 04:30-23:30")!!
+        assertEquals(OpenState.OPEN, oh.statusAt(at(1, 12, 0)))    // Mon 12:00
+        assertEquals(OpenState.OPEN, oh.statusAt(at(7, 5, 0)))     // Sun 05:00
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(1, 2, 0)))   // Mon 02:00, before open
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(1, 23, 45))) // Mon 23:45, after close
+    }
+
+    @Test
+    fun realFeed_spaceSeparatedWeekdayWeekendClauses() {
+        // Two clauses, separated only by whitespace before the next day token.
+        val oh = parseOpeningHours("Po-Pá 03:50-21:35 So-Ne 04:50-21:35")!!
+        assertEquals(OpenState.OPEN, oh.statusAt(at(1, 4, 0)))     // Mon 04:00, weekday clause
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(6, 4, 0)))   // Sat 04:00, weekend opens later
+        assertEquals(OpenState.OPEN, oh.statusAt(at(6, 5, 0)))     // Sat 05:00, weekend clause
+        assertEquals(OpenState.OPEN, oh.statusAt(at(7, 21, 30)))   // Sun 21:30
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(5, 22, 0)))  // Fri 22:00, after weekday close
+    }
+
+    @Test
+    fun realFeed_commaDayListsThreeClauses() {
+        val oh = parseOpeningHours(
+            "Po,St,Pá 03:50-19:30 Čt 03:50-21:00 So,Ne 04:50-21:00",
+        )!!
+        assertEquals(OpenState.OPEN, oh.statusAt(at(3, 10, 0)))    // Wed 10:00, in Po,St,Pá clause
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(3, 19, 45))) // Wed 19:45, after that clause
+        assertEquals(OpenState.OPEN, oh.statusAt(at(4, 20, 30)))   // Thu 20:30, Čt clause runs later
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(6, 4, 0)))   // Sat 04:00, before weekend open
+        assertEquals(OpenState.OPEN, oh.statusAt(at(7, 10, 0)))    // Sun 10:00, weekend clause
+    }
+
+    @Test
+    fun realFeed_nightGapTwoIntervalsEveryDay() {
+        val oh = parseOpeningHours("0:00-1:30 2:30-24:00")!!
+        assertEquals(OpenState.OPEN, oh.statusAt(at(1, 0, 30)))    // Mon 00:30, first interval
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(1, 2, 0)))   // Mon 02:00, in the gap
+        assertEquals(OpenState.OPEN, oh.statusAt(at(1, 3, 0)))     // Mon 03:00, second interval
+        assertEquals(OpenState.OPEN, oh.statusAt(at(4, 23, 0)))    // Thu 23:00, still second interval
+    }
+
+    @Test
+    fun realFeed_garbledDayTokenInListIsSkipped_notAWholeFailure() {
+        // "Xx" is not a day — it must be dropped, leaving a usable Po / Pá + weekend result.
+        val oh = parseOpeningHours("Po,Xx,Pá 8:00-16:00 So,Ne 9:00-15:00")
+        assertNotNull("garbled token must not sink the parse", oh)
+        assertEquals(OpenState.OPEN, oh!!.statusAt(at(1, 10, 0)))  // Mon 10:00, Po survived
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(3, 10, 0)))  // Wed 10:00, not listed
+        assertEquals(OpenState.OPEN, oh.statusAt(at(6, 10, 0)))    // Sat 10:00, weekend clause
+    }
+
+    @Test
+    fun realFeed_daySpecThatIsOnlyProse_staysUnknown() {
+        // Nothing usable where a day-spec was expected -> null -> caller treats as UNKNOWN.
+        val parsed = parseOpeningHours("xyz 8:00-16:00")
+        assertNull(parsed)
+        val state = parsed?.statusAt(at(1, 12, 0)) ?: OpenState.UNKNOWN
+        assertEquals(OpenState.UNKNOWN, state)
+    }
+
     @Test
     fun nullParse_callSiteTreatsAsUnknown() {
         // The screen does `parseOpeningHours(raw)?.statusAt(now) ?: OpenState.UNKNOWN`.
