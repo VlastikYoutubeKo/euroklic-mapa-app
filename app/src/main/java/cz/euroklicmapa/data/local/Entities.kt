@@ -49,8 +49,13 @@ data class SyncMetadataEntity(
 )
 
 /**
- * A saved place. Denormalised so Favourites render (and stay usable) even if the main cache is
- * cleared or the place drops out of the feed.
+ * A saved place. A **full detail snapshot** (DB v8) so Favourites open with the complete
+ * `DetailScreen` body — even offline and even if the place fell out of the feed cache, was
+ * removed server-side, or was never synced on this device. `DetailViewModel` reconstructs a
+ * [WcLocationEntity] / [PickupPointEntity] from this row when the live Room row is absent.
+ *
+ * Everything past [savedAt] is a nullable snapshot column: WC-side and pickup-side fields share
+ * this one table ([isPickup] says which set is meaningful), [note] is reused by both.
  */
 @Entity(tableName = "favorites", primaryKeys = ["placeId", "isPickup"])
 data class FavoriteEntity(
@@ -64,4 +69,24 @@ data class FavoriteEntity(
     val longitude: Double,
     val latitude: Double,
     val savedAt: Long,
+    // ---- WC snapshot (DetailScreen.WcBody) ----
+    val description: String? = null,
+    val note: String? = null,
+    val photoUrl: String? = null,
+    val webUrl: String? = null,
+    val openingHours: String? = null,
+    val access: String? = null,
+    val wheelchair: String? = null,
+    val accessibilityNote: String? = null,
+    val country: String? = null,
+    val floorPlanUrl: String? = null,
+    // ---- pickup snapshot (DetailScreen.PickupBody) ----
+    val address: String? = null,
+    val phone: String? = null,
+    val email: String? = null,
+    val hours: String? = null,
+    val district: String? = null,
+    val kraj: String? = null,
+    val precision: String? = null,
+    val sourceUrl: String? = null,
 )

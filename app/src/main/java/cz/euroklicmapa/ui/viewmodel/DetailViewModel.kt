@@ -11,12 +11,15 @@ import cz.euroklicmapa.data.repository.AddPhotoResult
 import cz.euroklicmapa.data.repository.AddPlaceRepository
 import cz.euroklicmapa.data.repository.EuroklicRepository
 import cz.euroklicmapa.data.repository.FavoritesRepository
+import cz.euroklicmapa.data.mapper.toPickupPointEntity
+import cz.euroklicmapa.data.mapper.toWcLocationEntity
 import cz.euroklicmapa.data.repository.VoteOutcome
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
@@ -57,19 +60,33 @@ class DetailViewModel(
     }
 
     // WC detail observes Room so a successful vote (which writes back the new counts) reflects
-    // immediately here and on the map/list. Pickup detail is a one-shot lookup.
+    // immediately here and on the map/list. When the live row is absent (feed scoped it out,
+    // removed server-side, never synced) but the place is favourited, fall back to the stored
+    // full-detail snapshot so it still opens offline. Pickup detail is a one-shot lookup with
+    // the same snapshot fallback.
     val state: StateFlow<DetailState> =
         if (type == "WC") {
-            repository.observeLocation(id)
-                .map { wc -> wc?.let { DetailState.WcDetail(it) } ?: DetailState.Error }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DetailState.Loading)
-        } else {
-            MutableStateFlow<DetailState>(DetailState.Loading).also { flow ->
-                viewModelScope.launch {
-                    flow.value = repository.getPickupPoint(id)
-                        ?.let { DetailState.PickupDetail(it) } ?: DetailState.Error
+            combine(
+                repository.observeLocation(id),
+                favorites.observeFavorite(id, false),
+            ) { live, fav ->
+                when {
+                    live != null -> DetailState.WcDetail(live)
+                    fav != null -> DetailState.WcDetail(fav.toWcLocationEntity())
+                    else -> DetailState.Error
                 }
-            }.asStateFlow()
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DetailState.Loading)
+        } else {
+            combine(
+                flow { emit(repository.getPickupPoint(id)) },
+                favorites.observeFavorite(id, true),
+            ) { live, fav ->
+                when {
+                    live != null -> DetailState.PickupDetail(live)
+                    fav != null -> DetailState.PickupDetail(fav.toPickupPointEntity())
+                    else -> DetailState.Error
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DetailState.Loading)
         }
 
     val userLocation: StateFlow<GeoPoint?> = locationRepository.lastKnown

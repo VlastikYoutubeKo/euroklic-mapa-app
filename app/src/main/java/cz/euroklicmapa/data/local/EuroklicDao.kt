@@ -59,6 +59,9 @@ interface EuroklicDao {
     @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE placeId = :id AND isPickup = :isPickup)")
     fun observeIsFavorite(id: Int, isPickup: Boolean): Flow<Boolean>
 
+    @Query("SELECT * FROM favorites WHERE placeId = :id AND isPickup = :isPickup LIMIT 1")
+    fun observeFavorite(id: Int, isPickup: Boolean): Flow<FavoriteEntity?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFavorite(favorite: FavoriteEntity)
 

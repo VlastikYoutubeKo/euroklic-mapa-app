@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SyncMetadataEntity::class,
         FavoriteEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class EuroklicDatabase : RoomDatabase() {
@@ -64,6 +64,31 @@ abstract class EuroklicDatabase : RoomDatabase() {
         val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE locations ADD COLUMN floorPlanUrl TEXT")
+            }
+        }
+
+        /** `favorites` becomes a full detail snapshot — 18 nullable columns so a favourited
+         *  place opens with the complete detail body offline / when it's not in the feed cache. */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE favorites ADD COLUMN description TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN note TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN photoUrl TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN webUrl TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN openingHours TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN access TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN wheelchair TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN accessibilityNote TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN country TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN floorPlanUrl TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN address TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN phone TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN email TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN hours TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN district TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN kraj TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN precision TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN sourceUrl TEXT")
             }
         }
     }

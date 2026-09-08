@@ -412,11 +412,21 @@ Done since (2026-09-02, backend context file + follow-up):
   live on the emulator.
 - **Nav IA → 4 tabs** (Mapa / Seznam / Oblíbené / Více), single-pane `NavDisplay` (dropped
   `ListDetailSceneStrategy` — it was squeezing the map on tablets and isn't needed phone-first).
-- **Favourites** — `FavoriteEntity` (denormalised snapshot), DB **v4** with a real
-  `MIGRATION_3_4` (favourites are user data, not disposable cache; `fallbackToDestructiveMigration`
-  now only covers the v1–v3 gap). `FavoritesRepository`, `FavoritesScreen`/`FavoritesViewModel`,
-  bookmark toggle in `DetailScreen` (`DetailViewModel.isFavorite` / `toggleFavorite`). Round-trip
-  verified.
+- **Favourites** — `FavoriteEntity`, DB **v4** with a real `MIGRATION_3_4` (favourites are user
+  data, not disposable cache; `fallbackToDestructiveMigration` now only covers the v1–v3 gap).
+  `FavoritesRepository`, `FavoritesScreen`/`FavoritesViewModel`, bookmark toggle in `DetailScreen`
+  (`DetailViewModel.isFavorite` / `toggleFavorite`). Round-trip verified.
+  **2026-09-08 (A11b) — `FavoriteEntity` is now a full detail snapshot** (DB **v8**,
+  `MIGRATION_7_8` = 18 `ALTER TABLE favorites ADD COLUMN … TEXT`): all WC-body fields
+  (`description`/`note`/`photoUrl`/`webUrl`/`openingHours`/`access`/`wheelchair`/
+  `accessibilityNote`/`country`/`floorPlanUrl`) + all pickup-body fields (`address`/`phone`/
+  `email`/`hours`/`district`/`kraj`/`precision`/`sourceUrl`, `note` shared). `add()` fills it via
+  `WcLocationEntity/PickupPointEntity.toFavoriteEntity()` (`data/mapper/Mappers.kt`).
+  `DetailViewModel` `combine(repository.observeLocation(id), favorites.observeFavorite(id, isPickup))`
+  — when the live Room row is absent (feed scoped it out via `near=`, removed server-side, or never
+  synced on this device) it falls back to `fav.toWcLocationEntity()` / `toPickupPointEntity()`, so a
+  favourited place opens with the full detail body even offline / even if it's not in the feed cache.
+  `FavoriteMapperTest` covers the round-trip.
 - **`MoreScreen`** — kept short on purpose (2026-09-04 declutter — the disclaimer + "co je
   Euroklíč" + NRZP warning used to be three always-visible cards before anything actionable):
   theme toggle (light/dark/system via `data/prefs/ThemeRepository` + DataStore, read in

@@ -129,10 +129,20 @@
   takže neporušuje „no notifications" omezení.)
 
 ### A11b. Offline resilience
-- Offline-first browse existuje, ale: Nominatim vyhledávání potřebuje
-  síť, a oblíbené neukládají full detail snapshot. Levné vylepšení:
-  při syncu cache-ovat plný detail ~50 nejbližších míst k poslední
-  známé poloze (offline detail bez čekání).
+- [x] HOTOVO (2026-09-08) — **oblíbené = full detail snapshot.** `FavoriteEntity`
+  (DB **v8**, `MIGRATION_7_8` = 18 `ALTER TABLE favorites ADD COLUMN … TEXT`) teď nese
+  celý detail: WC (`description`/`note`/`photoUrl`/`webUrl`/`openingHours`/`access`/
+  `wheelchair`/`accessibilityNote`/`country`/`floorPlanUrl`) i výdejnu (`address`/`phone`/
+  `email`/`hours`/`district`/`kraj`/`precision`/`sourceUrl`, `note` sdílené). `FavoritesRepository.add`
+  plní přes `WcLocationEntity/PickupPointEntity.toFavoriteEntity()` (`data/mapper/Mappers.kt`).
+  `DetailViewModel` `combine(observeLocation(id), favorites.observeFavorite(id, isPickup))` →
+  když živý Room řádek chybí (feed ho `near=` odřízl / smazán server-side / nikdy nesynced),
+  spadne na `fav.toWcLocationEntity()` / `toPickupPointEntity()` → detail se otevře i offline.
+  Testy: `FavoriteMapperTest` (7 – round-trip všech polí, `source ?: ""`, null → null).
+- **~50 nejbližších prefetch je obsolete** — `EuroklicRepositoryImpl` už tahá
+  `near=<last>&radius_km=500` s fallbackem na plný feed, takže po prvním syncu je
+  fakticky *každý* CZ/SK řádek v Room cache. Prefetch by nic nepřidal.
+- Zbývá: Nominatim vyhledávání pořád potřebuje síť (mimo scope A11b).
 
 ### A12. Cross-promo web ↔ app
 - Detail místa na webu nemá „Otevřít v aplikaci" odkaz (App Links

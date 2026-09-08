@@ -120,6 +120,7 @@ class EuroklicApplication : Application() {
                 EuroklicDatabase.MIGRATION_4_5,
                 EuroklicDatabase.MIGRATION_5_6,
                 EuroklicDatabase.MIGRATION_6_7,
+                EuroklicDatabase.MIGRATION_7_8,
             )
             // Fallback for the un-migrated v1/v2/v3 gaps; from v4 on `favorites` is preserved.
             .fallbackToDestructiveMigration(dropAllTables = true)
