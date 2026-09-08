@@ -38,29 +38,32 @@ Zbývá k funkční smyčce → sekce 1.
 - **Hotovo =** fotka je vidět v appce i po restartu; místo má v admin frontě před tím nulu fotek
 - Pozn.: na emulátoru už create-flow prošel; teprve teď existuje živý endpoint
 
-### 1.2 [web] Zobrazit fotku místa na webu
-- [ ] Detail `/lokace/{id}-{slug}`: fotka nad/vedle popisu, `loading="lazy"`,
-      link na plnou velikost; fallback když `photo_url` null/""
-- [ ] Map popup: malý náhled fotky (pokud je)
-- **Hotovo =** schválená fotka z 1.1 viditelná na webu bez deployu dalších změn dat
+### 1.2 [web] Zobrazit fotku místa na webu — ✅ HOTOVO (2026-09-08, backend session)
+- [x] Detail = tentýž popup jako na mapě (SPA URL routing). Fotka `loading="lazy"`,
+      proklik na plnou velikost (`target=_blank`), placeholder „📷 Fotka zatím není
+      k dispozici" když `photo_url` null/"". `index.php:611-627`, `.popup-photo-placeholder`.
+- [x] Map popup náhled — tímtéž řešením.
 
-### 1.3 [web] Moderace fotek na webu pro moderátory bez appky
-- [ ] Rozhodnout: buď odkaz „Moderuj v appce", nebo minimálně Discord webhook ping
-      při novém návrhu fotky (obdoba nového místa) — teď se návrh fotky na Discord
-      neposílá (jen nové místo)
-- **Hotovo =** moderátor se o novém návrhu fotky dozví do 15 minut bez otevření appky
+### 1.3 [web] Moderace fotek na webu pro moderátory bez appky — ✅ HOTOVO (2026-09-08, backend session)
+- [x] Ne webhook — `bot.py` persistentní polling (vzor nových míst): sloupec
+      `photo_suggestions.posted_to_discord` (migrace) + `check_new_photo_suggestions()`
+      (10 s poll) + `PhotoApprovalView` (Schválit/Zamítnout přímo z Discordu, píše do
+      stejných tabulek jako `api_admin.php` approve_photo/reject_photo). Ověřeno živě
+      (QA fotka → `posted_to_discord=1` do 10 s).
 
 ### 1.4 [app-ios] Fotka v detailu (Hero)
 - [ ] `DetailView` zatím `photoUrl` vůbec nezobrazuje — přidat hero/ASyncImage
       nad nadpis, `isNullOrBlank` handling (stejně jako Android `DetailScreen.Hero`)
 - **Hotovo =** místo se schválenou fotkou ukazuje fotku i na iOS
 
-### 1.5 [backend] Hygiena fotek
-- [ ] Odmítnuté/přebytečné soubory z `/uploads/` mazat (nebo alespoň počítat + limit)
-- [ ] Sjednotit chybové hlášky 403/404/413/429 do `message` v těle (appka je čte)
+### 1.5 [backend] Hygiena fotek — ✅ HOTOVO (2026-09-08, backend session)
+- [x] `reject_photo` v `api_admin.php` už soubor z disku mazal (bylo hotové dřív).
+- [x] Všechny chybové odpovědi `api_add_photo.php` teď nesou `message` navíc k `error`
+      (stejný text) → `resp.error ?: resp.message` v appce funguje.
 
 ### 1.6 [backend+web+app] Až fotky budou reálné
-- [ ] `og:image` per místo (SEO, TODO-IDEAS B8.3) — detail webu i sdílení do Discordu/WhatsApp
+- [x] `og:image` per místo — `index.php` už bere `photo_url` jako og:image fallback
+      (backend session, potvrzeno 2026-09-08).
 
 ---
 
@@ -121,11 +124,17 @@ Zero infrastruktury, žádné tokeny, funguje hned:
 
 ## 3. OSTATNÍ — bložáky správného fungování
 
-### 3.1 [backend] GDPR smazání účtu — **blokující pro Play**
-- [ ] `POST /api_account_delete.php` (Bearer) — rozhodnout smazat vs. anonymizovat
-      (jméno u commitů míst nechat = anonymizovat je férovější)
-- [ ] App: „Smazat účet a data" v AuthCard s potvrzovacím dialogem
-- **Hotovo =** uživatel si smaže účet z appky, jeho komentáře/fotky změní autora na „Smazaný uživatel"
+### 3.1 GDPR smazání účtu — **blokující pro Play**
+- [x] [backend] `POST /api_account_delete.php` (Bearer, vzor `api_logout.php`) — **LIVE
+      2026-09-08.** PLNÁ anonymizace: maže `author_name` **i** `discord_user_id`
+      z `locations`/`photo_suggestions` (řádky zůstávají — veřejný obsah mapy), tvrdě
+      maže `api_tokens`/`auth_codes`/consent. Token po volání neplatí. Response má
+      `message` pole. Otestováno živě throwaway účtem.
+- [ ] [app-android] „Smazat účet a data" v `AuthCard` (`MoreScreen`) s potvrzovacím
+      dialogem → `EuroklicApi` nový `POST api_account_delete.php` (Bearer) →
+      `AuthRepository.deleteAccount()` (po úspěchu lokální `logout()` cleanup).
+- [ ] [app-ios] totéž v `AuthSession` + settings řádek.
+- **Hotovo =** uživatel si smaže účet z appky, jméno u přispěných míst zmizí.
 
 ### 3.2 [app-android] Před Play submitem
 - [ ] `targetSdk` 37 preview → stabilní (dnes blokátor)
@@ -190,9 +199,13 @@ Zero infrastruktury, žádné tokeny, funguje hned:
 
 ## 4. Doporučené pořadí (když „co dneska?")
 
-1. **1.1** fotka E2E na Honoru (uzavře celou fotkovou smyčku)
+1. **1.1** fotka E2E na Honoru (uzavře celou fotkovou smyčku) — web strana (1.2/1.3) už live
 2. **2.1** lokální notifikace (admin fronta + nové v okolí) — největší hodnota / nejnižší cena
-3. **1.2 + 1.3** web fotky + Discord ping na návrh fotky
-4. **3.1** GDPR smazání účtu (Play blokátor)
-5. **2.2–2.4** FCM fáze 2 (před Play)
-6. Zbytek dle kapacity
+3. **3.1 app-side** — „Smazat účet a data" v AuthCard (endpoint už LIVE, Play blokátor)
+4. **2.2–2.4** FCM fáze 2 (před Play)
+5. Zbytek dle kapacity
+
+Web/backend HOTOVO 2026-09-08 (backend session): 1.2, 1.3, 1.5, 1.6 og:image,
+3.1 endpoint. Nedělalo se: 2.5, 3.3 (index.php už má PublicToilet JSON-LD), 3.7, 3.8,
+3.11, 2.2 — „až bude čas". §3.6 rotace Mapy klíče = na uživateli (přihlášení do
+developer.mapy.com).
