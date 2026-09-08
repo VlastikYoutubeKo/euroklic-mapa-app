@@ -161,8 +161,14 @@ Zero infrastruktury, žádné tokeny, funguje hned:
 - [ ] JSON-LD `Place` na `/lokace/*`, detaily v sitemap, `FAQPage`, og:image (1.6)
 - **Hotovo =** Google Rich Results Test na detailu bez errorů
 
-### 3.4 [app-android] Komentáře write — až backend dá endpoint
-- [ ] Bearer POST + anti-spam vrstvy z TODO-IDEAS B3 (login povinný, limity, fronta)
+### 3.4 Komentáře write — uživatel schválil 2026-09-08, čeká na backend endpoint
+- [ ] [backend] `POST` endpoint pro psaní komentáře (Bearer) → moderační fronta
+      (`approved=0` + Discord ping), anti-spam vrstvy z TODO-IDEAS B3 (login povinný,
+      denní limity nového účtu, rate limit per token/IP, plain-text only, délka,
+      dedup po user id, report tlačítko, audit log). **Přeposláno backend session 2026-09-08.**
+- [ ] [app-android] po nasazení: pole „Přidat komentář" v `DetailScreen.CommentsSection`
+      (login-gated jako `AddPhotoRow`), `EuroklicApi` + `DetailViewModel.postComment()`,
+      optimistic „čeká na schválení" stav.
 - **Hotovo =** komentář z appky projde moderační frontou jako na webu
 
 ### 3.5 [app-ios] První build + test na Macu (uživatel chce koupit/zařídit Mac)
