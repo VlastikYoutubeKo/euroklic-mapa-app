@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -131,10 +132,12 @@ fun DetailScreen(
     val imagePicker = rememberImagePicker { uri -> viewModel.uploadPhoto(uri) }
 
     LaunchedEffect(message) {
-        if (message != null) {
-            kotlinx.coroutines.delay(3500)
-            viewModel.consumeMessage()
-        }
+        val m = message ?: return@LaunchedEffect
+        // Also a Toast: the inline copy under the vote buttons is easy to miss (e.g. after a
+        // comment submit the composer is scrolled into view and the vote row is off-screen).
+        Toast.makeText(context, m, Toast.LENGTH_SHORT).show()
+        kotlinx.coroutines.delay(3500)
+        viewModel.consumeMessage()
     }
 
     val navTarget: GeoPoint? = when (val s = state) {
