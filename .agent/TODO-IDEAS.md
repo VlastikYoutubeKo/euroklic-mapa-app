@@ -61,6 +61,13 @@
   Ověřeno naživo (Praha 797 m; po `geo fix` na Hradec 0 m).
 
 ### A6. Otevírací doba / `opening_hours` — parser
+- [x] HOTOVO (2026-09-08) — `util/OpeningHours.kt`: lenient/konzervativní parser
+  (`parseOpeningHours` → `OpeningHours.statusAt(Calendar)` → `OPEN/CLOSED/UNKNOWN`),
+  pure-JVM (`java.util.Calendar`, desugaring není zapnuté). Zvládá nonstop/24h/0-24,
+  „Po–Pá 6:00–22:00", víc klauzulí (`,`/`;`/newline), Po,St,Pá výčty, „denně",
+  přes půlnoc (end ≤ start). Cokoli nejednoznačného → `null`. `DetailScreen`
+  `OpeningHoursSection` ukazuje chip „Otevřeno"/„Zavřeno" (success/error) + vždy
+  syrový text; `null`/UNKNOWN → původní `Section`. `OpeningHoursTest` (13 testů).
 - `opening_hours` je free text (ČD stanice). Nápad: lehký parser
   „po–pá 6–22" formátů → „Otevřeno / Zavřeno" badge v detailu
   (nemít, pokud data nekonzistentní — projít všech ~109 řádků cURL-em
@@ -106,6 +113,12 @@
   na endpoint.
 
 ### A11. Data quality smyčka — „Byl jste tu? Ověřte"
+- [x] HOTOVO (2026-09-08, jen detail WC) — `DetailScreen.WcBody`: `VerifyPresenceCard`
+  nad `VoteRow`, zobrazí se jen když `type=="WC"` && `placeStatus(...)==REPORTED` &&
+  `userLocation != null` && vzdálenost ≤ 75 m. Text „Jste na místě? Ověřte, jestli je
+  WC funkční." + dvě kompaktní tlačítka Funguje/Nefunguje (48dp, contentDescription)
+  volající stejné `onVote(true/false)` jako `VoteRow`. Není notifikace, jen UI stav.
+  Sheet na mapě záměrně netknutý (follow-up).
 - Hlasování odpoví na „funguje teď", ale nikdo **nemá za úkol**
   reported místo re-checknout. Nápad: reported bod se dostane do fronty
   „potřebuje ověřit" (web: moderátoři; app: jemný náznak na detailu

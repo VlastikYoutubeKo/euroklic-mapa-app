@@ -47,6 +47,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -70,6 +72,8 @@ import cz.euroklicmapa.ui.theme.EuroklicTheme
 import cz.euroklicmapa.ui.viewmodel.DetailState
 import cz.euroklicmapa.ui.viewmodel.DetailViewModel
 import cz.euroklicmapa.ui.viewmodel.DetailViewModelFactory
+import cz.euroklicmapa.util.OpenState
+import cz.euroklicmapa.util.PlaceStatus
 import cz.euroklicmapa.util.countryName
 import cz.euroklicmapa.util.distanceBetween
 import cz.euroklicmapa.util.isForeignCountry
@@ -77,7 +81,10 @@ import cz.euroklicmapa.util.formatDistance
 import cz.euroklicmapa.util.formatWalkingTime
 import cz.euroklicmapa.util.launchNavigation
 import cz.euroklicmapa.util.openUrl
+import cz.euroklicmapa.util.parseOpeningHours
+import cz.euroklicmapa.util.placeStatus
 import org.osmdroid.util.GeoPoint
+import java.util.Calendar
 
 private const val KEY_STATUS_URL = "https://euroklic.odjezdy.online/clanky/jak-vybavit-euroklic/"
 
@@ -307,7 +314,7 @@ private fun WcBody(
             lon = wc.longitude,
             modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)),
         )
-        Section("Otevírací doba", wc.openingHours)
+        OpeningHoursSection(wc.openingHours)
         wc.description?.takeIf { it.isNotBlank() }?.let {
             Section("Popis", prettifyDescription(it))
         }
@@ -327,6 +334,17 @@ private fun WcBody(
             uploading = photoUploading,
             onClick = onAddPhoto,
         )
+
+        // A11 — you're literally standing at a place that's flagged as broken: nudge a re-check.
+        val reported = remember(wc.source, wc.likes, wc.dislikes, wc.lastVerified) {
+            placeStatus(wc.source, wc.likes, wc.dislikes, wc.lastVerified) == PlaceStatus.REPORTED
+        }
+        val atThisPlace = userLocation?.let {
+            distanceBetween(GeoPoint(wc.latitude, wc.longitude), it) <= 75.0
+        } ?: false
+        if (reported && atThisPlace) {
+            VerifyPresenceCard(voting = voting, onVote = onVote)
+        }
 
         VoteRow(
             likes = wc.likes,
@@ -615,6 +633,115 @@ private fun Section(label: String, value: String?) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(value, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+/**
+ * "Otevírací doba" section (ČD stations only). When [parseOpeningHours] is confident about the
+ * string we show a small "Otevřeno" / "Zavřeno" state chip; the raw hours text is always shown
+ * below it. On an unrecognised / ambiguous string it degrades to a plain [Section].
+ */
+@Composable
+private fun OpeningHoursSection(raw: String?) {
+    if (raw.isNullOrBlank()) return
+    val parsed = remember(raw) { parseOpeningHours(raw) }
+    val state = remember(parsed) { parsed?.statusAt(Calendar.getInstance()) ?: OpenState.UNKNOWN }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                "OTEVÍRACÍ DOBA",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (state != OpenState.UNKNOWN) {
+                val open = state == OpenState.OPEN
+                Text(
+                    if (open) "Otevřeno" else "Zavřeno",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (open) EuroklicTheme.extended.onSuccess else MaterialTheme.colorScheme.onError,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(
+                            if (open) EuroklicTheme.extended.success else MaterialTheme.colorScheme.error,
+                        )
+                        .padding(horizontal = 10.dp, vertical = 3.dp),
+                )
+            }
+        }
+        Text(raw, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+/**
+ * A11 — shown only on the WC detail when the place is REPORTED *and* the user is within ~75 m.
+ * Points at the same `onVote` the [VoteRow] below uses; the row stays too (this is a nudge).
+ */
+@Composable
+private fun VerifyPresenceCard(voting: Boolean, onVote: (Boolean) -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                "Jste na místě? Ověřte, jestli je WC funkční.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                CompactVoteButton(
+                    text = "Funguje",
+                    tint = EuroklicTheme.extended.success,
+                    enabled = !voting,
+                    onClick = { onVote(true) },
+                    contentDescription = "Ověřit, že WC funguje",
+                    modifier = Modifier.weight(1f),
+                )
+                CompactVoteButton(
+                    text = "Nefunguje",
+                    tint = MaterialTheme.colorScheme.error,
+                    enabled = !voting,
+                    onClick = { onVote(false) },
+                    contentDescription = "Nahlásit, že WC nefunguje",
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactVoteButton(
+    text: String,
+    tint: Color,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        shape = RoundedCornerShape(12.dp),
+        color = tint.copy(alpha = 0.12f),
+        contentColor = tint,
+        modifier = modifier
+            .height(48.dp)
+            .semantics { this.contentDescription = contentDescription },
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(text, style = MaterialTheme.typography.titleSmall)
+        }
     }
 }
 
