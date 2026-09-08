@@ -66,14 +66,19 @@
   (nemít, pokud data nekonzistentní — projít všech ~109 řádků cURL-em
   a rozhodnout).
 
-### A7. Testy (dlouhodobě zanedbané)
-- Zatím jen šablony. Priorita:
-  1. `PlaceStatus.placeStatus()` + `voteBadge()` — čistá logika,
-     kopie webu, snadno testovatelná (regresní ochrana proti driftu od webu).
-  2. `flattenPlaces(...)` — řazení/sloučení feedů.
-  3. `Mappers.kt` — `[lon, lat]` → entity, `NaN` odmítnutí.
-  4. `SecureTokenStore` — instrumented test šifrování/dešifrování.
-- Plus CI (GitHub Actions): `assembleDebug` + `testDebugUnitTest` na každý PR.
+### A7. Testy (dlouhodobě zanedbané) — ČÁSTEČNĚ HOTOVO (2026-09-08)
+- [x] `PlaceStatus.placeStatus()` + `voteBadge()` + `VoteBadge.label()` +
+      `nowUtcTimestamp()` — `app/src/test/.../util/PlaceStatusTest.kt` (27 testů,
+      včetně 183denní hranice a „REPORTED přebíjí cd").
+- [x] `flattenPlaces(...)` — `app/src/test/.../ui/viewmodel/PlacesTest.kt`
+      (13 testů: kategorie filtr, řazení dle vzdálenosti / abecedy, subtitle fallbacky).
+      `./gradlew :app:testDebugUnitTest` = 41 testů, 0 failures.
+- [ ] `Mappers.kt` — `[lon, lat]` → entity, `NaN` odmítnutí. (zbývá)
+- [ ] `SecureTokenStore` — instrumented test šifrování/dešifrování. (zbývá)
+- [ ] CI (GitHub Actions): `assembleDebug` + `testDebugUnitTest` na každý PR. (zbývá)
+- Pozn.: `placeStatus` používá lenient `SimpleDateFormat` — číselně tvarovaný ale
+  mimo rozsah string („2024-13-99…") se zroluje na platné datum, nespadne do UNVERIFIED.
+  Jen skutečně neparsovatelný vstup jde do fallbacku.
 
 ### A8. Ladicí / observability
 - Chybí crash reporting (Sentry/Firebase Crashlytics — ale zvážit privacy:
