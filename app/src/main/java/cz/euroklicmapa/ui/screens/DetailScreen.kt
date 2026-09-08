@@ -86,6 +86,7 @@ import cz.euroklicmapa.util.formatWalkingTime
 import cz.euroklicmapa.util.launchNavigation
 import cz.euroklicmapa.util.openUrl
 import cz.euroklicmapa.util.parseOpeningHours
+import cz.euroklicmapa.util.sanitizeStationHours
 import cz.euroklicmapa.util.placeStatus
 import org.osmdroid.util.GeoPoint
 import java.util.Calendar
@@ -729,18 +730,19 @@ private fun Section(label: String, value: String?) {
 }
 
 /**
- * ČD stations only. [hall] is the station-hall opening hours (`opening_hours` — corrected on
- * 2026-09-08 when the backend fixed a scrape that had been reading the ticket-counter block);
- * [wc] is WC-specific hours (`wc_opening_hours`) for the ~6 stations that list them separately,
- * usually narrower. We show the WC hours when present, otherwise the hall hours, and — since
- * the data is trustworthy again — a small "Otevřeno" / "Zavřeno" state chip when
- * [parseOpeningHours] is confident about the string. An unrecognised / ambiguous string just
- * drops the chip and shows the raw text.
+ * ČD stations only. [hall] is the station-hall opening hours (`opening_hours` — since 2026-09-09
+ * primarily scraped per-day from Správa železnic, cd.cz as fallback); [wc] is WC-specific hours
+ * (`wc_opening_hours`, still cd.cz-sourced, ~6 stations, usually narrower). We show the WC hours
+ * when present, otherwise the hall hours, and a small "Otevřeno" / "Zavřeno" chip when
+ * [parseOpeningHours] is confident. [sanitizeStationHours] strips the "UPOZORNĚNÍ: Mimořádná
+ * změna…" tails a few cd.cz-sourced rows still carry.
  */
 @Composable
 private fun OpeningHoursSection(hall: String?, wc: String?) {
-    val showWc = !wc.isNullOrBlank()
-    val body = (if (showWc) wc else hall)?.takeIf { it.isNotBlank() } ?: return
+    val cleanWc = sanitizeStationHours(wc)
+    val cleanHall = sanitizeStationHours(hall)
+    val showWc = cleanWc != null
+    val body = (cleanWc ?: cleanHall) ?: return
     val label = if (showWc) "OTEVÍRACÍ DOBA WC" else "OTEVÍRACÍ DOBA STANICE"
 
     val state = remember(body) {

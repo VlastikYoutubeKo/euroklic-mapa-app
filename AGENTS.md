@@ -53,13 +53,15 @@ screen layout, and rationale.
   **falls back to the full feed if the scoped fetch is empty** (user abroad). The feed
   **intentionally spans beyond CZ/SK** — do not re-add a client-side geo clamp.
 - WC features (`/api_locations.php`, `/api_app_places.php` toilets) also carry: **`web_url`**
-  (`/lokace/{id}-{slug}` — real route), **`opening_hours`** (free text, ČD stations only, ~38
-  rows — **corrected 2026-09-08**: the backend now scrapes the "Prostory pro cestující"
-  station-hall block, not the ticket-counter one it had been reading, so this is real hall
-  hours you can trust; multi-day-range clauses space-separated, e.g.
-  `"Po-Pá 03:50-21:35 So-Ne 04:50-21:35"`), **`wc_opening_hours`** (**new 2026-09-08**,
-  `String?`, WC-specific hours for the ~6 stations that list them separately from the hall,
-  usually narrower; `description` no longer duplicates any of this),
+  (`/lokace/{id}-{slug}` — real route), **`opening_hours`** (free text, ČD stations only, ~86
+  rows — since **2026-09-09** primarily scraped **per-day from Správa železnic** (`update_sz_hours.php`,
+  the JSF/Liferay station portlet), cd.cz only as fallback (~2/109 stations SZ doesn't cover);
+  clean, spaces around the dash — `"Po-Ne 04:30 - 23:30"`, `"Po-Pá 04:35 - 20:00 So-Ne 05:00 - 20:00"`),
+  **`wc_opening_hours`** (`String?`, WC-specific hours for the ~6 stations that list them
+  separately, usually narrower — still **cd.cz-sourced**, so a few rows carry trailing
+  `"UPOZORNĚNÍ: Mimořádná změna provozní doby…"` one-off notices; the app strips those for
+  display + parse via `util/OpeningHours.sanitizeStationHours`. `description` no longer
+  duplicates any hours.),
   **`access`** (`"eurokey"` for `cd`+`osm`, `"unknown"` for `mapotic`+`user`),
   **`wheelchair`** (`yes|no|unknown` — real ČD-station building accessibility, `unknown`
   elsewhere), **`accessibility_note`** (raw multi-line text, ČD only), **`country`**

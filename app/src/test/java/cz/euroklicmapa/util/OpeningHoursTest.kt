@@ -211,4 +211,50 @@ class OpeningHoursTest {
         val state = parsed?.statusAt(at(1, 12, 0)) ?: OpenState.UNKNOWN
         assertEquals(OpenState.UNKNOWN, state)
     }
+
+    // --- Správa železnic feed formats (2026-09-09): spaces around the dash ---
+
+    @Test
+    fun sz_spacedDash_everyDay() {
+        val oh = parseOpeningHours("Po-Ne 04:30 - 23:30")!!
+        assertEquals(OpenState.OPEN, oh.statusAt(at(3, 12, 0)))
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(3, 2, 0)))
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(7, 23, 45)))
+    }
+
+    @Test
+    fun sz_spacedDash_weekdayWeekendClauses() {
+        val oh = parseOpeningHours("Po-Pá 04:35 - 20:00 So-Ne 05:00 - 20:00")!!
+        assertEquals(OpenState.OPEN, oh.statusAt(at(2, 4, 45)))    // Tue 04:45 — weekday clause
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(6, 4, 45)))  // Sat 04:45 — before weekend open
+        assertEquals(OpenState.OPEN, oh.statusAt(at(7, 10, 0)))    // Sun 10:00
+    }
+
+    @Test
+    fun sz_pastMidnightEndsAt24() {
+        val oh = parseOpeningHours("Po-Ne 03:30 - 24:00")!!
+        assertEquals(OpenState.OPEN, oh.statusAt(at(1, 23, 59)))
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(1, 3, 0)))
+    }
+
+    // --- cd.cz-sourced wc_opening_hours still carry "UPOZORNĚNÍ: Mimořádná změna…" tails ---
+
+    @Test
+    fun sanitize_cutsTheNoticeTail() {
+        val raw = "Po-Pá 04:55-07:00, 07:10-08:05 So 05:55-08:05 " +
+            "UPOZORNĚNÍ: 08.09.2026 20:46:18 Mimořádná změna provozní doby platná od 27.09.2026 " +
+            "do 27.09.2026 v Ne 05:55-08:05,09:35-12:05"
+        assertEquals("Po-Pá 04:55-07:00, 07:10-08:05 So 05:55-08:05", sanitizeStationHours(raw))
+    }
+
+    @Test
+    fun dirtyWcString_parsesTheRealPartNotTheNotices() {
+        val raw = "Po-Pá 04:55-07:00, 07:10-08:05, 09:35-12:05 So 05:55-08:05 " +
+            "UPOZORNĚNÍ: 08.09.2026 Mimořádná změna provozní doby platná od 27.09.2026 do 27.09.2026 v Ne 05:55-08:05"
+        val oh = parseOpeningHours(raw)
+        assertNotNull(oh)
+        assertEquals(OpenState.OPEN, oh!!.statusAt(at(1, 5, 0)))    // Mon 05:00
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(1, 8, 30)))   // Mon 08:30 — gap
+        assertEquals(OpenState.CLOSED, oh.statusAt(at(4, 20, 0)))   // Thu 20:00 — well outside
+    }
 }

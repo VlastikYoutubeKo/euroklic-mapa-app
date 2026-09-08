@@ -5,10 +5,11 @@ import java.util.Calendar
 
 /**
  * Lenient, **conservative** parser for the free-text station-hours strings the backend carries
- * for ČD stations only (`opening_hours` = station-hall hours, ~38 rows; `wc_opening_hours` =
- * WC-specific hours, ~6 rows; both `null` everywhere else). Pure JVM — no Android imports — so
- * it is unit-testable and safe on API 24 (`java.time` is not desugared here, so we speak
- * [Calendar]).
+ * for ČD stations only (`opening_hours` = station-hall hours, ~86 rows, since 2026-09-09 mostly
+ * per-day from Správa železnic with spaces around the dash — `"Po-Ne 04:30 - 23:30"`,
+ * `"Po-Pá 04:35 - 20:00 So-Ne 05:00 - 20:00"`; `wc_opening_hours` = WC-specific hours, ~6 rows,
+ * still cd.cz-sourced; both `null` everywhere else). Pure JVM — no Android imports — so it is
+ * unit-testable and safe on API 24 (`java.time` is not desugared here, so we speak [Calendar]).
  *
  * The contract is deliberately narrow: recognise only the handful of Czech formats we can be
  * confident about and return `null` (or a model whose [OpeningHours.statusAt] yields
@@ -92,12 +93,32 @@ private val DAY_FILLER_TOKENS = setOf("hod", "hodin", "h")
 private class DaySpec(val days: Set<Int>, val hadForeignWord: Boolean)
 
 /**
+ * Cut off the temporary-change notices some (cd.cz-sourced) rows carry — everything from the
+ * first `UPOZORNĚNÍ:` / `Mimořádná změna provozní doby` onward. Those are date-ranged one-off
+ * overrides we can't meaningfully render, and left in they wreck both the display and the parse.
+ * Returns the cleaned string trimmed, or `null` if nothing usable is left.
+ */
+fun sanitizeStationHours(raw: String?): String? {
+    if (raw.isNullOrBlank()) return null
+    // Kotlin's lowercase() is Unicode-aware, so this catches "UPOZORNĚNÍ" / "Mimořádná" too
+    // (a plain regex `(?i)` in Java is ASCII-only and would miss the accented capitals).
+    val lower = raw.lowercase()
+    val cutAt = listOf("upozorněn", "upozornen", "mimořádná změna", "mimoradna zmena")
+        .mapNotNull { m -> lower.indexOf(m).takeIf { it >= 0 } }
+        .minOrNull()
+    val cut = (if (cutAt != null) raw.substring(0, cutAt) else raw)
+        .trim()
+        .trimEnd(',', ';', '-', ' ')
+    return cut.ifBlank { null }
+}
+
+/**
  * @return an [OpeningHours] model, or `null` when the string is blank or anything about it is
  * ambiguous / unrecognised. Never throws.
  */
 fun parseOpeningHours(raw: String?): OpeningHours? {
-    if (raw.isNullOrBlank()) return null
-    val norm = normalize(raw)
+    val clean = sanitizeStationHours(raw) ?: return null
+    val norm = normalize(clean)
     if (norm.isBlank()) return null
 
     if (isAlwaysOpen(norm)) return OpeningHours(alwaysOpen = true, clauses = emptyList())
