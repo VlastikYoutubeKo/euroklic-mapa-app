@@ -130,9 +130,10 @@ Zero infrastruktury, žádné tokeny, funguje hned:
       z `locations`/`photo_suggestions` (řádky zůstávají — veřejný obsah mapy), tvrdě
       maže `api_tokens`/`auth_codes`/consent. Token po volání neplatí. Response má
       `message` pole. Otestováno živě throwaway účtem.
-- [ ] [app-android] „Smazat účet a data" v `AuthCard` (`MoreScreen`) s potvrzovacím
-      dialogem → `EuroklicApi` nový `POST api_account_delete.php` (Bearer) →
-      `AuthRepository.deleteAccount()` (po úspěchu lokální `logout()` cleanup).
+- [x] [app-android] „Smazat účet a data" v `AuthCard` (`MoreScreen`) s potvrzovacím
+      dialogem → `EuroklicApi.deleteAccount()` (`POST api_account_delete.php`, Bearer) →
+      `AuthRepository.deleteAccount()` (401/403 = token už mrtvý → hotovo; po úspěchu
+      `clearLocal()` + `AuthEvent.Info` toast). Buildí; **E2E test na reálném účtu čeká.**
 - [ ] [app-ios] totéž v `AuthSession` + settings řádek.
 - **Hotovo =** uživatel si smaže účet z appky, jméno u přispěných míst zmizí.
 
