@@ -37,6 +37,7 @@ import okhttp3.CookieJar
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.io.File
@@ -155,6 +156,16 @@ class EuroklicApplication : Application() {
                     onTokenRefreshed = { if (::authRepository.isInitialized) authRepository.onTokenRefreshed(it) },
                 ),
             )
+            // Debug builds only: log method + URL + status + timing (BASIC — no headers, no
+            // bodies, so the Bearer token never hits logcat). Enough to see e.g. whether a
+            // comment POST returned 200 or an error.
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(
+                        HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC },
+                    )
+                }
+            }
             .build()
         val retrofit = Retrofit.Builder()
             .baseUrl(EuroklicApi.BASE_URL)
