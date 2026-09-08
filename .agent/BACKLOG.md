@@ -204,12 +204,29 @@ Zero infrastruktury, žádné tokeny, funguje hned:
 ## 4. Doporučené pořadí (když „co dneska?")
 
 1. **1.1** fotka E2E na Honoru (uzavře celou fotkovou smyčku) — web strana (1.2/1.3) už live
-2. **2.1** lokální notifikace (admin fronta + nové v okolí) — největší hodnota / nejnižší cena
-3. **3.1 app-side** — „Smazat účet a data" v AuthCard (endpoint už LIVE, Play blokátor)
-4. **2.2–2.4** FCM fáze 2 (před Play)
+2. **3.2** Play release prep (targetSdk stable, release keystore, R8, versionCode,
+   privacy policy, launcher ikona) — potřebuje tvá rozhodnutí
+3. **2.2–2.4** FCM fáze 2 (před Play)
+4. **A7 zbytek** — testy `Mappers.kt` + `SecureTokenStore` + CI
 5. Zbytek dle kapacity
 
-Web/backend HOTOVO 2026-09-08 (backend session): 1.2, 1.3, 1.5, 1.6 og:image,
-3.1 endpoint. Nedělalo se: 2.5, 3.3 (index.php už má PublicToilet JSON-LD), 3.7, 3.8,
-3.11, 2.2 — „až bude čas". §3.6 rotace Mapy klíče = na uživateli (přihlášení do
-developer.mapy.com).
+### HOTOVO 2026-09-08
+
+**Web/backend (backend session):** 1.2, 1.3, 1.5, 1.6 og:image, 3.1 endpoint.
+
+**App-android (autonomní dávka, Sonnet 5 agenti):**
+- **3.1** „Smazat účet a data" v `AuthCard` → `EuroklicApi.deleteAccount()` +
+  potvrzovací dialog (`c9ffe8a`). E2E test na reálném účtu čeká.
+- **2.1** lokální notifikace fáze 1 — `notifications/` package, `QueuePollWorker`
+  (15 min, admin fronta + nové v okolí, gated v `doWork`), 3 kanály, opt-in
+  přepínače v Více, tap → AdminQueue, OEM karta (`e9cc4a7`).
+- **A7** unit testy — `PlaceStatusTest` (27) + `PlacesTest` (13) (`d116a4e`).
+- **A6** parser `opening_hours` → chip „Otevřeno/Zavřeno" + `OpeningHoursTest` (13) (`a65decf`).
+- **A11** „Jste na místě? Ověřte" karta na detailu reported WC do 75 m (`a65decf`).
+- **A11b** oblíbené = plný offline detail snapshot, DB **v8** + `MIGRATION_7_8`,
+  fallback v `DetailViewModel` + `FavoriteMapperTest` (7) (`21f2a39`).
+- Celkem: `./gradlew :app:assembleDebug :app:testDebugUnitTest` → 61 testů, 0 failures.
+
+**Nedělalo se:** 2.5, 3.3 (index.php už má PublicToilet JSON-LD), 3.7, 3.8, 3.11,
+2.2 — „až bude čas". §3.6 rotace Mapy klíče = na uživateli. 1.1 / 3.2 / 3.4 / 3.10
+blokované (reálné zařízení / tvá rozhodnutí / chybí backend endpoint / Mac).
