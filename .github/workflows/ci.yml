@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Gradle daemon is pinned to a JDK 25 toolchain
+      # (gradle/gradle-daemon-jvm.properties). Provide it as the runner JVM.
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      # cmdline-tools + license acceptance; AGP 9.4 auto-downloads the
+      # compileSdk 37 platform on first build.
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # No MAPY_APIKEY in CI — the build tolerates a missing key
+      # (MapyCzTileSource just logs a warning). `lint` is intentionally
+      # skipped: it needs dependency variants that aren't always resolvable.
+      - name: Assemble + unit tests
+        run: ./gradlew assembleDebug testDebugUnitTest --stacktrace
+
+      - name: Upload test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: app/build/reports/tests/testDebugUnitTest
+          if-no-files-found: ignore
