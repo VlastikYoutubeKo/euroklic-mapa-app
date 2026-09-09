@@ -81,16 +81,26 @@
   neřešíme app-side. (`opening_hours` teď nese celý multi-day-range blok vč. So–Ne,
   takže původní „zahazuje So–Ne" už neplatí.)
 
-### A7. Testy (dlouhodobě zanedbané) — ČÁSTEČNĚ HOTOVO (2026-09-08)
+### A7. Testy (dlouhodobě zanedbané) — ČÁSTEČNĚ HOTOVO (2026-09-09)
 - [x] `PlaceStatus.placeStatus()` + `voteBadge()` + `VoteBadge.label()` +
       `nowUtcTimestamp()` — `app/src/test/.../util/PlaceStatusTest.kt` (27 testů,
       včetně 183denní hranice a „REPORTED přebíjí cd").
 - [x] `flattenPlaces(...)` — `app/src/test/.../ui/viewmodel/PlacesTest.kt`
       (13 testů: kategorie filtr, řazení dle vzdálenosti / abecedy, subtitle fallbacky).
-      `./gradlew :app:testDebugUnitTest` = 41 testů, 0 failures.
-- [ ] `Mappers.kt` — `[lon, lat]` → entity, `NaN` odmítnutí. (zbývá)
-- [ ] `SecureTokenStore` — instrumented test šifrování/dešifrování. (zbývá)
-- [ ] CI (GitHub Actions): `assembleDebug` + `testDebugUnitTest` na každý PR. (zbývá)
+- [x] `Mappers.kt` — `[lon, lat]` → entity (pořadí lon/lat, NEprohozené), `NaN` na
+      prázdné/neúplné coords, pass-through všech polí `WcProperties`/`PickupPointProperties`
+      (`opening_hours`→`openingHours`, …). `app/src/test/.../data/mapper/MappersTest.kt` (10 testů).
+- [x] `QueuePollWorker` čisté funkce — vytažené do `internal object QueuePollLogic`
+      (`notifications/QueuePollLogic.kt`, bez změny chování workeru): `places`/`photos`/
+      `newPlacesNearby` (české skloňování) + `adminShouldNotify(...)`.
+      `app/src/test/.../notifications/QueuePollLogicTest.kt` (8 testů: pluralizační hranice
+      0/1/2/4/5/22, pravdivostní tabulka `adminShouldNotify` vč. sentinelu `-1` na prvním pollu).
+      `./gradlew :app:testDebugUnitTest` = 90 testů, 0 failures. `doWork()` / `CoroutineWorker`
+      se neunit-testuje (potřebuje Android + živý `EuroklicApplication`).
+- [ ] `SecureTokenStore` — instrumented test šifrování/dešifrování. (zbývá, instrumented)
+- [x] CI (GitHub Actions): `assembleDebug` + `testDebugUnitTest` na každý PR/push do main —
+      `.github/workflows/ci.yml` (JDK 25 toolchain, `android-actions/setup-android`, bez
+      `MAPY_APIKEY` a bez `lint`).
 - Pozn.: `placeStatus` používá lenient `SimpleDateFormat` — číselně tvarovaný ale
   mimo rozsah string („2024-13-99…") se zroluje na platné datum, nespadne do UNVERIFIED.
   Jen skutečně neparsovatelný vstup jde do fallbacku.

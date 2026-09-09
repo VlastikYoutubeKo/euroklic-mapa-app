@@ -54,19 +54,22 @@ class QueuePollWorker(
         val resp = app.api.adminList()
         val placeCount = resp.count
         val photoCount = resp.photo_count
-        val total = placeCount + photoCount
 
-        val changed = placeCount != app.notificationPrefs.lastAdminPlaceCount() ||
-            photoCount != app.notificationPrefs.lastAdminPhotoCount()
+        val shouldNotify = QueuePollLogic.adminShouldNotify(
+            placeCount = placeCount,
+            photoCount = photoCount,
+            lastPlaceCount = app.notificationPrefs.lastAdminPlaceCount(),
+            lastPhotoCount = app.notificationPrefs.lastAdminPhotoCount(),
+        )
         app.notificationPrefs.setLastAdminCounts(placeCount, photoCount)
 
-        if (total <= 0 || !changed) return
+        if (!shouldNotify) return
 
         notify(
             id = NOTIF_MODERATION,
             channel = NotificationChannels.MODERATION,
             title = "Čeká na schválení",
-            text = "${places(placeCount)} · ${photos(photoCount)}",
+            text = "${QueuePollLogic.places(placeCount)} · ${QueuePollLogic.photos(photoCount)}",
             contentIntent = activityIntent(navExtra = NAV_ADMIN_QUEUE, requestCode = NOTIF_MODERATION),
         )
     }
@@ -102,7 +105,7 @@ class QueuePollWorker(
                 id = NOTIF_NEARBY,
                 channel = NotificationChannels.NEARBY,
                 title = "Nové v okolí",
-                text = newPlacesNearby(nearbyNew.size),
+                text = QueuePollLogic.newPlacesNearby(nearbyNew.size),
                 contentIntent = activityIntent(navExtra = null, requestCode = NOTIF_NEARBY),
             )
             app.notificationPrefs.setLastNearbyNotifEpoch(now)
@@ -156,25 +159,5 @@ class QueuePollWorker(
         const val NOTIF_NEARBY = 4002
         const val NEARBY_RADIUS_M = 10_000.0
         const val DAY_MS = 24L * 60 * 60 * 1000
-
-        /** Rough Czech plural for "místo". */
-        fun places(n: Int) = when {
-            n == 1 -> "1 místo"
-            n in 2..4 -> "$n místa"
-            else -> "$n míst"
-        }
-
-        /** "1 nové místo v okolí" / "3 nová místa v okolí" / "7 nových míst v okolí". */
-        fun newPlacesNearby(n: Int) = when {
-            n == 1 -> "1 nové místo v okolí"
-            n in 2..4 -> "$n nová místa v okolí"
-            else -> "$n nových míst v okolí"
-        }
-
-        fun photos(n: Int) = when {
-            n == 1 -> "1 fotka"
-            n in 2..4 -> "$n fotky"
-            else -> "$n fotek"
-        }
     }
 }
