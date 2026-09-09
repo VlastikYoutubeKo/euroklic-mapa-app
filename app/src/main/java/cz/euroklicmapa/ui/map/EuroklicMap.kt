@@ -52,6 +52,9 @@ data class MapMarker(
     val dislikes: Int = 0,
 )
 
+/** A camera position the caller can persist (e.g. via `rememberSaveable`) and restore. */
+data class CameraPos(val lat: Double, val lon: Double, val zoom: Double)
+
 /** Roughly centred on CZ+SK, zoomed out enough that towns with data are on screen. */
 private val DEFAULT_CENTER = GeoPoint(49.4, 16.5)
 private const val DEFAULT_ZOOM = 6.8
@@ -80,6 +83,9 @@ private class RenderState {
     var userLocation: GeoPoint? = null
     var highlightArgb: Int = 0
     var onMarkerClick: (MapMarker) -> Unit = {}
+
+    /** Fired (debounced by the DelayedMapListener) after every pan/zoom so the caller can persist it. */
+    var onCameraIdle: (lat: Double, lon: Double, zoom: Double) -> Unit = { _, _, _ -> }
 }
 
 @Composable
@@ -89,9 +95,11 @@ fun EuroklicMap(
     userLocation: GeoPoint? = null,
     recenterTarget: GeoPoint? = null,
     selectedMarkerId: String? = null,
+    initialCamera: CameraPos? = null,
     onRecenterHandled: () -> Unit = {},
     onMarkerClick: (MapMarker) -> Unit = {},
     onMapClick: () -> Unit = {},
+    onCameraIdle: (latitude: Double, longitude: Double, zoom: Double) -> Unit = { _, _, _ -> },
 ) {
     val context = LocalContext.current
     val camera = remember { CameraState() }
@@ -149,11 +157,11 @@ fun EuroklicMap(
                 DelayedMapListener(
                     object : MapListener {
                         override fun onScroll(event: ScrollEvent?): Boolean {
-                            renderMarkers(this@apply, render); return false
+                            renderMarkers(this@apply, render); emitCamera(this@apply, render); return false
                         }
 
                         override fun onZoom(event: ZoomEvent?): Boolean {
-                            renderMarkers(this@apply, render); return false
+                            renderMarkers(this@apply, render); emitCamera(this@apply, render); return false
                         }
                     },
                     120,
@@ -171,6 +179,7 @@ fun EuroklicMap(
             render.userLocation = userLocation
             render.highlightArgb = highlightArgb
             render.onMarkerClick = onMarkerClick
+            render.onCameraIdle = onCameraIdle
             renderMarkers(mv, render)
 
             when {
@@ -179,6 +188,14 @@ fun EuroklicMap(
                     mv.controller.setZoom(16.0)
                     camera.framed = true
                     onRecenterHandled()
+                }
+                // Restore the camera the user last left (survives config change / process death).
+                // One-shot via camera.framed, same as the branches below — and it must lose to an
+                // explicit recenterTarget, hence its place in this `when`.
+                !camera.framed && initialCamera != null -> {
+                    camera.framed = true
+                    mv.controller.setZoom(initialCamera.zoom)
+                    mv.controller.setCenter(GeoPoint(initialCamera.lat, initialCamera.lon))
                 }
                 // Centre on the user the first time we get a fix; otherwise keep the CZ/SK
                 // default set in the factory (never auto-fit to the whole dataset).
@@ -227,6 +244,12 @@ fun EuroklicMap(
             mapView.onDetach()
         }
     }
+}
+
+/** Hand the caller the current camera centre + zoom so it can persist them. */
+private fun emitCamera(mv: MapView, s: RenderState) {
+    val c = mv.mapCenter
+    s.onCameraIdle(c.latitude, c.longitude, mv.zoomLevelDouble)
 }
 
 /**

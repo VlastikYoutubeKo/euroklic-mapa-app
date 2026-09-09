@@ -136,7 +136,12 @@
   `userLocation != null` && vzdálenost ≤ 75 m. Text „Jste na místě? Ověřte, jestli je
   WC funkční." + dvě kompaktní tlačítka Funguje/Nefunguje (48dp, contentDescription)
   volající stejné `onVote(true/false)` jako `VoteRow`. Není notifikace, jen UI stav.
-  Sheet na mapě záměrně netknutý (follow-up).
+- [x] HOTOVO (2026-09-09) — **sheet na mapě už tknutý.** `MapScreen.SelectedPlaceCard`
+  má `VerifyNudge` (lehká varianta): `!isPickup` && `marker.status == PlaceStatus.REPORTED`
+  && `userLocation != null` && `distanceBetween ≤ 75 m`. Text „Jste na místě? Ověřte,
+  jestli WC funguje." + jedno tlačítko „Ověřit" (48dp, contentDescription
+  „Otevřít detail a ověřit funkčnost WC", `error` accent), které jen otevře Detail
+  (`onOpenDetail`) — mapa nenese vlastní vote flow, hlasování zůstává na Detailu.
 - Hlasování odpoví na „funguje teď", ale nikdo **nemá za úkol**
   reported místo re-checknout. Nápad: reported bod se dostane do fronty
   „potřebuje ověřit" (web: moderátoři; app: jemný náznak na detailu
@@ -177,6 +182,16 @@
   (bez permission → rovnou rationale dialog).
 - Cold i warm start ověřeny přes `adb am start` se stejným action
   (statický shortcut na launcheru používá tentýž intent).
+
+### A14. Mapa — pozice kamery přežije process death — ✅ HOTOVO (2026-09-09)
+- `EuroklicMap` má `initialCamera: CameraPos?` in + `onCameraIdle(lat,lon,zoom)` out
+  (fired z existujícího `DelayedMapListener`). `MapScreen` drží
+  `var savedCamera by rememberSaveable(stateSaver = listSaver…)` → přežije
+  `onSaveInstanceState` (config change i kill procesu). Cold start: `savedCamera`,
+  jinak první location fix, jinak CZ/SK default. Explicitní `recenterTarget`
+  (hledání / FAB / nejbližší) pořád vyhrává. One-shot guard = stejný `camera.framed`
+  jako u prvního fixu (kamera set → listener → zapíše savedCamera → recompose →
+  už nesetuje znovu, žádná smyčka). Nikdy auto-fit na dataset.
 
 ---
 

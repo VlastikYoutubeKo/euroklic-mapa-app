@@ -56,12 +56,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -77,6 +81,7 @@ import cz.euroklicmapa.ui.components.LoginDialog
 import cz.euroklicmapa.ui.components.PlaceCard
 import cz.euroklicmapa.ui.components.SourceBadge
 import cz.euroklicmapa.ui.components.StatusBadge
+import cz.euroklicmapa.ui.map.CameraPos
 import cz.euroklicmapa.ui.map.EuroklicMap
 import cz.euroklicmapa.ui.map.MapMarker
 import cz.euroklicmapa.ui.theme.EuroklicTheme
@@ -85,6 +90,7 @@ import cz.euroklicmapa.ui.viewmodel.MapViewModelFactory
 import cz.euroklicmapa.ui.viewmodel.NearestResult
 import cz.euroklicmapa.ui.viewmodel.PlaceCategory
 import cz.euroklicmapa.ui.viewmodel.PlaceListItem
+import cz.euroklicmapa.util.PlaceStatus
 import cz.euroklicmapa.util.distanceBetween
 import cz.euroklicmapa.util.formatDistance
 import cz.euroklicmapa.util.formatWalkingTime
@@ -128,6 +134,17 @@ fun MapScreen(
 
     var selectedMarker by remember { mutableStateOf<MapMarker?>(null) }
     var showRationale by remember { mutableStateOf(false) }
+
+    // The map camera the user last left — persisted through onSaveInstanceState (config change
+    // *and* process death) so a cold start restores the view instead of snapping to the CZ/SK
+    // default. An explicit recenterTarget (search / FAB / nearest) still wins; see EuroklicMap.
+    val cameraPosSaver = remember {
+        listSaver<CameraPos?, Double>(
+            save = { pos -> pos?.let { listOf(it.lat, it.lon, it.zoom) } ?: emptyList() },
+            restore = { list -> list.takeIf { it.size == 3 }?.let { CameraPos(it[0], it[1], it[2]) } },
+        )
+    }
+    var savedCamera by rememberSaveable(stateSaver = cameraPosSaver) { mutableStateOf<CameraPos?>(null) }
 
     val sheetState = rememberStandardBottomSheetState(
         initialValue = SheetValue.PartiallyExpanded,
@@ -239,12 +256,14 @@ fun MapScreen(
                 userLocation = userLocation,
                 recenterTarget = recenterTarget,
                 selectedMarkerId = selectedMarker?.id,
+                initialCamera = savedCamera,
                 onRecenterHandled = viewModel::onRecenterHandled,
                 onMarkerClick = {
                     selectedMarker = it
                     scope.launch { sheetState.partialExpand() }
                 },
                 onMapClick = { selectedMarker = null },
+                onCameraIdle = { lat, lon, zoom -> savedCamera = CameraPos(lat, lon, zoom) },
             )
 
             Column(
@@ -482,6 +501,12 @@ private fun SelectedPlaceCard(
     onBackToList: () -> Unit,
 ) {
     val meters = userLocation?.let { distanceBetween(marker.position, it) }
+    // A11 (sheet mirror of DetailScreen.VerifyPresenceCard): user is standing at a WC that's
+    // flagged broken — nudge them into the detail to re-check. REPORTED depends only on
+    // likes/dislikes, so lastVerified = null is fine here (MapMarker carries no lastVerified).
+    val showVerifyNudge = !marker.isPickup &&
+        marker.status == PlaceStatus.REPORTED &&
+        meters != null && meters <= 75.0
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -531,9 +556,50 @@ private fun SelectedPlaceCard(
             Spacer(Modifier.width(8.dp))
             Text("Navigovat")
         }
+        if (showVerifyNudge) {
+            VerifyNudge(onVerify = onOpenDetail)
+        }
         TextButton(
             onClick = onOpenDetail,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) { Text("Zobrazit podrobnosti") }
+    }
+}
+
+/**
+ * A11 — lightweight mirror of `DetailScreen.VerifyPresenceCard` for the map sheet. The map only
+ * nudges; the actual vote flow lives on the Detail screen, so the button just opens it.
+ */
+@Composable
+private fun VerifyNudge(onVerify: () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                "Jste na místě? Ověřte, jestli WC funguje.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Surface(
+                onClick = onVerify,
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
+                contentColor = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .semantics { contentDescription = "Otevřít detail a ověřit funkčnost WC" },
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("Ověřit", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
     }
 }
