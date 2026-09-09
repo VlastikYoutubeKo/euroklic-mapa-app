@@ -82,6 +82,18 @@
                 <data android:scheme="euroklicmapa" android:host="auth-callback" />
             </intent-filter>
 
+            <!-- Deep link into a place detail from the web (`euroklicmapa://detail?id=<int>&type=WC|PICKUP`)
+                 to drive installs. Custom-scheme only — the verified https App Link is reserved for
+                 the auth callback; a place link doesn't need domain verification. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="euroklicmapa" android:host="detail" />
+            </intent-filter>
+
             <!-- Static launcher shortcut "Nejbližší WC" (res/xml/shortcuts.xml; API 25+). -->
             <meta-data
                 android:name="android.app.shortcuts"

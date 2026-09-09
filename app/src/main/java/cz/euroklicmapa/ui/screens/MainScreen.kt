@@ -44,6 +44,16 @@ fun MainScreen() {
         }
     }
 
+    // Set by a `euroklicmapa://detail?id=…&type=…` deep link (MainActivity → requestDetailNav).
+    // Consumed once here; the last-entry guard stops a re-add on rotation/recompose.
+    val detailNavPending by app.pendingDetailNav.collectAsStateWithLifecycle()
+    LaunchedEffect(detailNavPending) {
+        val pending = detailNavPending ?: return@LaunchedEffect
+        app.consumeDetailNav()
+        val target = Destinations.Detail(pending.id.toString(), pending.type)
+        if (backStack.lastOrNull() != target) backStack.add(target)
+    }
+
     LaunchedEffect(Unit) {
         app.authRepository.events.collect { ev ->
             val msg = when (ev) {

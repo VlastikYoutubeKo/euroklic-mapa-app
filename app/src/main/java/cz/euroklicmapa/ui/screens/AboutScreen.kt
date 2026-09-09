@@ -2,14 +2,17 @@ package cz.euroklicmapa.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,8 +24,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,6 +37,7 @@ import cz.euroklicmapa.ui.viewmodel.AppStats
 import cz.euroklicmapa.ui.viewmodel.StatsViewModel
 import cz.euroklicmapa.ui.viewmodel.StatsViewModelFactory
 import cz.euroklicmapa.util.appVersionName
+import cz.euroklicmapa.util.openUrl
 import cz.euroklicmapa.util.placesCount
 
 /**
@@ -83,6 +89,11 @@ fun AboutScreen(
                 "Pozor: NRZP ČR od července 2026 dočasně pozastavila výdej nových klíčů kvůli " +
                     "chybějícímu financování. Aktuální stav ověřujte na webu.",
                 warning = true,
+            )
+            LinkRow(
+                title = "Sdílet mapu",
+                subtitle = "Web má mapu k vložení na jiné stránky — otevřít v prohlížeči",
+                onClick = { openUrl(context, "https://euroklic.odjezdy.online/") },
             )
             Text(
                 "Euroklíč Mapa $version",
@@ -167,6 +178,40 @@ private fun Disclaimer() {
                     "ani NRZP ČR.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** Same row style as [MoreScreen]'s link rows — title + subtitle + chevron, whole row tappable. */
+@Composable
+private fun LinkRow(title: String, subtitle: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(
+                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

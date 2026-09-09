@@ -106,6 +106,22 @@ class EuroklicApplication : Application() {
         _pendingAdminQueueNav.value = false
     }
 
+    /**
+     * Set when a `euroklicmapa://detail?id=…&type=…` deep link is opened (routed through
+     * [MainActivity]); consumed once by [ui.screens.MainScreen], which pushes
+     * [ui.navigation.Destinations.Detail]. Mirrors [pendingAdminQueueNav].
+     */
+    private val _pendingDetailNav = MutableStateFlow<PendingDetail?>(null)
+    val pendingDetailNav: StateFlow<PendingDetail?> = _pendingDetailNav.asStateFlow()
+
+    fun requestDetailNav(id: Int, type: String) {
+        _pendingDetailNav.value = PendingDetail(id, type)
+    }
+
+    fun consumeDetailNav() {
+        _pendingDetailNav.value = null
+    }
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
@@ -205,6 +221,9 @@ class EuroklicApplication : Application() {
         )
     }
 }
+
+/** A pending deep-link navigation to a place detail (`euroklicmapa://detail?id=…&type=…`). */
+data class PendingDetail(val id: Int, val type: String)
 
 /** In-memory cookie jar, per host, merged by name. Enough to hold one session cookie. */
 private class SessionCookieJar : CookieJar {

@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         handleAuthCallback(intent)
+        handleDeepLink(intent)
         handleShortcutIntent(intent)
         handleNavIntent(intent)
         val themeRepository = (application as EuroklicApplication).themeRepository
@@ -44,8 +45,24 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleAuthCallback(intent)
+        handleDeepLink(intent)
         handleShortcutIntent(intent)
         handleNavIntent(intent)
+    }
+
+    /**
+     * Web deep link `euroklicmapa://detail?id=<int>&type=WC|PICKUP` — opens a specific place.
+     * A different host from the auth callback (`auth-callback`), so it never falls into
+     * [handleAuthCallback]'s branch. A pending flag on the Application is consumed once by
+     * [MainScreen], mirroring the `nav=admin_queue` pattern.
+     */
+    private fun handleDeepLink(intent: Intent?) {
+        val data = intent?.data ?: return
+        if (data.scheme != "euroklicmapa" || data.host != "detail") return
+        val id = data.getQueryParameter("id")?.toIntOrNull() ?: return
+        val type = data.getQueryParameter("type")?.uppercase()
+            .takeIf { it == "WC" || it == "PICKUP" } ?: "WC"
+        (application as EuroklicApplication).requestDetailNav(id, type)
     }
 
     /**

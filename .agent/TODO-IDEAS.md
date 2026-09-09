@@ -33,10 +33,11 @@
   žádné nové API); badge-semantika zrcadlí web (ověřeno = 👍, nahlášeno =
   👎 převažuje). Ověřeno naživo (1081 WC / 232 výdejen v cache).
 
-### A3. Widget „Vložit mapu" — výměna zkušeností
-- Web má embed widget mapy na cizí weby. Aplikace by v „O projektu" mohla
-  mít odkaz/CTA „Sdílet mapu" → otevřít web (Custom Tabs) s vysvětlením
-  widgetu. Nenáročné, propagační hodnota.
+### A3. Widget „Vložit mapu" — ✅ HOTOVÉ (2026-09-09)
+- [x] `AboutScreen` (Více → O projektu) má řádek „Sdílet mapu" ve stylu
+  `LinkRow` (title + subtitle + chevron, 56dp min): „Web má mapu k vložení
+  na jiné stránky — otevřít v prohlížeči" → `openUrl(context,
+  "https://euroklic.odjezdy.online/")`. Nenáročné, propagační hodnota.
 
 ### A4. Foto k místu — rozjet produktovou smyčku
 - `photo_url` je dnes prázdné pro všechny 1443 řádků. Aplikace **umí**
@@ -167,12 +168,25 @@
   fakticky *každý* CZ/SK řádek v Room cache. Prefetch by nic nepřidal.
 - Zbývá: Nominatim vyhledávání pořád potřebuje síť (mimo scope A11b).
 
-### A12. Cross-promo web ↔ app
-- Detail místa na webu nemá „Otevřít v aplikaci" odkaz (App Links
-  deep-linkují app→web obráceně směr nijak); na web detail přidat
-  intent link na `euroklicmapa://detail?id=…` → drive instalek.
-- Ověřit v app share button: sdílí `web_url` (ne app-only deep link,
-  který nebude fungovat pro příjemce bez app) + TalkBack label.
+### A12. Cross-promo web ↔ app — ČÁSTEČNĚ HOTOVO (2026-09-09, app-side)
+- [x] **App přijímá deep link** `euroklicmapa://detail?id=<int>&type=WC|PICKUP`.
+  `AndroidManifest` intent-filter na `.MainActivity` (VIEW+DEFAULT+BROWSABLE,
+  `scheme="euroklicmapa" host="detail"`, custom-scheme only — https App Link
+  zůstává vyhrazený auth callbacku). `MainActivity.handleDeepLink()` (z `onCreate`
+  i `onNewIntent`) parsuje `id`/`type` (`type` default „WC", jiný host než
+  `auth-callback` → nespadne do auth větve) → `EuroklicApplication.requestDetailNav()`
+  → `PendingDetail` StateFlow → `MainScreen` `LaunchedEffect` ho jednou spotřebuje
+  a pushne `Destinations.Detail` (guard proti re-addu na rotaci). Zrcadlí
+  `nav=admin_queue` pending-flag pattern.
+- [x] **Share tlačítko v detailu** — kolébka `Icons.Rounded.Share` vedle záložky
+  nad hero (`contentDescription = "Sdílet místo"`), `ACTION_SEND` + `createChooser`
+  v try/catch. Sdílí `web_url` (`"${wc.name}\n${wc.webUrl}"`), fallback
+  `https://euroklic.odjezdy.online/` když `web_url` prázdné; výdejny sdílí
+  `"${pp.orgName}\nhttps://euroklic.odjezdy.online/"`. **Nikdy** `euroklicmapa://`
+  deep link (nepoužitelný pro příjemce bez app).
+- [ ] **[web] otevřené:** detail místa na webu ještě nemá „Otevřít v aplikaci"
+  odkaz — web musí začít emitovat `euroklicmapa://detail?id=<int>&type=WC|PICKUP`
+  na detail stránce → drive instalek. Formát URI je připravený app-side.
 
 ### A13. Home-screen shortcut „Nejbližší WC" — ✅ HOTOVÉ (2026-09-05)
 - Static App Shortcut (long-press ikony, žádná permission,

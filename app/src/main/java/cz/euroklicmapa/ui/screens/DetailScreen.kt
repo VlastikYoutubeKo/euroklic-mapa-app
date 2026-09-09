@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.rounded.AddAPhoto
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.Directions
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Wc
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -216,24 +218,58 @@ fun DetailScreen(
         }
 
         if (state is DetailState.WcDetail || state is DetailState.PickupDetail) {
-            Surface(
-                onClick = viewModel::toggleFavorite,
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surface,
-                contentColor = if (isFavorite) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-                shadowElevation = 3.dp,
+            // Share the recipient-usable web page (`/lokace/{id}-{slug}`), never the
+            // `euroklicmapa://` deep link — that's useless to anyone without the app.
+            val shareText = when (val s = state) {
+                is DetailState.WcDetail ->
+                    s.wc.webUrl?.takeIf { it.isNotBlank() }?.let { "${s.wc.name}\n$it" }
+                        ?: "${s.wc.name}\nhttps://euroklic.odjezdy.online/"
+                is DetailState.PickupDetail -> "${s.pp.orgName}\nhttps://euroklic.odjezdy.online/"
+                else -> "https://euroklic.odjezdy.online/"
+            }
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .statusBarsPadding()
-                    .padding(12.dp)
-                    .size(44.dp),
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        if (isFavorite) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
-                        contentDescription = if (isFavorite) "Odebrat z oblíbených" else "Přidat do oblíbených",
-                    )
+                Surface(
+                    onClick = {
+                        try {
+                            val send = Intent(Intent.ACTION_SEND)
+                                .setType("text/plain")
+                                .putExtra(Intent.EXTRA_TEXT, shareText)
+                            context.startActivity(Intent.createChooser(send, null))
+                        } catch (_: Exception) {
+                            Toast.makeText(context, "Nelze sdílet.", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    shadowElevation = 3.dp,
+                    modifier = Modifier.size(44.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Rounded.Share, contentDescription = "Sdílet místo")
+                    }
+                }
+                Surface(
+                    onClick = viewModel::toggleFavorite,
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surface,
+                    contentColor = if (isFavorite) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    shadowElevation = 3.dp,
+                    modifier = Modifier.size(44.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            if (isFavorite) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+                            contentDescription = if (isFavorite) "Odebrat z oblíbených" else "Přidat do oblíbených",
+                        )
+                    }
                 }
             }
         }
