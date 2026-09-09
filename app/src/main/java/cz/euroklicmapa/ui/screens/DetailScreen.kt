@@ -53,7 +53,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -210,7 +212,7 @@ fun DetailScreen(
                 .align(Alignment.TopStart)
                 .statusBarsPadding()
                 .padding(12.dp)
-                .size(44.dp),
+                .size(48.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Zpět")
@@ -249,7 +251,9 @@ fun DetailScreen(
                     color = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     shadowElevation = 3.dp,
-                    modifier = Modifier.size(44.dp),
+                    // 48dp touch target (an outer .size() clamps Surface's built-in
+                    // minimumInteractiveComponentSize, so it has to be 48 here).
+                    modifier = Modifier.size(48.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(Icons.Rounded.Share, contentDescription = "Sdílet místo")
@@ -262,7 +266,7 @@ fun DetailScreen(
                     contentColor = if (isFavorite) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                     shadowElevation = 3.dp,
-                    modifier = Modifier.size(44.dp),
+                    modifier = Modifier.size(48.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -415,11 +419,15 @@ private fun WcBody(
 
 @Composable
 private fun AddPhotoRow(hasPhoto: Boolean, uploading: Boolean, onClick: () -> Unit) {
+    val label = if (hasPhoto) "Navrhnout jinou fotku" else "Přidat fotku"
     Surface(
         onClick = { if (!uploading) onClick() },
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth(),
+        // One focus stop announced as a button; the two Texts below carry the label.
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) { role = Role.Button },
     ) {
         Row(
             modifier = Modifier.padding(14.dp),
@@ -427,7 +435,12 @@ private fun AddPhotoRow(hasPhoto: Boolean, uploading: Boolean, onClick: () -> Un
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (uploading) {
-                CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                CircularProgressIndicator(
+                    strokeWidth = 2.dp,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .semantics { contentDescription = "Nahrávám fotku" },
+                )
             } else {
                 Icon(
                     Icons.Rounded.AddAPhoto,
@@ -437,7 +450,7 @@ private fun AddPhotoRow(hasPhoto: Boolean, uploading: Boolean, onClick: () -> Un
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    if (hasPhoto) "Navrhnout jinou fotku" else "Přidat fotku",
+                    label,
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -713,13 +726,11 @@ private fun CommentComposer(
             label = { Text("Přidat komentář") },
             isError = lenError,
             enabled = !posting,
-        )
-        Text(
-            "$trimmedLen/2000",
-            style = MaterialTheme.typography.labelSmall,
-            color = if (lenError) MaterialTheme.colorScheme.error
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth(),
+            // Counter as supportingText → TalkBack reads it as part of the field, and
+            // Material colours it with the error state automatically.
+            supportingText = {
+                Text("$trimmedLen/2000", modifier = Modifier.fillMaxWidth())
+            },
         )
         Button(
             onClick = {
@@ -734,7 +745,7 @@ private fun CommentComposer(
                     strokeWidth = 2.dp,
                     modifier = Modifier
                         .size(18.dp)
-                        .semantics { contentDescription = "Odesílání komentáře" },
+                        .semantics { contentDescription = "Odesílám komentář" },
                 )
             } else {
                 Text("Odeslat")
@@ -805,7 +816,11 @@ private fun OpeningHoursSection(hall: String?, wc: String?) {
                         .background(
                             if (open) EuroklicTheme.extended.success else MaterialTheme.colorScheme.error,
                         )
-                        .padding(horizontal = 10.dp, vertical = 3.dp),
+                        .padding(horizontal = 10.dp, vertical = 3.dp)
+                        // Bare "Otevřeno" has no context for TalkBack — spell out it's a status.
+                        .semantics {
+                            contentDescription = if (open) "Stav: otevřeno" else "Stav: zavřeno"
+                        },
                 )
             }
         }

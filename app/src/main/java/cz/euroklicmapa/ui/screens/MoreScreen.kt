@@ -40,6 +40,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -236,7 +239,12 @@ fun MoreScreen(
                     },
                 ) {
                     if (deleting) {
-                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .semantics { contentDescription = "Mažu účet" },
+                        )
                     } else {
                         Text("Smazat účet", color = MaterialTheme.colorScheme.error)
                     }
@@ -398,7 +406,12 @@ private fun BatteryNote(onOpenSettings: () -> Unit) {
         onClick = onOpenSettings,
         color = MaterialTheme.colorScheme.surfaceVariant,
         shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+        // Clickable Surface carries no role by default — announce it as a button; the
+        // clickable already merges the title + body into one focus stop.
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .semantics { role = Role.Button },
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(

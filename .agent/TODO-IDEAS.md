@@ -207,6 +207,31 @@
   jako u prvního fixu (kamera set → listener → zapíše savedCamera → recompose →
   už nesetuje znovu, žádná smyčka). Nikdy auto-fit na dataset.
 
+### A15. TalkBack pass přes UI z posledních dvou session — ✅ HOTOVO (2026-09-09)
+- Audit + cílené opravy (žádný redesign) přes: sekce „Notifikace" v `MoreScreen`,
+  komentářový composer v `DetailScreen`, karty návrhů v admin frontě, chip
+  otevírací doby, „ověřte na místě" karty (detail + mapa sheet), sdílecí tlačítko detailu.
+- Konkrétní opravy:
+  - `MoreScreen.BatteryNote` (klikací `Surface`) → `semantics { role = Role.Button }`
+    (klikací Surface bez role); mazací spinner v dialogu → `contentDescription = "Mažu účet"`.
+  - `MoreScreen.SwitchRow` prověřeno — už OK (`toggleable(role = Role.Switch)` na řádku,
+    vnitřní `Switch(onCheckedChange = null)`, řádek `heightIn(min = 56.dp)`).
+  - `DetailScreen.CommentComposer` — živý počet „N/2000" složen do `supportingText`
+    `OutlinedTextField` (TalkBack ho čte jako součást pole, error barva automaticky);
+    odesílací spinner `contentDescription = "Odesílám komentář"`.
+  - `DetailScreen.AddPhotoRow` → `semantics(mergeDescendants = true) { role = Role.Button }`,
+    upload spinner `contentDescription = "Nahrávám fotku"`.
+  - `DetailScreen.OpeningHoursSection` — „Otevřeno"/„Zavřeno" pill dostal
+    `contentDescription = "Stav: otevřeno/zavřeno"` (holý text bez kontextu).
+  - `DetailScreen` sdílet / zpět / záložka — `size(44.dp)` → `size(48.dp)` (vnější
+    `size()` kl. Surface vlastní `minimumInteractiveComponentSize`, takže cíl doteka byl 44).
+  - `AdminQueueScreen.SectionHeader` → `semantics { heading() }`.
+  - `AdminQueueScreen` `PhotoSuggestionCard` / `PendingCard` `AsyncImage` (foto v recenzi
+    = obsah) → `contentDescription` s názvem místa; „Schválit" spinnery → `"Schvaluji"`.
+  - `MapScreen.VerifyNudge` prověřeno — už OK (`contentDescription` + `height(48.dp)`).
+- Ověřeno `assembleDebug` + `testDebugUnitTest` (90/90). Reálný TalkBack test na
+  zařízení by ještě potvrdil pořadí focusu a merge chování `Surface`.
+
 ---
 
 ## B. Web (euroklic.odjezdy.online) — návrhy pro backend vlastníka

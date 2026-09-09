@@ -41,6 +41,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -167,7 +170,9 @@ private fun SectionHeader(text: String) {
         text.uppercase(),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 4.dp, top = 4.dp),
+        modifier = Modifier
+            .padding(start = 4.dp, top = 4.dp)
+            .semantics { heading() },
     )
 }
 
@@ -185,15 +190,18 @@ private fun PhotoSuggestionCard(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val placeLabel = photo.location_name?.takeIf { it.isNotBlank() }
+                ?: "Místo #${photo.location_id}"
             if (!photo.photo_url.isNullOrBlank()) {
                 AsyncImage(
                     model = photo.photo_url,
-                    contentDescription = null,
+                    // Photo under review is content, not decoration.
+                    contentDescription = "Navrhovaná fotka pro $placeLabel",
                     modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)),
                 )
             }
             Text(
-                photo.location_name?.takeIf { it.isNotBlank() } ?: "Místo #${photo.location_id}",
+                placeLabel,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -217,7 +225,12 @@ private fun PhotoSuggestionCard(
                 }
                 Button(onClick = onApprove, enabled = enabled, modifier = Modifier.weight(1f)) {
                     if (busy) {
-                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .semantics { contentDescription = "Schvaluji" },
+                        )
                     } else {
                         Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                         Text("Schválit")
@@ -269,7 +282,12 @@ private fun CommentSuggestionCard(
                 }
                 Button(onClick = onApprove, enabled = enabled, modifier = Modifier.weight(1f)) {
                     if (busy) {
-                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .semantics { contentDescription = "Schvaluji" },
+                        )
                     } else {
                         Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                         Text("Schválit")
@@ -297,7 +315,10 @@ private fun PendingCard(
             if (!place.photo_url.isNullOrBlank()) {
                 AsyncImage(
                     model = place.photo_url,
-                    contentDescription = null,
+                    // Photo attached to a place under review is content, not decoration.
+                    contentDescription = place.name.trim().takeIf { it.isNotEmpty() }
+                        ?.let { "Fotka navrženého místa $it" }
+                        ?: "Fotka navrženého místa",
                     modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(12.dp)),
                 )
             }
@@ -340,7 +361,12 @@ private fun PendingCard(
                     modifier = Modifier.weight(1f),
                 ) {
                     if (busy) {
-                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .semantics { contentDescription = "Schvaluji" },
+                        )
                     } else {
                         Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                         Text("Schválit")
