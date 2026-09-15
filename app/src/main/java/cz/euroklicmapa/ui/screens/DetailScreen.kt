@@ -3,6 +3,10 @@ package cz.euroklicmapa.ui.screens
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +19,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +33,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddAPhoto
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Directions
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Wc
@@ -40,6 +50,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -47,8 +58,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -60,6 +74,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -333,6 +349,145 @@ private fun Hero(photoUrl: String?, isPickup: Boolean, name: String?) {
     }
 }
 
+/**
+ * Photo strip below the description. A single photo fills the row edge-to-edge; several (once
+ * the backend ever sends more than one) scroll horizontally as thumbnails. Tapping any of them
+ * opens [PhotoViewerDialog] (fullscreen, pinch-zoom, swipe between photos).
+ */
+@Composable
+private fun PhotoGallery(photos: List<String>) {
+    if (photos.isEmpty()) return
+    var openIndex by remember(photos) { mutableStateOf<Int?>(null) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "FOTOGRAFIE",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            itemsIndexed(photos) { index, url ->
+                AsyncImage(
+                    model = url,
+                    contentDescription = null,
+                    placeholder = painterResource(R.drawable.placeholder),
+                    error = painterResource(R.drawable.placeholder),
+                    contentScale = ContentScale.Crop,
+                    modifier = (if (photos.size == 1) Modifier.fillParentMaxWidth() else Modifier.width(240.dp))
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable(
+                            onClickLabel = "Otevřít na celou obrazovku",
+                            onClick = { openIndex = index },
+                        )
+                        .semantics {
+                            contentDescription = if (photos.size > 1) {
+                                "Fotografie ${index + 1} z ${photos.size}"
+                            } else {
+                                "Fotografie"
+                            }
+                            role = Role.Button
+                        },
+                )
+            }
+        }
+    }
+
+    openIndex?.let { idx ->
+        PhotoViewerDialog(photos = photos, initialIndex = idx, onDismiss = { openIndex = null })
+    }
+}
+
+@Composable
+private fun PhotoViewerDialog(photos: List<String>, initialIndex: Int, onDismiss: () -> Unit) {
+    val pagerState = rememberPagerState(initialPage = initialIndex) { photos.size }
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                // Keying by page resets zoom/pan when swiping to a different photo.
+                key(page) {
+                    ZoomableImage(
+                        url = photos[page],
+                        contentDescription = if (photos.size > 1) {
+                            "Fotografie ${page + 1} z ${photos.size}"
+                        } else {
+                            "Fotografie"
+                        },
+                    )
+                }
+            }
+            Surface(
+                onClick = onDismiss,
+                shape = CircleShape,
+                color = Color.Black.copy(alpha = 0.5f),
+                contentColor = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(12.dp)
+                    .size(48.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Close, contentDescription = "Zavřít")
+                }
+            }
+            if (photos.size > 1) {
+                Text(
+                    "${pagerState.currentPage + 1} / ${photos.size}",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .padding(16.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                )
+            }
+        }
+    }
+}
+
+/** Pinch-to-zoom (1x-5x) + pan; double-tap toggles between 1x and 2x. */
+@Composable
+private fun ZoomableImage(url: String, contentDescription: String?) {
+    var scale by remember { mutableStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    val transformState = rememberTransformableState { zoomChange, panChange, _ ->
+        scale = (scale * zoomChange).coerceIn(1f, 5f)
+        offset = if (scale <= 1f) Offset.Zero else offset + panChange
+    }
+    AsyncImage(
+        model = url,
+        contentDescription = contentDescription,
+        placeholder = painterResource(R.drawable.placeholder),
+        error = painterResource(R.drawable.placeholder),
+        contentScale = ContentScale.Fit,
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer(
+                scaleX = scale,
+                scaleY = scale,
+                translationX = offset.x,
+                translationY = offset.y,
+            )
+            .transformable(transformState)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        if (scale > 1f) {
+                            scale = 1f
+                            offset = Offset.Zero
+                        } else {
+                            scale = 2f
+                        }
+                    },
+                )
+            },
+    )
+}
+
 @Composable
 private fun WcBody(
     wc: WcLocationEntity,
@@ -349,7 +504,9 @@ private fun WcBody(
     onSubmitComment: (String) -> Unit,
     onRequestLogin: () -> Unit,
 ) {
-    Hero(photoUrl = wc.photoUrl, isPickup = false, name = wc.name)
+    // The real photo now lives in PhotoGallery below the description — the hero stays an icon
+    // banner so it doesn't duplicate the (clickable, zoomable) inline gallery.
+    Hero(photoUrl = null, isPickup = false, name = wc.name)
     Column(
         modifier = Modifier.fillMaxWidth().padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -374,6 +531,9 @@ private fun WcBody(
         wc.description?.takeIf { it.isNotBlank() }?.let {
             Section("Popis", prettifyDescription(it))
         }
+        // Only ever one approved photo today (`locations.photo_url`), but the gallery already
+        // supports several in case the backend starts returning more.
+        PhotoGallery(photos = listOfNotNull(wc.photoUrl?.takeIf { it.isNotBlank() }))
         wc.note?.takeIf { it.isNotBlank() }?.let { Section("Poznámka", it) }
         wc.accessibilityNote?.takeIf { it.isNotBlank() }?.let { ExpandableSection("Přístupnost stanice", it) }
         wc.floorPlanUrl?.takeIf { it.isNotBlank() }?.let { FloorPlanLink(it) }
