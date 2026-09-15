@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.Directions
 import androidx.compose.material.icons.rounded.NearMe
 import androidx.compose.material.icons.rounded.Search
@@ -84,6 +85,8 @@ import cz.euroklicmapa.ui.components.StatusBadge
 import cz.euroklicmapa.ui.map.CameraPos
 import cz.euroklicmapa.ui.map.EuroklicMap
 import cz.euroklicmapa.ui.map.MapMarker
+import cz.euroklicmapa.ui.map.OfflineDownloadResult
+import cz.euroklicmapa.ui.map.startOfflineDownload
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import cz.euroklicmapa.ui.viewmodel.MapViewModel
 import cz.euroklicmapa.ui.viewmodel.MapViewModelFactory
@@ -99,6 +102,7 @@ import cz.euroklicmapa.util.openUrl
 import cz.euroklicmapa.util.placesCount
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -134,6 +138,9 @@ fun MapScreen(
 
     var selectedMarker by remember { mutableStateOf<MapMarker?>(null) }
     var showRationale by remember { mutableStateOf(false) }
+    var mapViewRef by remember { mutableStateOf<MapView?>(null) }
+    var downloadState by remember { mutableStateOf<OfflineDownloadResult?>(null) }
+    val downloading = downloadState is OfflineDownloadResult.Started || downloadState is OfflineDownloadResult.Progress
 
     // The map camera the user last left — persisted through onSaveInstanceState (config change
     // *and* process death) so a cold start restores the view instead of snapping to the CZ/SK
@@ -264,6 +271,7 @@ fun MapScreen(
                 },
                 onMapClick = { selectedMarker = null },
                 onCameraIdle = { lat, lon, zoom -> savedCamera = CameraPos(lat, lon, zoom) },
+                onMapReady = { mapViewRef = it },
             )
 
             Column(
@@ -297,6 +305,49 @@ fun MapScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                // Offline-tile download for the current viewport — a deliberate, bounded action
+                // (see startOfflineDownload's MAX_TILES guard), not a "cache everything" toggle.
+                SmallFloatingActionButton(
+                    onClick = {
+                        val mv = mapViewRef
+                        if (mv == null || downloading) return@SmallFloatingActionButton
+                        startOfflineDownload(mv, context) { result ->
+                            downloadState = result
+                            when (result) {
+                                is OfflineDownloadResult.TooLarge -> Toast.makeText(
+                                    context,
+                                    "Vybraná oblast je na stažení moc velká. Přibližte mapu na " +
+                                        "menší oblast a zkuste to znovu.",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                                is OfflineDownloadResult.Done -> Toast.makeText(
+                                    context, "Mapa téhle oblasti je stažená pro offline použití.",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                                is OfflineDownloadResult.Failed -> Toast.makeText(
+                                    context,
+                                    "Stahování mapy se nezdařilo. Zkuste to znovu s lepším připojením.",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                                else -> {}
+                            }
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ) {
+                    if (downloading) {
+                        val percent = (downloadState as? OfflineDownloadResult.Progress)?.percent ?: 0
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .semantics { contentDescription = "Stahuji mapu pro offline použití, $percent %" },
+                        )
+                    } else {
+                        Icon(Icons.Rounded.CloudDownload, contentDescription = "Stáhnout mapu pro offline použití")
+                    }
+                }
                 // Secondary — same "Přidat místo" action as More, just reachable without
                 // leaving the map. Tonal, so it doesn't compete with the primary FAB below.
                 SmallFloatingActionButton(

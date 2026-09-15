@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Point
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -100,12 +101,15 @@ fun EuroklicMap(
     onMarkerClick: (MapMarker) -> Unit = {},
     onMapClick: () -> Unit = {},
     onCameraIdle: (latitude: Double, longitude: Double, zoom: Double) -> Unit = { _, _, _ -> },
+    /** Fired once with the live [MapView] so the caller can trigger [startOfflineDownload]. */
+    onMapReady: (MapView) -> Unit = {},
 ) {
     val context = LocalContext.current
     val camera = remember { CameraState() }
     val render = remember { RenderState() }
     val highlightArgb = EuroklicTheme.extended.brandButton.toArgb()
     val onMapClickState = rememberUpdatedState(onMapClick)
+    val onMapReadyState = rememberUpdatedState(onMapReady)
 
     val mapView = remember {
         // Full osmdroid init — without a loaded Configuration + writable cache, tiles silently
@@ -169,6 +173,8 @@ fun EuroklicMap(
             )
         }
     }
+
+    LaunchedEffect(mapView) { onMapReadyState.value(mapView) }
 
     AndroidView(
         factory = { mapView },
