@@ -26,6 +26,13 @@ sealed class Destinations : NavKey {
     @Serializable
     data object About : Destinations()
 
+    @Serializable
+    data object Articles : Destinations()
+
+    /** [slug] keys into [cz.euroklicmapa.ui.screens.Article.all] — static content, no API. */
+    @Serializable
+    data class ArticleDetail(val slug: String) : Destinations()
+
     /** [type] is `"WC"` or `"PICKUP"`. */
     @Serializable
     data class Detail(val id: String, val type: String) : Destinations()

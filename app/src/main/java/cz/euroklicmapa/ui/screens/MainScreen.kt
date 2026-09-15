@@ -143,11 +143,26 @@ fun MainScreen() {
                         onAddPlace = { backStack.add(Destinations.AddPlace) },
                         onOpenAdmin = { backStack.add(Destinations.AdminQueue) },
                         onOpenAbout = { backStack.add(Destinations.About) },
+                        onOpenArticles = { backStack.add(Destinations.Articles) },
                     )
                 }
 
                 is Destinations.About -> NavEntry(key) {
                     AboutScreen(
+                        onBack = { if (backStack.size > 1) backStack.removeAt(backStack.size - 1) },
+                    )
+                }
+
+                is Destinations.Articles -> NavEntry(key) {
+                    ArticlesScreen(
+                        onOpenArticle = { slug -> backStack.add(Destinations.ArticleDetail(slug)) },
+                        onBack = { if (backStack.size > 1) backStack.removeAt(backStack.size - 1) },
+                    )
+                }
+
+                is Destinations.ArticleDetail -> NavEntry(key) {
+                    ArticleDetailScreen(
+                        slug = key.slug,
                         onBack = { if (backStack.size > 1) backStack.removeAt(backStack.size - 1) },
                     )
                 }

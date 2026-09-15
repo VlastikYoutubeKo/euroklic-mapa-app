@@ -62,8 +62,8 @@ import cz.euroklicmapa.util.appVersionName
 import cz.euroklicmapa.util.openUrl
 import kotlinx.coroutines.launch
 
-private const val URL_HOW = "https://euroklic.odjezdy.online/clanky/jak-vybavit-euroklic/"
 private const val URL_SITE = "https://euroklic.odjezdy.online/"
+private const val URL_PRIVACY = "https://euroklic.odjezdy.online/soukromi.php"
 
 /**
  * Kept deliberately short — this used to stack the full disclaimer + "co je Euroklíč" +
@@ -75,6 +75,7 @@ fun MoreScreen(
     onAddPlace: () -> Unit = {},
     onOpenAdmin: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
+    onOpenArticles: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as EuroklicApplication
@@ -201,9 +202,10 @@ fun MoreScreen(
             }
 
             SectionLabel("Odkazy")
-            LinkRow("Jak získat Euroklíč", "Postup a aktuální stav výdeje · NRZP ČR") { openUrl(context, URL_HOW) }
+            LinkRow("Články a návody", "Jak získat Euroklíč · Kde platí Euroklíč") { onOpenArticles() }
             LinkRow("euroklic.odjezdy.online", "Web, zdroje dat, nahlášení problému") { openUrl(context, URL_SITE) }
-            LinkRow("O projektu", "Nezávislý projekt · verze $version") { onOpenAbout() }
+            LinkRow("O projektu", "Nezávislý projekt, FAQ, podpora · verze $version") { onOpenAbout() }
+            LinkRow("Zásady ochrany osobních údajů", "Jak nakládáme s daty") { openUrl(context, URL_PRIVACY) }
 
             Spacer(Modifier.padding(bottom = 24.dp))
         }

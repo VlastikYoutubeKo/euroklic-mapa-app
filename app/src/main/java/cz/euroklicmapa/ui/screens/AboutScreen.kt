@@ -95,6 +95,8 @@ fun AboutScreen(
                 subtitle = "Web má mapu k vložení na jiné stránky — otevřít v prohlížeči",
                 onClick = { openUrl(context, "https://euroklic.odjezdy.online/") },
             )
+            FaqSection()
+            SupportSection(context)
             Text(
                 "Euroklíč Mapa $version",
                 style = MaterialTheme.typography.bodySmall,
@@ -214,6 +216,88 @@ private fun LinkRow(title: String, subtitle: String, onClick: () -> Unit) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/** Mirrors the web's "Často kladené dotazy (FAQ)" block on `/o-projektu.php`. */
+@Composable
+private fun FaqSection() {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            "Často kladené dotazy",
+            style = MaterialTheme.typography.titleSmall,
+            color = EuroklicTheme.extended.textStrong,
+        )
+        FAQ_ITEMS.forEach { (question, answer) ->
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        question,
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        answer,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val FAQ_ITEMS = listOf(
+    "Co je to Euroklíč a kdo na něj má nárok?" to
+        "Euroklíč je speciální univerzální klíč, kterým lze odemknout bezbariérová WC, plošiny a " +
+        "výtahy nejen v ČR, ale i po celé Evropě. Je určen lidem s průkazem TP, ZTP a ZTP/P, " +
+        "diabetikům, stomikům, onkologickým pacientům, lidem s roztroušenou sklerózou a rodičům " +
+        "dětí do tří let.",
+    "Odkud berete data?" to
+        "Data o lokacích získáváme primárně jako kompilaci otevřených dat a od našich uživatelů. " +
+        "Databáze je otevřená komunitě — každý uživatel může přes interaktivní mapu nahlásit " +
+        "nefunkční WC, nebo naopak přidat nové místo.",
+    "Můžu si mapu stáhnout do mobilu?" to
+        "Ano — a tahle appka je přesně to. Funguje i offline nad staženými daty.",
+    "Jak mohu pomoci?" to
+        "Nejvíce pomůžete tím, že budete databázi udržovat aktuální. Pokud narazíte na Eurozámek, " +
+        "který na mapě chybí, přidejte ho. Pokud dorazíte k toaletě, která je trvale zamčená nebo " +
+        "nefunkční, přidejte komentář a upozorněte ostatní.",
+)
+
+/** Mirrors the web's donation block ("Chcete projekt podpořit i finančně?") on `/o-projektu.php`. */
+@Composable
+private fun SupportSection(context: android.content.Context) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "Podpořit projekt",
+            style = MaterialTheme.typography.titleSmall,
+            color = EuroklicTheme.extended.textStrong,
+        )
+        Text(
+            "Projekt běží ve volném čase a z vlastní kapsy. Pokud vám pomohl, budu rád za podporu.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        LinkRow(
+            title = "Donatr.ee",
+            subtitle = "Vše na jednom místě",
+            onClick = { openUrl(context, "https://donatr.ee/mxnticek") },
+        )
+        LinkRow(
+            title = "PayPal",
+            subtitle = "paypal.me/mxnticek",
+            onClick = { openUrl(context, "https://paypal.me/mxnticek") },
+        )
+        LinkRow(
+            title = "Revolut",
+            subtitle = "revolut.me/vlastiwazs",
+            onClick = { openUrl(context, "https://revolut.me/vlastiwazs") },
+        )
     }
 }
 
