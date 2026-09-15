@@ -3,6 +3,7 @@ package cz.euroklicmapa.ui.screens
 import android.Manifest
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.Directions
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.NearMe
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
@@ -141,6 +143,7 @@ fun MapScreen(
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var downloadState by remember { mutableStateOf<OfflineDownloadResult?>(null) }
     val downloading = downloadState is OfflineDownloadResult.Started || downloadState is OfflineDownloadResult.Progress
+    var secondaryActionsExpanded by remember { mutableStateOf(false) }
 
     // The map camera the user last left — persisted through onSaveInstanceState (config change
     // *and* process death) so a cold start restores the view instead of snapping to the CZ/SK
@@ -305,57 +308,85 @@ fun MapScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                // Offline-tile download for the current viewport — a deliberate, bounded action
-                // (see startOfflineDownload's MAX_TILES guard), not a "cache everything" toggle.
-                SmallFloatingActionButton(
-                    onClick = {
-                        val mv = mapViewRef
-                        if (mv == null || downloading) return@SmallFloatingActionButton
-                        startOfflineDownload(mv, context) { result ->
-                            downloadState = result
-                            when (result) {
-                                is OfflineDownloadResult.TooLarge -> Toast.makeText(
-                                    context,
-                                    "Vybraná oblast je na stažení moc velká. Přibližte mapu na " +
-                                        "menší oblast a zkuste to znovu.",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                                is OfflineDownloadResult.Done -> Toast.makeText(
-                                    context, "Mapa téhle oblasti je stažená pro offline použití.",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                                is OfflineDownloadResult.Failed -> Toast.makeText(
-                                    context,
-                                    "Stahování mapy se nezdařilo. Zkuste to znovu s lepším připojením.",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                                else -> {}
+                // Two secondary actions (offline download, add place) collapse behind one toggle
+                // — three permanently-stacked FABs read as clutter next to the primary one below.
+                AnimatedVisibility(visible = secondaryActionsExpanded) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        // Offline-tile download for the current viewport — a deliberate, bounded
+                        // action (see startOfflineDownload's MAX_TILES guard), not a "cache
+                        // everything" toggle.
+                        SmallFloatingActionButton(
+                            onClick = {
+                                val mv = mapViewRef
+                                if (mv == null || downloading) return@SmallFloatingActionButton
+                                secondaryActionsExpanded = false
+                                startOfflineDownload(mv, context) { result ->
+                                    downloadState = result
+                                    when (result) {
+                                        is OfflineDownloadResult.TooLarge -> Toast.makeText(
+                                            context,
+                                            "Vybraná oblast je na stažení moc velká. Přibližte " +
+                                                "mapu na menší oblast a zkuste to znovu.",
+                                            Toast.LENGTH_LONG,
+                                        ).show()
+                                        is OfflineDownloadResult.Done -> Toast.makeText(
+                                            context,
+                                            "Mapa téhle oblasti je stažená pro offline použití.",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                        is OfflineDownloadResult.Failed -> Toast.makeText(
+                                            context,
+                                            "Stahování mapy se nezdařilo. Zkuste to znovu s " +
+                                                "lepším připojením.",
+                                            Toast.LENGTH_LONG,
+                                        ).show()
+                                        else -> {}
+                                    }
+                                }
+                            },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        ) {
+                            if (downloading) {
+                                val percent = (downloadState as? OfflineDownloadResult.Progress)?.percent ?: 0
+                                CircularProgressIndicator(
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .semantics {
+                                            contentDescription = "Stahuji mapu pro offline použití, $percent %"
+                                        },
+                                )
+                            } else {
+                                Icon(Icons.Rounded.CloudDownload, contentDescription = "Stáhnout mapu pro offline použití")
                             }
                         }
-                    },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                ) {
-                    if (downloading) {
-                        val percent = (downloadState as? OfflineDownloadResult.Progress)?.percent ?: 0
-                        CircularProgressIndicator(
-                            strokeWidth = 2.dp,
-                            modifier = Modifier
-                                .size(20.dp)
-                                .semantics { contentDescription = "Stahuji mapu pro offline použití, $percent %" },
-                        )
-                    } else {
-                        Icon(Icons.Rounded.CloudDownload, contentDescription = "Stáhnout mapu pro offline použití")
+                        // Same "Přidat místo" action as More, just reachable without leaving
+                        // the map.
+                        SmallFloatingActionButton(
+                            onClick = {
+                                secondaryActionsExpanded = false
+                                if (loggedIn) onAddPlace() else showLoginDialog = true
+                            },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        ) {
+                            Icon(Icons.Rounded.Add, contentDescription = "Přidat místo")
+                        }
                     }
                 }
-                // Secondary — same "Přidat místo" action as More, just reachable without
-                // leaving the map. Tonal, so it doesn't compete with the primary FAB below.
                 SmallFloatingActionButton(
-                    onClick = { if (loggedIn) onAddPlace() else showLoginDialog = true },
+                    onClick = { secondaryActionsExpanded = !secondaryActionsExpanded },
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 ) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Přidat místo")
+                    Icon(
+                        if (secondaryActionsExpanded) Icons.Rounded.Close else Icons.Rounded.MoreHoriz,
+                        contentDescription = if (secondaryActionsExpanded) "Zavřít další akce" else "Další akce",
+                    )
                 }
                 // The app's one question, one tap away — mirrors the website's
                 // "Najít nejbližší WC (GPS)". Refreshes the fix, recentres on the nearest

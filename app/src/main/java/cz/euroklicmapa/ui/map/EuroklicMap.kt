@@ -411,8 +411,10 @@ private fun drawIndividual(mv: MapView, list: List<MapMarker>, s: RenderState) {
                     clickable = false,
                 ) {}
                 key.startsWith("ring") -> {
+                    // Thicker white ring than the old 2.5dp gap — on a real screen that read as
+                    // barely different from an unverified dot at a glance.
                     addPoints(
-                        mv, group, SimpleFastPointOverlayOptions.Shape.CIRCLE, radius = r(10.5f),
+                        mv, group, SimpleFastPointOverlayOptions.Shape.CIRCLE, radius = r(12.5f),
                         paint = fill(android.graphics.Color.WHITE), clickable = false,
                     ) {}
                     addPoints(
@@ -420,8 +422,10 @@ private fun drawIndividual(mv: MapView, list: List<MapMarker>, s: RenderState) {
                         paint = fill(src), clickable = false,
                     ) {}
                 }
+                // Unverified: no ring AND visibly smaller than a verified/official dot, so
+                // "not yet confirmed" reads from size alone, not just the ring's presence.
                 else -> addPoints(
-                    mv, group, SimpleFastPointOverlayOptions.Shape.CIRCLE, radius = r(8f),
+                    mv, group, SimpleFastPointOverlayOptions.Shape.CIRCLE, radius = r(6f),
                     paint = fill(src), clickable = false,
                 ) {}
             }
