@@ -72,3 +72,39 @@ fun flattenPlaces(
     return if (userLocation != null) all.sortedBy { it.distanceMeters ?: Double.MAX_VALUE }
     else all.sortedBy { it.title.lowercase() }
 }
+
+/** The 4-value [PlaceStatus] (marker/badge rendering, mirrors the website) collapses to 3
+ *  filter buckets here — OFFICIAL and RECENTLY_VERIFIED both just mean "verified" to a filter. */
+enum class StatusFilter { VERIFIED, UNVERIFIED, REPORTED }
+
+private fun PlaceStatus.toFilterBucket(): StatusFilter = when (this) {
+    PlaceStatus.REPORTED -> StatusFilter.REPORTED
+    PlaceStatus.OFFICIAL, PlaceStatus.RECENTLY_VERIFIED -> StatusFilter.VERIFIED
+    PlaceStatus.UNVERIFIED -> StatusFilter.UNVERIFIED
+}
+
+/**
+ * Extra filters on top of [flattenPlaces]'s category split — "2.0" spec §24/28. Kept as a
+ * separate pass (not folded into `flattenPlaces` itself) so the 3 existing callers are
+ * unaffected unless they opt in. Empty [statuses] = no status filter. `null` [maxDistanceMeters]
+ * = no distance cap. Pickup points carry no [PlaceListItem.status] — a status filter never hides
+ * them (they don't participate in "verification" at all), but distance still applies to both.
+ */
+data class PlaceFilters(
+    val statuses: Set<StatusFilter> = emptySet(),
+    val maxDistanceMeters: Double? = null,
+) {
+    val activeCount: Int get() = statuses.size + if (maxDistanceMeters != null) 1 else 0
+}
+
+fun applyPlaceFilters(items: List<PlaceListItem>, filters: PlaceFilters): List<PlaceListItem> {
+    var result = items
+    if (filters.statuses.isNotEmpty()) {
+        result = result.filter { it.status == null || it.status.toFilterBucket() in filters.statuses }
+    }
+    val cap = filters.maxDistanceMeters
+    if (cap != null) {
+        result = result.filter { (it.distanceMeters ?: Double.MAX_VALUE) <= cap }
+    }
+    return result
+}

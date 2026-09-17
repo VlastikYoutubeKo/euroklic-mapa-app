@@ -27,6 +27,11 @@ class ListViewModel(
 
     fun setCategory(c: PlaceCategory) { _category.value = c }
 
+    private val _filters = MutableStateFlow(PlaceFilters())
+    val filters: StateFlow<PlaceFilters> = _filters.asStateFlow()
+
+    fun setFilters(f: PlaceFilters) { _filters.value = f }
+
     val dataSync: StateFlow<Long?> = repository.observeLocationsSync()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -39,8 +44,9 @@ class ListViewModel(
         repository.getPickupPoints(),
         locationRepository.lastKnown,
         _category,
-    ) { locations, pickupPoints, userLocation, category ->
-        flattenPlaces(locations, pickupPoints, userLocation, category)
+        _filters,
+    ) { locations, pickupPoints, userLocation, category, filters ->
+        applyPlaceFilters(flattenPlaces(locations, pickupPoints, userLocation, category), filters)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun refreshLocation() = locationRepository.refresh()

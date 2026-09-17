@@ -6,17 +6,29 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.WrongLocation
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,8 +38,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,6 +56,8 @@ import cz.euroklicmapa.ui.components.LoadingState
 import cz.euroklicmapa.ui.components.PlaceCard
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import cz.euroklicmapa.ui.viewmodel.PlaceCategory
+import cz.euroklicmapa.ui.viewmodel.PlaceFilters
+import cz.euroklicmapa.ui.viewmodel.StatusFilter
 import cz.euroklicmapa.util.formatDistance
 import cz.euroklicmapa.util.formatWalkingTime
 import cz.euroklicmapa.util.placesCount
@@ -60,6 +76,8 @@ fun ListScreen(
     val dataSync by viewModel.dataSync.collectAsStateWithLifecycle()
     val hasLocation by viewModel.hasLocation.collectAsStateWithLifecycle()
     val category by viewModel.category.collectAsStateWithLifecycle()
+    val filters by viewModel.filters.collectAsStateWithLifecycle()
+    var showFilterDialog by remember { mutableStateOf(false) }
 
     val locationPermissions = rememberMultiplePermissionsState(
         listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
@@ -89,12 +107,26 @@ fun ListScreen(
             )
             DataFreshnessBanner(dataSync)
             Row(
-                modifier = Modifier.selectableGroup(),
+                modifier = Modifier
+                    .selectableGroup()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 CategoryChip("Vše", category == PlaceCategory.ALL) { viewModel.setCategory(PlaceCategory.ALL) }
                 CategoryChip("Toalety", category == PlaceCategory.TOILET) { viewModel.setCategory(PlaceCategory.TOILET) }
                 CategoryChip("Výdejní místa", category == PlaceCategory.PICKUP) { viewModel.setCategory(PlaceCategory.PICKUP) }
+                FilterChip(
+                    selected = filters.activeCount > 0,
+                    onClick = { showFilterDialog = true },
+                    label = { Text(if (filters.activeCount > 0) "Filtry · ${filters.activeCount}" else "Filtry") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Rounded.FilterList,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize),
+                        )
+                    },
+                )
             }
             if (!hasLocation && !hasLocationPermission && items.isNotEmpty()) {
                 LocationHint(onEnable = { locationPermissions.launchMultiplePermissionRequest() })
@@ -164,6 +196,96 @@ fun ListScreen(
                 }
             }
         }
+    }
+
+    if (showFilterDialog) {
+        FilterDialog(
+            initial = filters,
+            onDismiss = { showFilterDialog = false },
+            onApply = { viewModel.setFilters(it); showFilterDialog = false },
+        )
+    }
+}
+
+/**
+ * "2.0" spec §24/28 — status + distance filters, using data already on [PlaceListItem]
+ * (no backend needed). Temp state inside the dialog per spec: "Zrušit" discards, "Použít" commits.
+ */
+@Composable
+private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: (PlaceFilters) -> Unit) {
+    var statuses by remember { mutableStateOf(initial.statuses) }
+    var distance by remember { mutableStateOf(initial.maxDistanceMeters) }
+
+    fun toggle(s: StatusFilter) {
+        statuses = if (s in statuses) statuses - s else statuses + s
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Filtry") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    "STAV",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FilterCheckRow("Ověřená místa", StatusFilter.VERIFIED in statuses) { toggle(StatusFilter.VERIFIED) }
+                FilterCheckRow("Bez ověření", StatusFilter.UNVERIFIED in statuses) { toggle(StatusFilter.UNVERIFIED) }
+                FilterCheckRow("Nahlášený problém", StatusFilter.REPORTED in statuses) { toggle(StatusFilter.REPORTED) }
+
+                Text(
+                    "VZDÁLENOST",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+                FilterRadioRow("500 m", distance == 500.0) { distance = 500.0 }
+                FilterRadioRow("1 km", distance == 1000.0) { distance = 1000.0 }
+                FilterRadioRow("5 km", distance == 5000.0) { distance = 5000.0 }
+                FilterRadioRow("Bez omezení", distance == null) { distance = null }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(PlaceFilters(statuses, distance)) }) { Text("Použít") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Zrušit") }
+        },
+    )
+}
+
+@Composable
+private fun FilterCheckRow(label: String, checked: Boolean, onToggle: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                role = Role.Checkbox,
+                onValueChange = { onToggle() },
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(checked = checked, onCheckedChange = null)
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun FilterRadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                role = Role.RadioButton,
+                onClick = onSelect,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Text(label, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
