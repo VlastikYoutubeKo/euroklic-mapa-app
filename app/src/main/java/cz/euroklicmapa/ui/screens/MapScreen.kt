@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -255,6 +256,7 @@ fun MapScreen(
                     places = nearby,
                     hasLocation = userLocation != null,
                     onOpen = { item -> onMarkerClick(item.id.toString(), item.navType) },
+                    onRetry = viewModel::retry,
                 )
             }
         },
@@ -531,6 +533,7 @@ private fun NearbySheetList(
     places: List<PlaceListItem>,
     hasLocation: Boolean,
     onOpen: (PlaceListItem) -> Unit,
+    onRetry: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -562,12 +565,17 @@ private fun NearbySheetList(
         }
         if (places.isEmpty()) {
             item {
-                Text(
-                    "Zatím tu nic není. Zkuste to znovu, až budete online.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 24.dp),
-                )
+                Column(
+                    modifier = Modifier.padding(vertical = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(
+                        "Zatím tu nic není. Zkuste to znovu, až budete online.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OutlinedButton(onClick = onRetry) { Text("Zkusit znovu") }
+                }
             }
         }
     }

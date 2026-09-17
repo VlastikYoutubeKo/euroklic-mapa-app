@@ -133,6 +133,14 @@ class MapViewModel(
     fun onRecenterHandled() {
         _recenterTarget.value = null
     }
+
+    /** Manual re-fetch for the sheet's "Zkusit znovu" — mirrors ListViewModel.retry(). */
+    fun retry() {
+        viewModelScope.launch {
+            repository.refreshLocations()
+            repository.refreshPickupPoints()
+        }
+    }
 }
 
 /** Outcome of the "Nejbližší WC" quick action. */
