@@ -478,6 +478,28 @@ private fun WcBody(
             StatusBadge(likes = wc.likes, dislikes = wc.dislikes, isCd = wc.source == "cd")
             if (isForeignCountry(wc.country)) ForeignBadge(wc.country)
         }
+
+        // A15 — moved up next to the status badge it summarizes: the old bottom-of-screen spot
+        // (after photo/map/hours/description/comments) buried the one action this app is for.
+        VoteRow(
+            likes = wc.likes,
+            dislikes = wc.dislikes,
+            myVote = myVote,
+            voting = voting,
+            message = message,
+            onVote = onVote,
+        )
+        // A11 — you're literally standing at a place that's flagged as broken: nudge a re-check.
+        val reported = remember(wc.source, wc.likes, wc.dislikes, wc.lastVerified) {
+            placeStatus(wc.source, wc.likes, wc.dislikes, wc.lastVerified) == PlaceStatus.REPORTED
+        }
+        val atThisPlace = userLocation?.let {
+            distanceBetween(GeoPoint(wc.latitude, wc.longitude), it) <= 75.0
+        } ?: false
+        if (reported && atThisPlace) {
+            VerifyPresenceCard(voting = voting, onVote = onVote)
+        }
+
         AccessCard(requiresKey = wc.access == "eurokey", wheelchair = wc.wheelchair)
         AddPhotoRow(hasPhoto = hasPhoto, uploading = photoUploading, onClick = onAddPhoto)
         DistanceCard(GeoPoint(wc.latitude, wc.longitude), userLocation)
@@ -504,25 +526,6 @@ private fun WcBody(
             onRequestLogin = onRequestLogin,
         )
 
-        // A11 — you're literally standing at a place that's flagged as broken: nudge a re-check.
-        val reported = remember(wc.source, wc.likes, wc.dislikes, wc.lastVerified) {
-            placeStatus(wc.source, wc.likes, wc.dislikes, wc.lastVerified) == PlaceStatus.REPORTED
-        }
-        val atThisPlace = userLocation?.let {
-            distanceBetween(GeoPoint(wc.latitude, wc.longitude), it) <= 75.0
-        } ?: false
-        if (reported && atThisPlace) {
-            VerifyPresenceCard(voting = voting, onVote = onVote)
-        }
-
-        VoteRow(
-            likes = wc.likes,
-            dislikes = wc.dislikes,
-            myVote = myVote,
-            voting = voting,
-            message = message,
-            onVote = onVote,
-        )
         ReportLink(wc.webUrl)
     }
 }
