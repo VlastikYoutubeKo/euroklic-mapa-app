@@ -2,6 +2,9 @@ package cz.euroklicmapa
 
 import android.app.Application
 import androidx.room.Room
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.SvgDecoder
 import cz.euroklicmapa.data.auth.AuthRepository
 import cz.euroklicmapa.data.auth.AuthTokenHolder
 import cz.euroklicmapa.data.auth.SecureTokenStore
@@ -47,7 +50,14 @@ import java.util.concurrent.TimeUnit
  * Manual DI container. The app is small enough that a ViewModelProvider.Factory per screen
  * pulling from here is simpler than a DI framework.
  */
-class EuroklicApplication : Application() {
+class EuroklicApplication : Application(), ImageLoaderFactory {
+
+    /** Adds SVG support (station floor plans, `api_floorplan.php`) to every `AsyncImage` in the
+     *  app — a no-op decoder step for the ordinary JPEG/PNG photo uploads. */
+    override fun newImageLoader(): ImageLoader =
+        ImageLoader.Builder(this)
+            .components { add(SvgDecoder.Factory()) }
+            .build()
 
     lateinit var repository: EuroklicRepository
         private set

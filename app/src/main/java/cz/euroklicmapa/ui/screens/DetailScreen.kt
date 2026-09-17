@@ -364,7 +364,7 @@ private fun Hero(photoUrl: String?, isPickup: Boolean, name: String?, onPhotoCli
 private fun PhotoViewerDialog(url: String, author: String?, contentDescription: String?, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
-            ZoomableImage(url = url, contentDescription = contentDescription)
+            ZoomableImage(model = url, contentDescription = contentDescription)
             Surface(
                 onClick = onDismiss,
                 shape = CircleShape,
@@ -398,9 +398,10 @@ private fun PhotoViewerDialog(url: String, author: String?, contentDescription: 
     }
 }
 
-/** Pinch-to-zoom (1x-5x) + pan; double-tap toggles between 1x and 2x. */
+/** Pinch-to-zoom (1x-5x) + pan; double-tap toggles between 1x and 2x. [model] is anything Coil
+ *  accepts — a remote URL (photos) or a local file (floor plan SVG cache). */
 @Composable
-private fun ZoomableImage(url: String, contentDescription: String?) {
+private fun ZoomableImage(model: Any?, contentDescription: String?) {
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     val transformState = rememberTransformableState { zoomChange, panChange, _ ->
@@ -408,7 +409,7 @@ private fun ZoomableImage(url: String, contentDescription: String?) {
         offset = if (scale <= 1f) Offset.Zero else offset + panChange
     }
     AsyncImage(
-        model = url,
+        model = model,
         contentDescription = contentDescription,
         placeholder = painterResource(R.drawable.placeholder),
         error = painterResource(R.drawable.placeholder),
@@ -515,7 +516,7 @@ private fun WcBody(
         }
         wc.note?.takeIf { it.isNotBlank() }?.let { Section("Poznámka", it) }
         wc.accessibilityNote?.takeIf { it.isNotBlank() }?.let { ExpandableSection("Přístupnost stanice", it) }
-        wc.floorPlanUrl?.takeIf { it.isNotBlank() }?.let { FloorPlanLink(it) }
+        wc.floorPlanUrl?.takeIf { it.isNotBlank() }?.let { FloorPlanSection(wc.id, it) }
         Section("Původní zdroj", originalSourceLabel(wc.source))
         wc.lastVerified?.let {
             Section("Naposledy ověřeno", it.substringBefore(" "))
@@ -664,14 +665,54 @@ private fun ExpandableSection(label: String, value: String) {
     }
 }
 
+/**
+ * Shows the station floor plan as a tappable (fullscreen, pinch-zoom) image, not just a link out.
+ * `cd.cz/planek/{id}` itself is an HTML page with the plan buried as base64 SVG inside inline JS
+ * — backend's `api_floorplan.php?id=<location id>` already does that scrape server-side and
+ * serves clean `image/svg+xml` (7-day HTTP cache), so this is a plain AsyncImage, same as any
+ * photo. [sourceUrl] (cd.cz) stays as a small secondary link for the original page.
+ */
 @Composable
-private fun FloorPlanLink(url: String) {
+private fun FloorPlanSection(locationId: Int, sourceUrl: String) {
+    var showViewer by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
-    TextButton(
-        onClick = { uriHandler.openUri(url) },
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-    ) {
-        Text("Orientační plánek stanice", textDecoration = TextDecoration.Underline)
+    val imageUrl = "https://euroklic.odjezdy.online/api_floorplan.php?id=$locationId"
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            "ORIENTAČNÍ PLÁNEK STANICE",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = "Orientační plánek stanice — otevřít na celou obrazovku",
+            placeholder = painterResource(R.drawable.placeholder),
+            error = painterResource(R.drawable.placeholder),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(190.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color.White) // plans are white-background line art in both app themes
+                .clickable(onClickLabel = "Otevřít na celou obrazovku", onClick = { showViewer = true })
+                .semantics { role = Role.Button },
+        )
+        TextButton(
+            onClick = { uriHandler.openUri(sourceUrl) },
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+        ) {
+            Text("Zobrazit na cd.cz", textDecoration = TextDecoration.Underline)
+        }
+    }
+
+    if (showViewer) {
+        PhotoViewerDialog(
+            url = imageUrl,
+            author = null,
+            contentDescription = "Orientační plánek stanice",
+            onDismiss = { showViewer = false },
+        )
     }
 }
 
