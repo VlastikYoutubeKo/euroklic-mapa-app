@@ -87,6 +87,7 @@ class MappersTest {
             note = "Klíč u informací",
             amenity = "toilets",
             photo_url = "https://euroklic.odjezdy.online/uploads/638.jpg",
+            photo_author = "Jana Nováková",
             likes = 9,
             dislikes = 3,
             last_verified = "2026-08-15 12:34:56",
@@ -107,6 +108,7 @@ class MappersTest {
         assertEquals("U pokladen, přízemí", entity.description)
         assertEquals("Klíč u informací", entity.note)
         assertEquals("https://euroklic.odjezdy.online/uploads/638.jpg", entity.photoUrl)
+        assertEquals("Jana Nováková", entity.photoAuthor)
         assertEquals(9, entity.likes)
         assertEquals(3, entity.dislikes)
         assertEquals("2026-08-15 12:34:56", entity.lastVerified)

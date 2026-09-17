@@ -19,11 +19,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,7 +45,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -311,7 +305,7 @@ fun DetailScreen(
 }
 
 @Composable
-private fun Hero(photoUrl: String?, isPickup: Boolean, name: String?) {
+private fun Hero(photoUrl: String?, isPickup: Boolean, name: String?, onPhotoClick: (() -> Unit)? = null) {
     Box(modifier = Modifier.fillMaxWidth().height(if (photoUrl.isNullOrBlank()) 168.dp else 240.dp)) {
         if (!photoUrl.isNullOrBlank()) {
             AsyncImage(
@@ -320,7 +314,16 @@ private fun Hero(photoUrl: String?, isPickup: Boolean, name: String?) {
                 placeholder = painterResource(R.drawable.placeholder),
                 error = painterResource(R.drawable.placeholder),
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .let { m ->
+                        if (onPhotoClick == null) {
+                            m
+                        } else {
+                            m.clickable(onClickLabel = "Otevřít na celou obrazovku", onClick = onPhotoClick)
+                                .semantics { role = Role.Button }
+                        }
+                    },
             )
         } else {
             Box(
@@ -349,73 +352,13 @@ private fun Hero(photoUrl: String?, isPickup: Boolean, name: String?) {
     }
 }
 
-/**
- * Photo strip below the description. A single photo fills the row edge-to-edge; several (once
- * the backend ever sends more than one) scroll horizontally as thumbnails. Tapping any of them
- * opens [PhotoViewerDialog] (fullscreen, pinch-zoom, swipe between photos).
- */
+/** Fullscreen photo viewer (pinch-zoom, double-tap) opened from [Hero]. Shows who submitted the
+ *  photo when the backend sends it (`photo_author`) — absent on older/un-migrated rows. */
 @Composable
-private fun PhotoGallery(photos: List<String>) {
-    if (photos.isEmpty()) return
-    var openIndex by remember(photos) { mutableStateOf<Int?>(null) }
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            "FOTOGRAFIE",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            itemsIndexed(photos) { index, url ->
-                AsyncImage(
-                    model = url,
-                    contentDescription = null,
-                    placeholder = painterResource(R.drawable.placeholder),
-                    error = painterResource(R.drawable.placeholder),
-                    contentScale = ContentScale.Crop,
-                    modifier = (if (photos.size == 1) Modifier.fillParentMaxWidth() else Modifier.width(240.dp))
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .clickable(
-                            onClickLabel = "Otevřít na celou obrazovku",
-                            onClick = { openIndex = index },
-                        )
-                        .semantics {
-                            contentDescription = if (photos.size > 1) {
-                                "Fotografie ${index + 1} z ${photos.size}"
-                            } else {
-                                "Fotografie"
-                            }
-                            role = Role.Button
-                        },
-                )
-            }
-        }
-    }
-
-    openIndex?.let { idx ->
-        PhotoViewerDialog(photos = photos, initialIndex = idx, onDismiss = { openIndex = null })
-    }
-}
-
-@Composable
-private fun PhotoViewerDialog(photos: List<String>, initialIndex: Int, onDismiss: () -> Unit) {
-    val pagerState = rememberPagerState(initialPage = initialIndex) { photos.size }
+private fun PhotoViewerDialog(url: String, author: String?, contentDescription: String?, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
-            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-                // Keying by page resets zoom/pan when swiping to a different photo.
-                key(page) {
-                    ZoomableImage(
-                        url = photos[page],
-                        contentDescription = if (photos.size > 1) {
-                            "Fotografie ${page + 1} z ${photos.size}"
-                        } else {
-                            "Fotografie"
-                        },
-                    )
-                }
-            }
+            ZoomableImage(url = url, contentDescription = contentDescription)
             Surface(
                 onClick = onDismiss,
                 shape = CircleShape,
@@ -431,9 +374,9 @@ private fun PhotoViewerDialog(photos: List<String>, initialIndex: Int, onDismiss
                     Icon(Icons.Rounded.Close, contentDescription = "Zavřít")
                 }
             }
-            if (photos.size > 1) {
+            if (!author.isNullOrBlank()) {
                 Text(
-                    "${pagerState.currentPage + 1} / ${photos.size}",
+                    "Foto: $author",
                     color = Color.White,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
@@ -504,9 +447,22 @@ private fun WcBody(
     onSubmitComment: (String) -> Unit,
     onRequestLogin: () -> Unit,
 ) {
-    // The real photo now lives in PhotoGallery below the description — the hero stays an icon
-    // banner so it doesn't duplicate the (clickable, zoomable) inline gallery.
-    Hero(photoUrl = null, isPickup = false, name = wc.name)
+    var showPhotoViewer by remember { mutableStateOf(false) }
+    val hasPhoto = !wc.photoUrl.isNullOrBlank()
+    Hero(
+        photoUrl = wc.photoUrl,
+        isPickup = false,
+        name = wc.name,
+        onPhotoClick = if (hasPhoto) ({ showPhotoViewer = true }) else null,
+    )
+    if (showPhotoViewer && hasPhoto) {
+        PhotoViewerDialog(
+            url = wc.photoUrl!!,
+            author = wc.photoAuthor,
+            contentDescription = "Fotografie: ${wc.name}",
+            onDismiss = { showPhotoViewer = false },
+        )
+    }
     Column(
         modifier = Modifier.fillMaxWidth().padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -517,10 +473,8 @@ private fun WcBody(
             StatusBadge(likes = wc.likes, dislikes = wc.dislikes, isCd = wc.source == "cd")
             if (isForeignCountry(wc.country)) ForeignBadge(wc.country)
         }
-        if (wc.access == "eurokey") {
-            KeyRequiredCard()
-        }
-        WheelchairCard(wc.wheelchair)
+        AccessCard(requiresKey = wc.access == "eurokey", wheelchair = wc.wheelchair)
+        AddPhotoRow(hasPhoto = hasPhoto, uploading = photoUploading, onClick = onAddPhoto)
         DistanceCard(GeoPoint(wc.latitude, wc.longitude), userLocation)
         MiniMap(
             lat = wc.latitude,
@@ -531,9 +485,6 @@ private fun WcBody(
         wc.description?.takeIf { it.isNotBlank() }?.let {
             Section("Popis", prettifyDescription(it))
         }
-        // Only ever one approved photo today (`locations.photo_url`), but the gallery already
-        // supports several in case the backend starts returning more.
-        PhotoGallery(photos = listOfNotNull(wc.photoUrl?.takeIf { it.isNotBlank() }))
         wc.note?.takeIf { it.isNotBlank() }?.let { Section("Poznámka", it) }
         wc.accessibilityNote?.takeIf { it.isNotBlank() }?.let { ExpandableSection("Přístupnost stanice", it) }
         wc.floorPlanUrl?.takeIf { it.isNotBlank() }?.let { FloorPlanLink(it) }
@@ -546,12 +497,6 @@ private fun WcBody(
             posting = commentPosting,
             onSubmit = onSubmitComment,
             onRequestLogin = onRequestLogin,
-        )
-
-        AddPhotoRow(
-            hasPhoto = !wc.photoUrl.isNullOrBlank(),
-            uploading = photoUploading,
-            onClick = onAddPhoto,
         )
 
         // A11 — you're literally standing at a place that's flagged as broken: nudge a re-check.
@@ -637,25 +582,40 @@ private fun ForeignBadge(country: String?) {
     )
 }
 
+/** Merges the old separate KeyRequiredCard + WheelchairCard into one box — two stacked
+ *  full-width cards for two one-line facts read as clutter; one card, two lines doesn't. */
 @Composable
-private fun WheelchairCard(wheelchair: String?) {
-    val (text, warn) = when (wheelchair) {
+private fun AccessCard(requiresKey: Boolean, wheelchair: String?) {
+    val wheelchairLine = when (wheelchair) {
         "yes" -> "Bezbariérový přístup do budovy: ano" to false
         "no" -> "Bezbariérový přístup do budovy: ne" to true
-        else -> return
+        else -> null
     }
+    if (!requiresKey && wheelchairLine == null) return
     Surface(
-        color = if (warn) MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
-        else EuroklicTheme.extended.success.copy(alpha = 0.14f),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(14.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text(
-            text,
+        Column(
             modifier = Modifier.padding(14.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (warn) MaterialTheme.colorScheme.error else EuroklicTheme.extended.success,
-        )
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            if (requiresKey) {
+                Text(
+                    "Zamčeno – pro vstup je nutný Euroklíč.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            wheelchairLine?.let { (text, warn) ->
+                Text(
+                    text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (warn) MaterialTheme.colorScheme.error else EuroklicTheme.extended.success,
+                )
+            }
+        }
     }
 }
 
@@ -681,22 +641,6 @@ private fun ExpandableSection(label: String, value: String) {
         ) {
             Text(if (expanded) "Zobrazit méně" else "Zobrazit vše")
         }
-    }
-}
-
-@Composable
-private fun KeyRequiredCard() {
-    Surface(
-        color = EuroklicTheme.extended.brandButton.copy(alpha = 0.12f),
-        shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text(
-            "Zamčeno – pro vstup je nutný Euroklíč.",
-            modifier = Modifier.padding(14.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
     }
 }
 

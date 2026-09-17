@@ -32,6 +32,7 @@ class PlacesTest {
         description = null,
         note = null,
         photoUrl = null,
+        photoAuthor = null,
         likes = likes,
         dislikes = dislikes,
         lastVerified = lastVerified,

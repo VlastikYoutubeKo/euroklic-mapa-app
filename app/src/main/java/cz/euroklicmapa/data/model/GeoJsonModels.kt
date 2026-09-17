@@ -33,6 +33,8 @@ data class WcProperties(
     val note: String? = null,
     val amenity: String? = null,
     val photo_url: String? = null,
+    /** Who submitted [photo_url] (Discord display name, or null pre-migration / no photo). */
+    val photo_author: String? = null,
     val likes: Int = 0,
     val dislikes: Int = 0,
     val last_verified: String? = null,

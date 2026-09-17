@@ -22,6 +22,7 @@ class FavoriteMapperTest {
         description = "U pokladen, přízemí",
         note = "Klíč u informací",
         photoUrl = "https://euroklic.odjezdy.online/uploads/42.jpg",
+        photoAuthor = "Jana Nováková",
         likes = 7,
         dislikes = 2,
         lastVerified = "2026-08-01 10:00:00",
@@ -65,6 +66,7 @@ class FavoriteMapperTest {
         assertEquals(wc.description, restored.description)
         assertEquals(wc.note, restored.note)
         assertEquals(wc.photoUrl, restored.photoUrl)
+        assertEquals(wc.photoAuthor, restored.photoAuthor)
         assertEquals(wc.likes, restored.likes)
         assertEquals(wc.dislikes, restored.dislikes)
         assertEquals(wc.lastVerified, restored.lastVerified)
@@ -92,7 +94,7 @@ class FavoriteMapperTest {
     @Test
     fun wc_nullSnapshotStrings_roundTripToNull() {
         val bare = wc.copy(
-            description = null, note = null, photoUrl = null, webUrl = null,
+            description = null, note = null, photoUrl = null, photoAuthor = null, webUrl = null,
             openingHours = null, wcOpeningHours = null, access = null, wheelchair = null,
             accessibilityNote = null, country = null, floorPlanUrl = null,
             lastVerified = null,
@@ -101,6 +103,7 @@ class FavoriteMapperTest {
         assertNull(restored.description)
         assertNull(restored.note)
         assertNull(restored.photoUrl)
+        assertNull(restored.photoAuthor)
         assertNull(restored.webUrl)
         assertNull(restored.openingHours)
         assertNull(restored.wcOpeningHours)

@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SyncMetadataEntity::class,
         FavoriteEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = false,
 )
 abstract class EuroklicDatabase : RoomDatabase() {
@@ -98,6 +98,15 @@ abstract class EuroklicDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE locations ADD COLUMN wcOpeningHours TEXT")
                 db.execSQL("ALTER TABLE favorites ADD COLUMN wcOpeningHours TEXT")
+            }
+        }
+
+        /** `photo_author` — who submitted the approved photo, requested from backend 2026-09-17
+         *  for photo-credit display in the fullscreen viewer. Nullable/absent until backend ships it. */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE locations ADD COLUMN photoAuthor TEXT")
+                db.execSQL("ALTER TABLE favorites ADD COLUMN photoAuthor TEXT")
             }
         }
     }
