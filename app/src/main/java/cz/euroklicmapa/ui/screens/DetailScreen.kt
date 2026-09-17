@@ -2,6 +2,7 @@ package cz.euroklicmapa.ui.screens
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -31,6 +32,10 @@ import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Directions
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.ThumbDown
+import androidx.compose.material.icons.rounded.ThumbDownOffAlt
+import androidx.compose.material.icons.rounded.ThumbUp
+import androidx.compose.material.icons.rounded.ThumbUpOffAlt
 import androidx.compose.material.icons.rounded.Wc
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -1029,6 +1034,8 @@ private fun VoteRow(
                 text = "Funguje",
                 count = likes,
                 tint = ok,
+                icon = Icons.Rounded.ThumbUpOffAlt,
+                iconSelected = Icons.Rounded.ThumbUp,
                 selected = myVote == true,
                 enabled = !voting,
                 onClick = { onVote(true) },
@@ -1038,6 +1045,8 @@ private fun VoteRow(
                 text = "Nefunguje",
                 count = dislikes,
                 tint = err,
+                icon = Icons.Rounded.ThumbDownOffAlt,
+                iconSelected = Icons.Rounded.ThumbDown,
                 selected = myVote == false,
                 enabled = !voting,
                 onClick = { onVote(false) },
@@ -1058,17 +1067,32 @@ private fun VoteButton(
     text: String,
     count: Int,
     tint: Color,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconSelected: androidx.compose.ui.graphics.vector.ImageVector,
     selected: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Neutral (outlined, no tint) until it means something — my vote, or someone already
+    // voted. A permanently red-tinted "Nefunguje · 0" read as a standing warning on places
+    // nobody has actually reported, which is what made this look unfinished/off.
+    val active = selected || count > 0
     Surface(
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(14.dp),
-        color = if (selected) tint else tint.copy(alpha = 0.12f),
-        contentColor = if (selected) Color.White else tint,
+        color = when {
+            selected -> tint
+            active -> tint.copy(alpha = 0.12f)
+            else -> MaterialTheme.colorScheme.surfaceContainerHigh
+        },
+        contentColor = when {
+            selected -> Color.White
+            active -> tint
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        border = if (active) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier.height(52.dp),
     ) {
         Row(
@@ -1076,6 +1100,8 @@ private fun VoteButton(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Icon(if (selected) iconSelected else icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.size(6.dp))
             Text(
                 "$text · $count",
                 style = MaterialTheme.typography.titleSmall,
