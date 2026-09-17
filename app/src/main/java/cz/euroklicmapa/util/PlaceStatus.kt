@@ -50,6 +50,18 @@ fun placeStatus(
 }
 
 /**
+ * True when a place HAS a `last_verified` date but it's old enough to have fallen out of
+ * [PlaceStatus.RECENTLY_VERIFIED] — i.e. it reads as "unverified" even though someone did once
+ * confirm it. Doesn't touch marker/badge rendering (that still mirrors the website exactly);
+ * this only drives an extra caption on the detail screen ("ověření je starší").
+ */
+fun isStaleVerification(lastVerified: String?, now: Long = System.currentTimeMillis()): Boolean {
+    val verifiedAt = lastVerified?.let { runCatching { lastVerifiedFormat.get().parse(it)?.time }.getOrNull() }
+        ?: return false
+    return now - verifiedAt >= VERIFIED_WINDOW_MS
+}
+
+/**
  * Community-trust badge — the "Oficiální / Komunitní zdroj" pill beside it already says the
  * origin, so this must NOT repeat it. **Mirrors the website popup badge 1:1**: purely
  * likes/dislikes/`cd` — deliberately NOT `last_verified`/183-day (that still drives the marker

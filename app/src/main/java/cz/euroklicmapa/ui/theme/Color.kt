@@ -3,56 +3,61 @@ package cz.euroklicmapa.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * Brand palette. Contrast was verified against WCAG AA (4.5:1 for body text).
- * Do not tweak these values without recomputing contrast.
+ * Brand palette — "2.0" revision (2026-09-18), built from a pasted design spec's proposed
+ * background/surface/status colors. The spec's own Primary (#3F6FF5) FAILED WCAG AA as white
+ * button text (4.37:1, needs 4.5) and as text-on-dark-background (4.33:1) — every value below
+ * was re-derived and verified (30-pair audit, all ≥4.5:1 body text / ≥3:1 UI, most comfortably
+ * above minimum) before being adopted. Do not tweak without recomputing contrast.
  */
 
 // Shared (identical in light and dark)
-val BrandBlue = Color(0xFF2454E0)        // filled buttons / FAB background — same in both modes
-val BrandBluePressed = Color(0xFF1B3FB8)
+val BrandBlue = Color(0xFF2C60F4)        // filled buttons / FAB background — same in both modes
+val BrandBluePressed = Color(0xFF1E4CD6)
 
 // ---- Light ----
 val LightPrimary = BrandBlue
 val LightOnPrimary = Color(0xFFFFFFFF)
-val LightPrimaryContainer = Color(0xFFDDE6FF)
-val LightOnPrimaryContainer = Color(0xFF0C246E)
-val LightBackground = Color(0xFFF8FAFC)
-val LightOnBackground = Color(0xFF1E293B)
+val LightPrimaryContainer = Color(0xFFDCE5FF)
+val LightOnPrimaryContainer = Color(0xFF0D285F)
+val LightBackground = Color(0xFFF8F9FC)
+val LightOnBackground = Color(0xFF171B23)
 val LightSurface = Color(0xFFFFFFFF)
-val LightOnSurface = Color(0xFF1E293B)
-val LightOnSurfaceVariant = Color(0xFF64748B)   // text-muted
+val LightOnSurface = Color(0xFF171B23)
+val LightOnSurfaceVariant = Color(0xFF454C5B)   // text-muted
 val LightSurfaceContainerLowest = Color(0xFFFFFFFF)
-val LightSurfaceContainerLow = Color(0xFFFBFCFE)
-val LightSurfaceContainer = Color(0xFFF1F5F9)
-val LightSurfaceContainerHigh = Color(0xFFE9EEF5)
-val LightSurfaceContainerHighest = Color(0xFFE2E8F0)
-val LightOutline = Color(0xFFCBD5E1)
-val LightOutlineVariant = Color(0xFFE7ECF3)
-val LightTextStrong = Color(0xFF0F172A)
-val LightSuccess = Color(0xFF0D8259)
-val LightError = Color(0xFFD92D2D)
+val LightSurfaceContainerLow = Color(0xFFFCFCFD)
+val LightSurfaceContainer = Color(0xFFEEF1F7)
+val LightSurfaceContainerHigh = Color(0xFFE4E8F0)
+val LightSurfaceContainerHighest = Color(0xFFDAE1EE)
+val LightOutline = Color(0xFF737B8B)
+val LightOutlineVariant = Color(0xFFE9EAEC)
+val LightTextStrong = Color(0xFF0E141D)
+val LightSuccess = Color(0xFF157A54)
+val LightWarning = Color(0xFF94640B)            // "ověření je starší" (STALE) caption
+val LightError = Color(0xFFE00014)
 val LightAccent = Color(0xFFB4530A)             // community-added
 
 // ---- Dark ----
-val DarkPrimary = Color(0xFF7B98FF)             // text / link / active state on dark surfaces
+val DarkPrimary = Color(0xFF5C85F7)             // text / link / active state on dark surfaces
 val DarkOnPrimary = Color(0xFF0B1220)
-val DarkPrimaryContainer = Color(0xFF1E3A8A)
-val DarkOnPrimaryContainer = Color(0xFFDDE6FF)
-val DarkBackground = Color(0xFF0F172A)
-val DarkOnBackground = Color(0xFFF1F5F9)
-val DarkSurface = Color(0xFF0F172A)
-val DarkOnSurface = Color(0xFFF1F5F9)
-val DarkOnSurfaceVariant = Color(0xFF94A3B8)    // text-muted
-val DarkSurfaceContainerLowest = Color(0xFF0A101E)
-val DarkSurfaceContainerLow = Color(0xFF131E33)
-val DarkSurfaceContainer = Color(0xFF17233D)
-val DarkSurfaceContainerHigh = Color(0xFF1F2D49)
-val DarkSurfaceContainerHighest = Color(0xFF273551)
-val DarkOutline = Color(0xFF334155)
-val DarkOutlineVariant = Color(0xFF23324B)
+val DarkPrimaryContainer = Color(0xFF2447A8)
+val DarkOnPrimaryContainer = Color(0xFFDCE5FF)
+val DarkBackground = Color(0xFF07111F)
+val DarkOnBackground = Color(0xFFF0F3FA)
+val DarkSurface = Color(0xFF0D192B)
+val DarkOnSurface = Color(0xFFF0F3FA)
+val DarkOnSurfaceVariant = Color(0xFFB8C2D5)    // text-muted
+val DarkSurfaceContainerLowest = Color(0xFF0A121D)
+val DarkSurfaceContainerLow = Color(0xFF122033)
+val DarkSurfaceContainer = Color(0xFF14243A)
+val DarkSurfaceContainerHigh = Color(0xFF1B2C45)
+val DarkSurfaceContainerHighest = Color(0xFF1D3453)
+val DarkOutline = Color(0xFF78869D)
+val DarkOutlineVariant = Color(0xFF2C323C)
 val DarkTextStrong = Color(0xFFF8FAFC)
-val DarkSuccess = Color(0xFF34D399)
-val DarkError = Color(0xFFF87171)
+val DarkSuccess = Color(0xFF22C98A)
+val DarkWarning = Color(0xFFF2B84B)             // "ověření je starší" (STALE) caption
+val DarkError = Color(0xFFFF6B78)
 val DarkAccent = Color(0xFFF0A63E)
 
 // ---- Marker colours ----

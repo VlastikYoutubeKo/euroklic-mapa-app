@@ -71,6 +71,7 @@ private val DarkColors = darkColorScheme(
 data class ExtendedColors(
     val success: Color,
     val onSuccess: Color,
+    val warning: Color,
     val accent: Color,
     val textStrong: Color,
     val brandButton: Color,
@@ -81,6 +82,7 @@ data class ExtendedColors(
 private val LightExtended = ExtendedColors(
     success = LightSuccess,
     onSuccess = Color.White,
+    warning = LightWarning,
     accent = LightAccent,
     textStrong = LightTextStrong,
     brandButton = BrandBlue,
@@ -91,6 +93,7 @@ private val LightExtended = ExtendedColors(
 private val DarkExtended = ExtendedColors(
     success = DarkSuccess,
     onSuccess = Color(0xFF07231A),
+    warning = DarkWarning,
     accent = DarkAccent,
     textStrong = DarkTextStrong,
     brandButton = BrandBlue,

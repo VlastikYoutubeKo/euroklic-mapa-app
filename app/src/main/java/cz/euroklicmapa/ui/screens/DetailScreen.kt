@@ -100,6 +100,7 @@ import cz.euroklicmapa.util.PlaceStatus
 import cz.euroklicmapa.util.countryName
 import cz.euroklicmapa.util.distanceBetween
 import cz.euroklicmapa.util.isForeignCountry
+import cz.euroklicmapa.util.isStaleVerification
 import cz.euroklicmapa.util.formatDistance
 import cz.euroklicmapa.util.formatWalkingTime
 import cz.euroklicmapa.util.launchNavigation
@@ -516,7 +517,18 @@ private fun WcBody(
         wc.accessibilityNote?.takeIf { it.isNotBlank() }?.let { ExpandableSection("Přístupnost stanice", it) }
         wc.floorPlanUrl?.takeIf { it.isNotBlank() }?.let { FloorPlanLink(it) }
         Section("Původní zdroj", originalSourceLabel(wc.source))
-        wc.lastVerified?.let { Section("Naposledy ověřeno", it.substringBefore(" ")) }
+        wc.lastVerified?.let {
+            Section("Naposledy ověřeno", it.substringBefore(" "))
+            // STALE — the place once got confirmed but it's since aged out of "recently
+            // verified"; say so explicitly instead of silently reading as never-checked.
+            if (isStaleVerification(it)) {
+                Text(
+                    "Ověření je starší — informace mohou být neaktuální.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = EuroklicTheme.extended.warning,
+                )
+            }
+        }
 
         CommentsSection(
             comments = comments,
@@ -715,10 +727,13 @@ private fun PickupBody(pp: PickupPointEntity, userLocation: GeoPoint?) {
 }
 
 @Composable
+// Neutral, not primary-filled — "2.0" spec's point stands: primary is reserved for the one CTA
+// (Navigovat), not spent on a metadata card. Distance still reads as the loudest number on the
+// screen through type size/weight alone (headlineSmall/Bold), not through a colored box.
 private fun DistanceCard(target: GeoPoint, userLocation: GeoPoint?) {
     val meters = userLocation?.let { distanceBetween(target, it) } ?: return
     Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -730,12 +745,12 @@ private fun DistanceCard(target: GeoPoint, userLocation: GeoPoint?) {
             Text(
                 formatDistance(meters),
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = EuroklicTheme.extended.textStrong,
             )
             Text(
                 "${formatWalkingTime(meters)} pěšky\nvzdušnou čarou, přibližně",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
