@@ -12,6 +12,7 @@ import cz.euroklicmapa.data.repository.AddPlaceRepository
 import cz.euroklicmapa.data.repository.EuroklicRepository
 import cz.euroklicmapa.data.repository.FavoritesRepository
 import cz.euroklicmapa.data.repository.PostCommentResult
+import cz.euroklicmapa.data.repository.ReportResult
 import cz.euroklicmapa.data.mapper.toPickupPointEntity
 import cz.euroklicmapa.data.mapper.toWcLocationEntity
 import cz.euroklicmapa.data.repository.VoteOutcome
@@ -112,6 +113,9 @@ class DetailViewModel(
     private val _commentPosting = MutableStateFlow(false)
     val commentPosting: StateFlow<Boolean> = _commentPosting.asStateFlow()
 
+    private val _reportSending = MutableStateFlow(false)
+    val reportSending: StateFlow<Boolean> = _reportSending.asStateFlow()
+
     init {
         locationRepository.refresh()
         if (type == "WC") loadComments()
@@ -146,6 +150,21 @@ class DetailViewModel(
             } finally {
                 _commentPosting.value = false
             }
+        }
+    }
+
+    /** Structured problem report ("2.0" spec §23/29) — queues a moderation item server-side. */
+    fun reportProblem(reason: cz.euroklicmapa.data.model.ReportReason, note: String?, onDone: (Boolean) -> Unit) {
+        if (_reportSending.value || type != "WC") return
+        viewModelScope.launch {
+            _reportSending.value = true
+            val result = repository.reportProblem(id, reason, note)
+            _reportSending.value = false
+            _message.value = when (result) {
+                ReportResult.Success -> "Děkujeme, hlášení jsme přijali."
+                is ReportResult.Error -> result.message
+            }
+            onDone(result is ReportResult.Success)
         }
     }
 

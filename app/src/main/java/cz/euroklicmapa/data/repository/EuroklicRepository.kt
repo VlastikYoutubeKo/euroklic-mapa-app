@@ -28,6 +28,11 @@ sealed interface PostCommentResult {
     data class Error(val message: String) : PostCommentResult
 }
 
+sealed interface ReportResult {
+    data object Success : ReportResult
+    data class Error(val message: String) : ReportResult
+}
+
 sealed interface VoteOutcome {
     /** New authoritative counts from the server (fall back to optimistic if either is -1). */
     data class Success(val likes: Int, val dislikes: Int) : VoteOutcome
@@ -61,6 +66,9 @@ interface EuroklicRepository {
      * queue — success means "queued", not "visible". Maps HTTP codes to Czech messages.
      */
     suspend fun postComment(locationId: Int, text: String): PostCommentResult
+
+    /** Structured problem report (`POST /api_report.php`, Bearer). Queues a moderation item. */
+    suspend fun reportProblem(locationId: Int, reason: cz.euroklicmapa.data.model.ReportReason, note: String?): ReportResult
 }
 
 class EuroklicRepositoryImpl(
@@ -234,5 +242,40 @@ class EuroklicRepositoryImpl(
         PostCommentResult.Error("Odpověď serveru se nepodařilo zpracovat.")
     } catch (e: Exception) {
         PostCommentResult.Error("Bez připojení. Zkuste to znovu, až budete online.")
+    }
+
+    override suspend fun reportProblem(
+        locationId: Int,
+        reason: cz.euroklicmapa.data.model.ReportReason,
+        note: String?,
+    ): ReportResult = try {
+        val resp = api.reportProblem(
+            cz.euroklicmapa.data.model.PostReportRequest(
+                location_id = locationId,
+                reason = reason.wireValue,
+                note = note?.trim()?.takeIf { it.isNotBlank() },
+            ),
+        )
+        when {
+            resp.success -> ReportResult.Success
+            !resp.error.isNullOrBlank() -> ReportResult.Error(resp.error)
+            !resp.message.isNullOrBlank() -> ReportResult.Error(resp.message)
+            else -> ReportResult.Error("Hlášení se nepodařilo odeslat.")
+        }
+    } catch (e: HttpException) {
+        ReportResult.Error(
+            when (e.code()) {
+                401, 403 -> "Přihlášení vypršelo. Přihlaste se prosím znovu."
+                400 -> serverMessage(e) ?: "Hlášení se nepodařilo odeslat (zkontrolujte vyplněná pole)."
+                404 -> "Tohle místo se nepodařilo najít."
+                409 -> "Tohle už jste nahlásili — čeká to na vyřízení."
+                429 -> "Za poslední hodinu jste toho nahlásili hodně. Zkuste to později."
+                else -> "Chyba serveru (${e.code()})."
+            },
+        )
+    } catch (e: SerializationException) {
+        ReportResult.Error("Odpověď serveru se nepodařilo zpracovat.")
+    } catch (e: Exception) {
+        ReportResult.Error("Bez připojení. Zkuste to znovu, až budete online.")
     }
 }

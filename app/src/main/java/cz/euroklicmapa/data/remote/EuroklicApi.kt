@@ -151,6 +151,18 @@ interface EuroklicApi {
     @POST("api_comments.php")
     suspend fun postComment(@retrofit2.http.Body body: PostCommentRequest): ApiResult
 
+    /**
+     * Structured problem report ("2.0" spec §23/29). Bearer required — unlike voting
+     * (`api_vote.php`), this is not anonymous, since it opens a moderation-queue item. HTTP:
+     * 200 OK · 403 no auth · 400 validation/bad `reason` · 404 place unknown · 409 duplicate
+     * (same user+place+still-unresolved report) · 429 rate limit (10/h). Response shape:
+     * `{success, error?, message}` — `error`/`message` carry the same text.
+     */
+    @POST("api_report.php")
+    suspend fun reportProblem(
+        @retrofit2.http.Body body: cz.euroklicmapa.data.model.PostReportRequest,
+    ): ApiResult
+
     companion object {
         const val BASE_URL = "https://euroklic.odjezdy.online/"
     }

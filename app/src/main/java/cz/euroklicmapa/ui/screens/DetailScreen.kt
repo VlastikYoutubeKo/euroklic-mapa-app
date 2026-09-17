@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -36,7 +37,9 @@ import androidx.compose.material.icons.rounded.ThumbDown
 import androidx.compose.material.icons.rounded.ThumbDownOffAlt
 import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material.icons.rounded.ThumbUpOffAlt
+import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material.icons.rounded.Wc
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,6 +47,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -148,6 +152,7 @@ fun DetailScreen(
     val photoUploading by viewModel.photoUploading.collectAsStateWithLifecycle()
     val comments by viewModel.comments.collectAsStateWithLifecycle()
     val commentPosting by viewModel.commentPosting.collectAsStateWithLifecycle()
+    val reportSending by viewModel.reportSending.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val app = context.applicationContext as EuroklicApplication
     val authState by app.authRepository.state.collectAsStateWithLifecycle()
@@ -212,6 +217,8 @@ fun DetailScreen(
                     commentPosting = commentPosting,
                     onSubmitComment = viewModel::postComment,
                     onRequestLogin = { showLoginDialog = true },
+                    reportSending = reportSending,
+                    onReportProblem = viewModel::reportProblem,
                 )
                 is DetailState.PickupDetail -> PickupBody(s.pp, userLocation)
             }
@@ -453,6 +460,8 @@ private fun WcBody(
     commentPosting: Boolean,
     onSubmitComment: (String) -> Unit,
     onRequestLogin: () -> Unit,
+    reportSending: Boolean,
+    onReportProblem: (cz.euroklicmapa.data.model.ReportReason, String?, (Boolean) -> Unit) -> Unit,
 ) {
     var showPhotoViewer by remember { mutableStateOf(false) }
     val hasPhoto = !wc.photoUrl.isNullOrBlank()
@@ -539,6 +548,12 @@ private fun WcBody(
             onRequestLogin = onRequestLogin,
         )
 
+        ReportProblemRow(
+            loggedIn = loggedIn,
+            sending = reportSending,
+            onSubmit = onReportProblem,
+            onRequestLogin = onRequestLogin,
+        )
         ReportLink(wc.webUrl)
     }
 }
@@ -723,8 +738,123 @@ private fun ReportLink(webUrl: String?) {
         onClick = { uriHandler.openUri(webUrl ?: "https://euroklic.odjezdy.online/") },
         contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
     ) {
-        Text("Nahlásit problém nebo upravit na webu", textDecoration = TextDecoration.Underline)
+        // "2.0" spec §37/29: split into two distinct actions — the structured in-app dialog
+        // (ReportProblemRow, above) is now "Nahlásit problém"; this stays as the escape hatch
+        // for edits the dialog doesn't cover (wrong name, merge duplicates, etc.).
+        Text("Navrhnout úpravu na webu", textDecoration = TextDecoration.Underline)
     }
+}
+
+/**
+ * "2.0" spec §23/29 — structured problem report, replacing the old "open the web" link for the
+ * common case. Login-gated like comments/photos (the endpoint requires Bearer, unlike anonymous
+ * voting) since a report opens a moderation-queue item, not a public vote.
+ */
+@Composable
+private fun ReportProblemRow(
+    loggedIn: Boolean,
+    sending: Boolean,
+    onSubmit: (cz.euroklicmapa.data.model.ReportReason, String?, (Boolean) -> Unit) -> Unit,
+    onRequestLogin: () -> Unit,
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    Surface(
+        onClick = { if (loggedIn) showDialog = true else onRequestLogin() },
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) { role = Role.Button },
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                Icons.Rounded.WarningAmber,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                "Nahlásit problém",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+
+    if (showDialog) {
+        ReportProblemDialog(
+            sending = sending,
+            onDismiss = { showDialog = false },
+            onSubmit = { reason, note ->
+                onSubmit(reason, note) { success -> if (success) showDialog = false }
+            },
+        )
+    }
+}
+
+@Composable
+private fun ReportProblemDialog(
+    sending: Boolean,
+    onDismiss: () -> Unit,
+    onSubmit: (cz.euroklicmapa.data.model.ReportReason, String?) -> Unit,
+) {
+    var reason by remember { mutableStateOf<cz.euroklicmapa.data.model.ReportReason?>(null) }
+    var note by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = { if (!sending) onDismiss() },
+        title = { Text("Co je špatně?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                cz.euroklicmapa.data.model.ReportReason.entries.forEach { r ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = reason == r,
+                                role = Role.RadioButton,
+                                enabled = !sending,
+                                onClick = { reason = r },
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = reason == r, onClick = null, enabled = !sending)
+                        Text(r.label, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { if (it.length <= 1000) note = it },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    label = { Text("Poznámka (nepovinné)") },
+                    minLines = 2,
+                    enabled = !sending,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = reason != null && !sending,
+                onClick = { reason?.let { onSubmit(it, note) } },
+            ) {
+                if (sending) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp).semantics { contentDescription = "Odesílám hlášení" },
+                    )
+                } else {
+                    Text("Odeslat")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(enabled = !sending, onClick = onDismiss) { Text("Zrušit") }
+        },
+    )
 }
 
 @Composable
