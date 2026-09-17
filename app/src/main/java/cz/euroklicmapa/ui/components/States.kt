@@ -34,7 +34,13 @@ fun LoadingState(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun EmptyState(icon: ImageVector, title: String, subtitle: String?, modifier: Modifier = Modifier) {
+fun EmptyState(
+    icon: ImageVector,
+    title: String,
+    subtitle: String?,
+    modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
+) {
     Column(
         modifier = modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -61,6 +67,10 @@ fun EmptyState(icon: ImageVector, title: String, subtitle: String?, modifier: Mo
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+        }
+        if (action != null) {
+            androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 8.dp))
+            action()
         }
     }
 }

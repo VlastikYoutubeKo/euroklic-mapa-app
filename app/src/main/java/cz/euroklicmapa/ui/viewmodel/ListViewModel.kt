@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class ListViewModel(
     private val repository: EuroklicRepository,
@@ -43,4 +44,12 @@ class ListViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun refreshLocation() = locationRepository.refresh()
+
+    /** Manual re-fetch for the "Zkusit znovu" button — e.g. after a failed first launch offline. */
+    fun retry() {
+        viewModelScope.launch {
+            repository.refreshLocations()
+            repository.refreshPickupPoints()
+        }
+    }
 }

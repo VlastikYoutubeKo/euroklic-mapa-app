@@ -12,7 +12,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.WrongLocation
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,9 +23,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -95,9 +101,31 @@ fun ListScreen(
             }
         }
 
+        // Room's Flow emits an empty list immediately on subscribe, before the network refresh
+        // resolves — so "items.isEmpty() && dataSync == null" alone can't tell "still loading"
+        // from "loaded and failed, offline, no cache". A generous timeout (real device is
+        // usually seconds; the documented worst case is ~40s on a slow link) breaks the
+        // otherwise-permanent spinner into an actionable retry state.
+        var loadTimedOut by remember { mutableStateOf(false) }
+        LaunchedEffect(items.isEmpty(), dataSync) {
+            loadTimedOut = false
+            if (items.isEmpty() && dataSync == null) {
+                delay(20_000)
+                loadTimedOut = true
+            }
+        }
+
         when {
-            items.isEmpty() && dataSync == null ->
+            items.isEmpty() && dataSync == null && !loadTimedOut ->
                 LoadingState("Načítám místa…")
+
+            items.isEmpty() && dataSync == null && loadTimedOut ->
+                EmptyState(
+                    icon = Icons.Rounded.CloudOff,
+                    title = "Nepodařilo se načíst data",
+                    subtitle = "Zkontrolujte připojení k internetu.",
+                    action = { Button(onClick = viewModel::retry) { Text("Zkusit znovu") } },
+                )
 
             items.isEmpty() && category != PlaceCategory.ALL ->
                 EmptyState(
@@ -111,6 +139,7 @@ fun ListScreen(
                     icon = Icons.Rounded.WrongLocation,
                     title = "Zatím tu nic není",
                     subtitle = "Zkuste to znovu, až budete online.",
+                    action = { Button(onClick = viewModel::retry) { Text("Zkusit znovu") } },
                 )
 
             else -> LazyColumn(
