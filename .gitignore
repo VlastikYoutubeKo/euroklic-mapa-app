@@ -27,3 +27,4 @@ ios/*.xcodeproj
 
 # Secrets - injected at build time (see ios/Secrets.xcconfig.example)
 ios/Secrets.xcconfig
+scratchpad/
