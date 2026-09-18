@@ -1,5 +1,23 @@
 # BACKLOG — co zbývá dodělat, aby appka i web fungovaly správně
 
+## ⚠ NOVÝ NÁLEZ 2026-09-18 (noční "2.0" dávka) — [app-android] landscape bug na MapScreen
+
+Reálný, potvrzený layout bug (uiautomator dump, ne jen screenshot dojem): v landscape
+orientaci na Honoru se `SearchField` a `CategoryChipRow` nad mapou zmáčknou na ~40-60px
+šířky (text obsahově správný — "Hledat adresu nebo místo" je v accessibility stromu celý —
+ale bounds jsou mikroskopické, takže vizuálně je vidět jen "Hle"/oříznuté chipy). Spodní
+navigace i bottom sheet obsah v landscape renderují správně na plnou šířku — problém je
+izolovaný na ten jeden overlay `Column` (search+chipy) uvnitř `Box` vedle `EuroklicMap`
+v `MapScreen.kt`. Portrait je 100% v pořádku, tohle appka měla už předtím (nesouvisí
+s dnešní paletou/filtry/atd.).
+
+Podezření: interakce `BottomSheetScaffold` + `AndroidView` (osmdroid `MapView` embedded
+přes AndroidView) v landscape — možná constraint propagation přes `Box` siblings, možná
+Material3 1.4.0 adaptive bottom-sheet chování na širším viewportu. Nejde blind-fixnout přes
+ADB/uiautomator — chce to Android Studio Layout Inspector (živé připojení k zařízení) na
+zjištění skutečných měřených constraints toho Column. Než se appka bude v landscape reálně
+používat, funguje aspoň portrait bez omezení.
+
 > Pro Claude session (app-side i web-side). Vzniklo 2026-09-06 na žádost uživatele.
 > Toto je **akční seznam**, ne nápady — nápady zůstávají v [TODO-IDEAS.md](TODO-IDEAS.md).
 > Formát: `[owner]` = kdo to bere (backend / web / app-android / app-ios).
