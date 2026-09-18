@@ -213,4 +213,33 @@ class PlaceStatusTest {
             placeStatus("osm", 0, 0, stamp, now),
         )
     }
+
+    // ---- isStaleVerification (2.0 spec — detail-screen-only caption, no marker/badge change) --
+
+    @Test
+    fun isStale_nullLastVerified_isFalse() {
+        assertFalse(isStaleVerification(null, now))
+    }
+
+    @Test
+    fun isStale_unparsableLastVerified_isFalse() {
+        assertFalse(isStaleVerification("not a date", now))
+    }
+
+    @Test
+    fun isStale_within183Days_isFalse() {
+        assertFalse(isStaleVerification(nowUtcTimestamp(now - 182 * dayMs), now))
+    }
+
+    @Test
+    fun isStale_atExactly183Days_isTrue() {
+        // Mirrors placeStatus's own boundary: RECENTLY_VERIFIED needs strict `<` 183 days, so
+        // exactly 183 days has already fallen out of it — isStaleVerification must agree.
+        assertTrue(isStaleVerification(nowUtcTimestamp(now - 183 * dayMs), now))
+    }
+
+    @Test
+    fun isStale_wellPast183Days_isTrue() {
+        assertTrue(isStaleVerification(nowUtcTimestamp(now - 400 * dayMs), now))
+    }
 }

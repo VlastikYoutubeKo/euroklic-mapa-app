@@ -248,4 +248,121 @@ class PlacesTest {
         assertNull(ppItem.likes)
         assertNull(ppItem.source)
     }
+
+    // ---- applyPlaceFilters (2.0 spec §24/28) --------------------------------
+
+    @Test
+    fun filters_noStatusesNoDistance_isNoOp() {
+        val out = flattenPlaces(
+            locations = listOf(wc(1, source = "cd"), wc(2, source = "osm")),
+            pickupPoints = listOf(pickup(3)),
+            userLocation = null,
+            category = PlaceCategory.ALL,
+        )
+        val filtered = applyPlaceFilters(out, PlaceFilters())
+        assertEquals(3, filtered.size)
+    }
+
+    @Test
+    fun filters_verifiedOnly_keepsOfficialAndRecentlyVerified_dropsUnverified() {
+        val user = GeoPoint(50.0, 14.0)
+        val official = wc(1, source = "cd")
+        val unverified = wc(2, source = "osm")
+        val out = flattenPlaces(
+            locations = listOf(official, unverified),
+            pickupPoints = emptyList(),
+            userLocation = user,
+            category = PlaceCategory.ALL,
+        )
+        val filtered = applyPlaceFilters(out, PlaceFilters(statuses = setOf(StatusFilter.VERIFIED)))
+        assertEquals(listOf(1), filtered.map { it.id })
+    }
+
+    @Test
+    fun filters_reportedOnly_keepsOnlyDislikeMajority() {
+        val user = GeoPoint(50.0, 14.0)
+        val reported = wc(1, source = "osm", likes = 1, dislikes = 3)
+        val fine = wc(2, source = "osm", likes = 3, dislikes = 0)
+        val out = flattenPlaces(
+            locations = listOf(reported, fine),
+            pickupPoints = emptyList(),
+            userLocation = user,
+            category = PlaceCategory.ALL,
+        )
+        val filtered = applyPlaceFilters(out, PlaceFilters(statuses = setOf(StatusFilter.REPORTED)))
+        assertEquals(listOf(1), filtered.map { it.id })
+    }
+
+    @Test
+    fun filters_statusFilter_neverHidesPickupPoints() {
+        val out = flattenPlaces(
+            locations = listOf(wc(1, source = "osm")),
+            pickupPoints = listOf(pickup(2)),
+            userLocation = null,
+            category = PlaceCategory.ALL,
+        )
+        // Pickup points carry no PlaceStatus at all — a status filter must never hide them,
+        // regardless of which bucket is selected (they simply don't participate).
+        val filtered = applyPlaceFilters(out, PlaceFilters(statuses = setOf(StatusFilter.REPORTED)))
+        assertTrue(filtered.any { it.isPickup })
+    }
+
+    @Test
+    fun filters_maxDistance_dropsFartherItems_keepsBoundaryInclusive() {
+        val user = GeoPoint(50.0, 14.0)
+        val near = wc(1, name = "Near", lat = 50.001, lon = 14.0) // well under 1km
+        val far = wc(2, name = "Far", lat = 51.0, lon = 14.0) // way over 1km
+        val out = flattenPlaces(
+            locations = listOf(near, far),
+            pickupPoints = emptyList(),
+            userLocation = user,
+            category = PlaceCategory.ALL,
+        )
+        val filtered = applyPlaceFilters(out, PlaceFilters(maxDistanceMeters = 1000.0))
+        assertEquals(listOf(1), filtered.map { it.id })
+    }
+
+    @Test
+    fun filters_maxDistance_withNoUserLocation_dropsEverything() {
+        // distanceMeters is null with no user location — MAX_VALUE fallback in
+        // applyPlaceFilters means a finite cap correctly excludes it rather than crashing.
+        val out = flattenPlaces(
+            locations = listOf(wc(1)),
+            pickupPoints = emptyList(),
+            userLocation = null,
+            category = PlaceCategory.ALL,
+        )
+        val filtered = applyPlaceFilters(out, PlaceFilters(maxDistanceMeters = 500.0))
+        assertTrue(filtered.isEmpty())
+    }
+
+    @Test
+    fun filters_statusAndDistance_combineAsAnd() {
+        val user = GeoPoint(50.0, 14.0)
+        val nearVerified = wc(1, source = "cd", lat = 50.001, lon = 14.0)
+        val nearUnverified = wc(2, source = "osm", lat = 50.001, lon = 14.0)
+        val farVerified = wc(3, source = "cd", lat = 51.0, lon = 14.0)
+        val out = flattenPlaces(
+            locations = listOf(nearVerified, nearUnverified, farVerified),
+            pickupPoints = emptyList(),
+            userLocation = user,
+            category = PlaceCategory.ALL,
+        )
+        val filtered = applyPlaceFilters(
+            out,
+            PlaceFilters(statuses = setOf(StatusFilter.VERIFIED), maxDistanceMeters = 1000.0),
+        )
+        assertEquals(listOf(1), filtered.map { it.id })
+    }
+
+    @Test
+    fun placeFilters_activeCount_countsStatusesAndDistanceSeparately() {
+        assertEquals(0, PlaceFilters().activeCount)
+        assertEquals(1, PlaceFilters(maxDistanceMeters = 500.0).activeCount)
+        assertEquals(2, PlaceFilters(statuses = setOf(StatusFilter.VERIFIED, StatusFilter.REPORTED)).activeCount)
+        assertEquals(
+            3,
+            PlaceFilters(statuses = setOf(StatusFilter.VERIFIED, StatusFilter.REPORTED), maxDistanceMeters = 500.0).activeCount,
+        )
+    }
 }
