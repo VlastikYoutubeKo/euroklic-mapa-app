@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddAPhoto
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +35,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,6 +66,10 @@ fun AddPlaceScreen(
 ) {
     val context = LocalContext.current
     val imagePicker = rememberImagePicker { uri -> viewModel.photoUri = uri }
+    // "2.0" spec's multi-step Review — this form is short enough (3 fields + map + photo) that
+    // a full step-by-step wizard would just add taps without helping; one confirm-before-submit
+    // dialog gets the same "catch a mistake before it's queued" value without the restructure.
+    var showReview by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.submitted.collect {
@@ -148,19 +157,84 @@ fun AddPlaceScreen(
             }
 
             Button(
-                onClick = viewModel::submit,
+                onClick = { showReview = true },
                 enabled = viewModel.canSubmit,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) {
                 if (viewModel.submitting) {
                     CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
                 } else {
-                    Text("Odeslat ke schválení")
+                    Text("Zkontrolovat a odeslat")
                 }
             }
             Spacer(Modifier.size(12.dp))
         }
     }
+
+    if (showReview) {
+        ReviewDialog(
+            name = viewModel.name,
+            description = viewModel.description,
+            latitude = viewModel.location.latitude,
+            longitude = viewModel.location.longitude,
+            photoUri = viewModel.photoUri,
+            onDismiss = { showReview = false },
+            onConfirm = {
+                showReview = false
+                viewModel.submit()
+            },
+        )
+    }
+}
+
+/** "2.0" spec Review step, as one dialog instead of a separate screen — see the comment at
+ *  [AddPlaceScreen]'s `showReview` for why a full wizard doesn't fit this form. */
+@Composable
+private fun ReviewDialog(
+    name: String,
+    description: String,
+    latitude: Double,
+    longitude: Double,
+    photoUri: Uri?,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Zkontrolujte místo") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (photoUri != null) {
+                    AsyncImage(
+                        model = photoUri,
+                        contentDescription = "Vybraná fotka",
+                        modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(12.dp)),
+                    )
+                }
+                Text(name, style = MaterialTheme.typography.titleMedium)
+                if (description.isNotBlank()) {
+                    Text(
+                        description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Text(
+                    String.format(Locale.US, "%.5f, %.5f", latitude, longitude),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    "Po odeslání projde místo schválením moderátora, než se objeví v mapě.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Odeslat") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Zpět a upravit") } },
+    )
 }
 
 @Composable
