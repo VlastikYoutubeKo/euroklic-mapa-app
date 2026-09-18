@@ -52,8 +52,8 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import cz.euroklicmapa.EuroklicApplication
 import cz.euroklicmapa.ui.components.DataFreshnessBanner
 import cz.euroklicmapa.ui.components.EmptyState
-import cz.euroklicmapa.ui.components.LoadingState
 import cz.euroklicmapa.ui.components.PlaceCard
+import cz.euroklicmapa.ui.components.PlaceListSkeleton
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import cz.euroklicmapa.ui.viewmodel.PlaceCategory
 import cz.euroklicmapa.ui.viewmodel.PlaceFilters
@@ -149,7 +149,7 @@ fun ListScreen(
 
         when {
             items.isEmpty() && dataSync == null && !loadTimedOut ->
-                LoadingState("Načítám místa…")
+                PlaceListSkeleton()
 
             items.isEmpty() && dataSync == null && loadTimedOut ->
                 EmptyState(
