@@ -421,14 +421,11 @@ private fun ZoomableImage(model: Any?, contentDescription: String?) {
         placeholder = painterResource(R.drawable.placeholder),
         error = painterResource(R.drawable.placeholder),
         contentScale = ContentScale.Fit,
+        // Gesture detection must read raw screen-pixel drags — attaching it below graphicsLayer
+        // (inside the already-scaled coordinate space) divides every pan delta by the current
+        // zoom, so panning felt like it only tracked ~15-50px of a full-length drag at high zoom.
         modifier = Modifier
             .fillMaxSize()
-            .graphicsLayer(
-                scaleX = scale,
-                scaleY = scale,
-                translationX = offset.x,
-                translationY = offset.y,
-            )
             .transformable(transformState)
             .pointerInput(Unit) {
                 detectTapGestures(
@@ -441,7 +438,13 @@ private fun ZoomableImage(model: Any?, contentDescription: String?) {
                         }
                     },
                 )
-            },
+            }
+            .graphicsLayer(
+                scaleX = scale,
+                scaleY = scale,
+                translationX = offset.x,
+                translationY = offset.y,
+            ),
     )
 }
 

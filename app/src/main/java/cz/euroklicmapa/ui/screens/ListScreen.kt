@@ -3,6 +3,8 @@ package cz.euroklicmapa.ui.screens
 import android.Manifest
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,21 +16,17 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.WrongLocation
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -211,6 +208,7 @@ fun ListScreen(
  * "2.0" spec §24/28 — status + distance filters, using data already on [PlaceListItem]
  * (no backend needed). Temp state inside the dialog per spec: "Zrušit" discards, "Použít" commits.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: (PlaceFilters) -> Unit) {
     var statuses by remember { mutableStateOf(initial.statuses) }
@@ -224,26 +222,30 @@ private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: 
         onDismissRequest = onDismiss,
         title = { Text("Filtry") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     "STAV",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                FilterCheckRow("Ověřená místa", StatusFilter.VERIFIED in statuses) { toggle(StatusFilter.VERIFIED) }
-                FilterCheckRow("Bez ověření", StatusFilter.UNVERIFIED in statuses) { toggle(StatusFilter.UNVERIFIED) }
-                FilterCheckRow("Nahlášený problém", StatusFilter.REPORTED in statuses) { toggle(StatusFilter.REPORTED) }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(StatusFilter.VERIFIED in statuses, { toggle(StatusFilter.VERIFIED) }, label = { Text("Ověřená místa") })
+                    FilterChip(StatusFilter.UNVERIFIED in statuses, { toggle(StatusFilter.UNVERIFIED) }, label = { Text("Bez ověření") })
+                    FilterChip(StatusFilter.REPORTED in statuses, { toggle(StatusFilter.REPORTED) }, label = { Text("Nahlášený problém") })
+                }
 
                 Text(
                     "VZDÁLENOST",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 12.dp),
+                    modifier = Modifier.padding(top = 8.dp),
                 )
-                FilterRadioRow("500 m", distance == 500.0) { distance = 500.0 }
-                FilterRadioRow("1 km", distance == 1000.0) { distance = 1000.0 }
-                FilterRadioRow("5 km", distance == 5000.0) { distance = 5000.0 }
-                FilterRadioRow("Bez omezení", distance == null) { distance = null }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(distance == 500.0, { distance = 500.0 }, label = { Text("500 m") })
+                    FilterChip(distance == 1000.0, { distance = 1000.0 }, label = { Text("1 km") })
+                    FilterChip(distance == 5000.0, { distance = 5000.0 }, label = { Text("5 km") })
+                    FilterChip(distance == null, { distance = null }, label = { Text("Bez omezení") })
+                }
             }
         },
         confirmButton = {
@@ -253,40 +255,6 @@ private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: 
             TextButton(onClick = onDismiss) { Text("Zrušit") }
         },
     )
-}
-
-@Composable
-private fun FilterCheckRow(label: String, checked: Boolean, onToggle: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(
-                value = checked,
-                role = Role.Checkbox,
-                onValueChange = { onToggle() },
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(checked = checked, onCheckedChange = null)
-        Text(label, style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-@Composable
-private fun FilterRadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectable(
-                selected = selected,
-                role = Role.RadioButton,
-                onClick = onSelect,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = selected, onClick = null)
-        Text(label, style = MaterialTheme.typography.bodyMedium)
-    }
 }
 
 @Composable
