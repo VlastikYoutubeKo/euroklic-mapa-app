@@ -6,4 +6,19 @@
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/window_background</item>
     </style>
+
+    <!--
+      Splash (androidx.core.splashscreen). Before this, the activity had no splash theme, so
+      Android 12+ fell back to its own heuristic — a plain light-gray window with the launcher
+      icon, unrelated to the brand palette. Background reuses the launcher icon's own background
+      color (ic_launcher_background, #2454E0 — NOT the same as BrandBlue/brandButton #2C60F4
+      used elsewhere in-app, a close-but-different blue) so the icon-tap → splash transition is
+      pixel-continuous with the icon the user just tapped, not a subtle color shift. Icon reuses
+      the same mark as the launcher (ic_launcher_foreground) — no separate asset needed.
+    -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.MyApplication</item>
+    </style>
 </resources>
