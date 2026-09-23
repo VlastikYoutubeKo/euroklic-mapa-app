@@ -12,6 +12,7 @@ import cz.euroklicmapa.data.location.LocationRepository
 import cz.euroklicmapa.data.local.EuroklicDatabase
 import cz.euroklicmapa.data.prefs.NotificationPrefs
 import cz.euroklicmapa.data.prefs.ThemeRepository
+import cz.euroklicmapa.data.prefs.VotePrefs
 import cz.euroklicmapa.data.remote.AuthInterceptor
 import cz.euroklicmapa.data.remote.EuroklicApi
 import cz.euroklicmapa.data.remote.GeocodingRepository
@@ -84,6 +85,7 @@ class EuroklicApplication : Application(), ImageLoaderFactory {
     val geocodingRepository: GeocodingRepository by lazy { GeocodingRepository() }
     val themeRepository: ThemeRepository by lazy { ThemeRepository(applicationContext) }
     val notificationPrefs: NotificationPrefs by lazy { NotificationPrefs(applicationContext) }
+    val votePrefs: VotePrefs by lazy { VotePrefs(applicationContext) }
 
     /**
      * Set by the "Nejbližší WC" launcher shortcut (static intent action handled in

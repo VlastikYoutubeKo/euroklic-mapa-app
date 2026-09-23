@@ -137,7 +137,7 @@ fun DetailScreen(
     viewModel: DetailViewModel = viewModel(
         factory = with(LocalContext.current.applicationContext as EuroklicApplication) {
             DetailViewModelFactory(
-                repository, locationRepository, favoritesRepository, addPlaceRepository,
+                repository, locationRepository, favoritesRepository, addPlaceRepository, votePrefs,
                 id.toIntOrNull() ?: 0, type,
             )
         },

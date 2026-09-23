@@ -7,6 +7,7 @@ import cz.euroklicmapa.data.local.PickupPointEntity
 import cz.euroklicmapa.data.local.WcLocationEntity
 import cz.euroklicmapa.data.location.LocationRepository
 import cz.euroklicmapa.data.model.WcComment
+import cz.euroklicmapa.data.prefs.VotePrefs
 import cz.euroklicmapa.data.repository.AddPhotoResult
 import cz.euroklicmapa.data.repository.AddPlaceRepository
 import cz.euroklicmapa.data.repository.EuroklicRepository
@@ -38,6 +39,7 @@ class DetailViewModel(
     locationRepository: LocationRepository,
     private val favorites: FavoritesRepository,
     private val addPlaceRepository: AddPlaceRepository,
+    private val votePrefs: VotePrefs,
     private val id: Int,
     private val type: String,
 ) : ViewModel() {
@@ -96,9 +98,21 @@ class DetailViewModel(
     private val _voting = MutableStateFlow(false)
     val voting: StateFlow<Boolean> = _voting.asStateFlow()
 
-    /** This session's own vote, for button highlight. Not persisted. */
+    /**
+     * This device's own vote on this place, for button highlight. Persisted via [VotePrefs] —
+     * used to reset to `null` on every fresh process (app update, force-stop, reboot), silently
+     * inviting a repeat vote even though the server would reject/skew it. Loaded once on init.
+     */
     private val _myVote = MutableStateFlow<Boolean?>(null)
     val myVote: StateFlow<Boolean?> = _myVote.asStateFlow()
+
+    init {
+        if (type == "WC") {
+            viewModelScope.launch {
+                _myVote.value = votePrefs.getVote(id)
+            }
+        }
+    }
 
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
@@ -188,10 +202,16 @@ class DetailViewModel(
             val previous = _myVote.value
             _myVote.value = like
             when (val outcome = repository.vote(id, like)) {
-                is VoteOutcome.Success ->
+                is VoteOutcome.Success -> {
+                    votePrefs.setVote(id, like)
                     _message.value = if (like) "Díky, zaznamenáno jako funguje." else "Díky, zaznamenáno."
-                is VoteOutcome.Rejected ->
+                }
+                is VoteOutcome.Rejected -> {
+                    // Server already had a vote from this IP — persist locally too, so a fresh
+                    // process (app update, force-stop) doesn't forget it and offer to vote again.
+                    votePrefs.setVote(id, like)
                     _message.value = outcome.message // e.g. "Už jste takto hlasovali." — keep highlight
+                }
                 VoteOutcome.Failed -> {
                     _myVote.value = previous
                     _message.value = "Hlas se teď nepodařilo odeslat. Zkuste to znovu."
