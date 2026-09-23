@@ -526,9 +526,17 @@ Still open:
 - The map still fetches by `near` and shares one Room cache with the list; `bbox`-on-pan for
   the map is a possible optimisation, not done.
 
-Not done (deferred): launcher icon (user said ignore for now), splash / Glance widget /
-QS tile / deep links, map camera state across process death, tests for the new code
-(incl. the notification poll worker), FCM/push (notifications phase 2, BACKLOG 2.2).
+Done (2026-09-24): real launcher icon — map pin + key negative-space, brand blue `#2454E0`
+(matches `brandButton`), designed by Codex via the backend session, wired as an adaptive icon
+(`res/drawable-nodpi/ic_launcher_{background,foreground}.png` + `values/ic_launcher_background.xml`;
+`mipmap-anydpi-v26/ic_launcher(.xml/_round.xml)` needed no changes, already referencing those
+names, monochrome variant included for Android 13+ themed icons). Verified live on a real device.
+**Gap:** legacy `mipmap-*/ic_launcher.webp` raster fallbacks for pre-API26 devices (minSdk 24)
+still show the old Android Studio placeholder — no image tooling (ImageMagick/PIL) was available
+to regenerate them; low real-world impact (Android 7.0/7.1 is over a decade old).
+
+Not done (deferred): splash / Glance widget / QS tile, tests for the new code (incl. the
+notification poll worker), FCM/push (notifications phase 2, BACKLOG 2.2).
 
 ### Running on the emulator
 
