@@ -36,6 +36,10 @@ val LightSuccess = Color(0xFF157A54)
 val LightWarning = Color(0xFF94640B)            // "ověření je starší" (STALE) caption
 val LightError = Color(0xFFE00014)
 val LightAccent = Color(0xFFB4530A)             // community-added
+val LightSecondaryContainer = Color(0xFFFFE3C7) // secondary (accent-orange) container — 10.70:1
+val LightOnSecondaryContainer = Color(0xFF4A2800)
+val LightTertiaryContainer = Color(0xFFC8F0DC)  // tertiary (success-green) container — 11.18:1
+val LightOnTertiaryContainer = Color(0xFF04341F)
 
 // ---- Dark ----
 val DarkPrimary = Color(0xFF5C85F7)             // text / link / active state on dark surfaces
@@ -59,6 +63,10 @@ val DarkSuccess = Color(0xFF22C98A)
 val DarkWarning = Color(0xFFF2B84B)             // "ověření je starší" (STALE) caption
 val DarkError = Color(0xFFFF6B78)
 val DarkAccent = Color(0xFFF0A63E)
+val DarkSecondaryContainer = Color(0xFF4A3010)  // secondary (accent-orange) container — 9.91:1
+val DarkOnSecondaryContainer = Color(0xFFFFE3C7)
+val DarkTertiaryContainer = Color(0xFF123D2C)   // tertiary (success-green) container — 9.80:1
+val DarkOnTertiaryContainer = Color(0xFFC8F0DC)
 
 // ---- Marker colours ----
 // Per the 2026-09-02 backend change, the 4 raw sources collapse to 2 UI groups. Colour + main

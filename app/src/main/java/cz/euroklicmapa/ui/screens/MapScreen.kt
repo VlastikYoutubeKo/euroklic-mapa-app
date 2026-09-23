@@ -349,8 +349,8 @@ fun MapScreen(
                                     }
                                 }
                             },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
                         ) {
                             if (downloading) {
                                 val percent = (downloadState as? OfflineDownloadResult.Progress)?.percent ?: 0
@@ -373,8 +373,8 @@ fun MapScreen(
                                 secondaryActionsExpanded = false
                                 if (loggedIn) onAddPlace() else showLoginDialog = true
                             },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
                         ) {
                             Icon(Icons.Rounded.Add, contentDescription = "Přidat místo")
                         }
@@ -382,8 +382,8 @@ fun MapScreen(
                 }
                 SmallFloatingActionButton(
                     onClick = { secondaryActionsExpanded = !secondaryActionsExpanded },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
                 ) {
                     Icon(
                         if (secondaryActionsExpanded) Icons.Rounded.Close else Icons.Rounded.MoreHoriz,

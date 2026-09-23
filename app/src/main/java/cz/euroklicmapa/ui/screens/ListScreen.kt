@@ -123,6 +123,7 @@ fun ListScreen(
                             modifier = Modifier.size(FilterChipDefaults.IconSize),
                         )
                     },
+                    colors = brandChipColors(),
                 )
             }
             if (!hasLocation && !hasLocationPermission && items.isNotEmpty()) {
@@ -229,9 +230,10 @@ private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: 
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(StatusFilter.VERIFIED in statuses, { toggle(StatusFilter.VERIFIED) }, label = { Text("Ověřená místa") })
-                    FilterChip(StatusFilter.UNVERIFIED in statuses, { toggle(StatusFilter.UNVERIFIED) }, label = { Text("Bez ověření") })
-                    FilterChip(StatusFilter.REPORTED in statuses, { toggle(StatusFilter.REPORTED) }, label = { Text("Nahlášený problém") })
+                    val colors = brandChipColors()
+                    FilterChip(StatusFilter.VERIFIED in statuses, { toggle(StatusFilter.VERIFIED) }, label = { Text("Ověřená místa") }, colors = colors)
+                    FilterChip(StatusFilter.UNVERIFIED in statuses, { toggle(StatusFilter.UNVERIFIED) }, label = { Text("Bez ověření") }, colors = colors)
+                    FilterChip(StatusFilter.REPORTED in statuses, { toggle(StatusFilter.REPORTED) }, label = { Text("Nahlášený problém") }, colors = colors)
                 }
 
                 Text(
@@ -241,10 +243,11 @@ private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: 
                     modifier = Modifier.padding(top = 8.dp),
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(distance == 500.0, { distance = 500.0 }, label = { Text("500 m") })
-                    FilterChip(distance == 1000.0, { distance = 1000.0 }, label = { Text("1 km") })
-                    FilterChip(distance == 5000.0, { distance = 5000.0 }, label = { Text("5 km") })
-                    FilterChip(distance == null, { distance = null }, label = { Text("Bez omezení") })
+                    val colors = brandChipColors()
+                    FilterChip(distance == 500.0, { distance = 500.0 }, label = { Text("500 m") }, colors = colors)
+                    FilterChip(distance == 1000.0, { distance = 1000.0 }, label = { Text("1 km") }, colors = colors)
+                    FilterChip(distance == 5000.0, { distance = 5000.0 }, label = { Text("5 km") }, colors = colors)
+                    FilterChip(distance == null, { distance = null }, label = { Text("Bez omezení") }, colors = colors)
                 }
             }
         },
@@ -263,8 +266,22 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
         selected = selected,
         onClick = onClick,
         label = { Text(label) },
+        colors = brandChipColors(),
     )
 }
+
+/**
+ * FilterChip's default selected state pulls from `secondaryContainer`, which this app's theme
+ * gives its own "community-added" amber semantic — wrong hue for a generic selection control.
+ * Matches `MapScreen.MapFilterChip`'s existing solid-`brandButton` selected style, so chip
+ * selection looks the same on Map and Seznam.
+ */
+@Composable
+private fun brandChipColors() = FilterChipDefaults.filterChipColors(
+    selectedContainerColor = EuroklicTheme.extended.brandButton,
+    selectedLabelColor = EuroklicTheme.extended.onBrandButton,
+    selectedLeadingIconColor = EuroklicTheme.extended.onBrandButton,
+)
 
 @Composable
 private fun LocationHint(onEnable: () -> Unit) {
