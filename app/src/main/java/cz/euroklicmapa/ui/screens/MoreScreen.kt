@@ -224,8 +224,9 @@ fun MoreScreen(
             title = { Text("Smazat účet a data?") },
             text = {
                 Text(
-                    "Odhlásíme tě a server smaže tvůj účet. Tvé jméno se odpojí od míst a fotek, " +
-                        "které jsi přidal — samotné příspěvky na mapě zůstanou. Tuto akci nelze vzít zpět.",
+                    "Odhlásíme tě a server smaže tvůj účet. Tvé jméno se odpojí od míst, komentářů, " +
+                        "fotek a nahlášení, které jsi přidal — samotné příspěvky na mapě zůstanou. " +
+                        "Tuto akci nelze vzít zpět.",
                 )
             },
             confirmButton = {
