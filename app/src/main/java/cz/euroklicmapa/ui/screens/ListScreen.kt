@@ -51,6 +51,7 @@ import cz.euroklicmapa.ui.components.DataFreshnessBanner
 import cz.euroklicmapa.ui.components.EmptyState
 import cz.euroklicmapa.ui.components.PlaceCard
 import cz.euroklicmapa.ui.components.PlaceListSkeleton
+import cz.euroklicmapa.ui.components.brandChipColors
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import cz.euroklicmapa.ui.viewmodel.PlaceCategory
 import cz.euroklicmapa.ui.viewmodel.PlaceFilters
@@ -280,18 +281,6 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
     )
 }
 
-/**
- * FilterChip's default selected state pulls from `secondaryContainer`, which this app's theme
- * gives its own "community-added" amber semantic — wrong hue for a generic selection control.
- * Matches `MapScreen.MapFilterChip`'s existing solid-`brandButton` selected style, so chip
- * selection looks the same on Map and Seznam.
- */
-@Composable
-private fun brandChipColors() = FilterChipDefaults.filterChipColors(
-    selectedContainerColor = EuroklicTheme.extended.brandButton,
-    selectedLabelColor = EuroklicTheme.extended.onBrandButton,
-    selectedLeadingIconColor = EuroklicTheme.extended.onBrandButton,
-)
 
 @Composable
 private fun LocationHint(onEnable: () -> Unit) {

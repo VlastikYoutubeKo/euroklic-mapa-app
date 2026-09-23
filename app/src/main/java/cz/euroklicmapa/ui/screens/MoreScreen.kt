@@ -57,6 +57,7 @@ import cz.euroklicmapa.EuroklicApplication
 import cz.euroklicmapa.data.auth.AuthState
 import cz.euroklicmapa.data.prefs.ThemeMode
 import cz.euroklicmapa.ui.components.LoginDialog
+import cz.euroklicmapa.ui.components.brandChipColors
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import cz.euroklicmapa.util.appVersionName
 import cz.euroklicmapa.util.openUrl
@@ -150,6 +151,7 @@ fun MoreScreen(
                                 },
                             )
                         },
+                        colors = brandChipColors(),
                     )
                 }
             }
