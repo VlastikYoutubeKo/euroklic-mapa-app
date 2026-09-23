@@ -18,6 +18,12 @@ ADB/uiautomator — chce to Android Studio Layout Inspector (živé připojení 
 zjištění skutečných měřených constraints toho Column. Než se appka bude v landscape reálně
 používat, funguje aspoň portrait bez omezení.
 
+**2026-09-24 — vědomě odloženo pro beta.** Konzultováno s backend/Codex session před spuštěním
+malé "friends & family" beta: rozhodnutí je NEopravovat naslepo (pořád chybí Layout Inspector),
+místo toho appku pro betu komunikovat jako portrait-only a testery na to upozornit. Signing
+key/release build je druhý (skutečný blokující) bod před betou — ten se řeší zvlášť s backend
+session. Až bude Layout Inspector k dispozici, tenhle bug má přednost před dalším UI leštěním.
+
 > Pro Claude session (app-side i web-side). Vzniklo 2026-09-06 na žádost uživatele.
 > Toto je **akční seznam**, ne nápady — nápady zůstávají v [TODO-IDEAS.md](TODO-IDEAS.md).
 > Formát: `[owner]` = kdo to bere (backend / web / app-android / app-ios).
