@@ -3,4 +3,12 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="window_background">#F8FAFC</color>
+    <!--
+      Splash screen background only. Deliberately the SAME value as ic_launcher_background
+      (#2454E0), not BrandBlue/brandButton (#2C60F4, Color.kt) — a close-but-different blue used
+      everywhere else in-app. Named separately (Codex review, 2026-09-24) so that distinction
+      reads as intentional, not drift: this one exists to be pixel-continuous with the launcher
+      icon the user just tapped, nothing else in-app needs to match it.
+    -->
+    <color name="splash_background">#2454E0</color>
 </resources>

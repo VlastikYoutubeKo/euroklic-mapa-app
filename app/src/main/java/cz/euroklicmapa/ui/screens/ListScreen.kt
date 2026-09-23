@@ -104,14 +104,24 @@ fun ListScreen(
             )
             DataFreshnessBanner(dataSync)
             Row(
-                modifier = Modifier
-                    .selectableGroup()
-                    .horizontalScroll(rememberScrollState()),
+                modifier = Modifier.selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                CategoryChip("Vše", category == PlaceCategory.ALL) { viewModel.setCategory(PlaceCategory.ALL) }
-                CategoryChip("Toalety", category == PlaceCategory.TOILET) { viewModel.setCategory(PlaceCategory.TOILET) }
-                CategoryChip("Výdejní místa", category == PlaceCategory.PICKUP) { viewModel.setCategory(PlaceCategory.PICKUP) }
+                // "Filtry" sits outside the scroll area (Codex review, 2026-09-24) — it was the
+                // trailing chip in a plain horizontalScroll Row with no scroll-position memory or
+                // "there's more" affordance, so on first render it could sit at/past the screen
+                // edge with no hint it was reachable. Only the category chips scroll now; the
+                // filter action itself is always fully visible.
+                Row(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    CategoryChip("Vše", category == PlaceCategory.ALL) { viewModel.setCategory(PlaceCategory.ALL) }
+                    CategoryChip("Toalety", category == PlaceCategory.TOILET) { viewModel.setCategory(PlaceCategory.TOILET) }
+                    CategoryChip("Výdejní místa", category == PlaceCategory.PICKUP) { viewModel.setCategory(PlaceCategory.PICKUP) }
+                }
                 FilterChip(
                     selected = filters.activeCount > 0,
                     onClick = { showFilterDialog = true },
