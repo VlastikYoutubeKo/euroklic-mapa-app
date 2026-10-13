@@ -10,6 +10,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import cz.euroklicmapa.data.prefs.ThemeMode
+import cz.euroklicmapa.data.prefs.DesignVariant
 import cz.euroklicmapa.ui.screens.MainScreen
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 
@@ -32,12 +33,13 @@ class MainActivity : ComponentActivity() {
         val themeRepository = (application as EuroklicApplication).themeRepository
         setContent {
             val mode by themeRepository.mode.collectAsState(initial = ThemeMode.SYSTEM)
+            val variant by themeRepository.variant.collectAsState(initial = DesignVariant.SOUCASNY)
             val dark = when (mode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
             }
-            EuroklicTheme(darkTheme = dark) {
+            EuroklicTheme(darkTheme = dark, variant = variant) {
                 MainScreen()
             }
         }
@@ -91,7 +93,7 @@ class MainActivity : ComponentActivity() {
     /**
      * OAuth callback — either the verified App Link
      * `https://euroklic.odjezdy.online/app/auth-callback` or the `euroklicmapa://auth-callback`
-     * custom-scheme fallback, carrying `?code=…&state=…` (or the legacy `?token=…`).
+     * custom-scheme fallback, carrying `?code=…&state=…`.
      */
     private fun handleAuthCallback(intent: Intent?) {
         val data = intent?.data ?: return

@@ -14,13 +14,10 @@ import android.graphics.drawable.Drawable
  */
 object UserLocationIcon {
 
-    // Deliberately NOT brand blue: ColorOfficial (ui/theme/Color.kt) — the "verified ČD source"
-    // marker fill — is also blue with a white ring, which on a real device read as the same dot
-    // as "you are here". Green matches no marker fill (official=blue, community=amber,
-    // pickup=slate) and reuses the already contrast-verified LightSuccess token.
-    private const val LOCATION_GREEN = 0xFF0D8259.toInt()
-
-    fun build(context: Context): Drawable {
+    // Colours come from the theme. SOUCASNY and ZNACENI deliberately keep the location green:
+    // blue with a white ring was confused with official WC markers on a real phone.
+    // SVEZI uses dark green; KONTRAST uses black/white plus a yellow halo and contrasting ring.
+    fun build(context: Context, dotArgb: Int, haloArgb: Int, ringArgb: Int = Color.WHITE): Drawable {
         val density = context.resources.displayMetrics.density
         // Bigger canvas than the dot itself so the translucent accuracy halo has room — no place
         // marker ever draws one, so its presence alone (not just the colour) says "this is you".
@@ -30,14 +27,13 @@ object UserLocationIcon {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         val c = size / 2f
 
-        paint.color = LOCATION_GREEN
-        paint.alpha = 55
+        paint.color = haloArgb
         canvas.drawCircle(c, c, c, paint)
 
         paint.alpha = 255
-        paint.color = Color.WHITE
+        paint.color = ringArgb
         canvas.drawCircle(c, c, 8f * density, paint)
-        paint.color = LOCATION_GREEN
+        paint.color = dotArgb
         canvas.drawCircle(c, c, 6f * density, paint)
 
         return BitmapDrawable(context.resources, bitmap)

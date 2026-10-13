@@ -6,6 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
+import cz.euroklicmapa.ui.theme.EuroklicTheme
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import org.osmdroid.config.Configuration
@@ -19,6 +21,7 @@ import org.osmdroid.views.overlay.Marker
 @Composable
 fun MiniMap(lat: Double, lon: Double, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val extended = EuroklicTheme.extended
     val mapView = remember {
         Configuration.getInstance().load(
             context,
@@ -46,7 +49,7 @@ fun MiniMap(lat: Double, lon: Double, modifier: Modifier = Modifier) {
                 Marker(mv).apply {
                     position = point
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                    icon = UserLocationIcon.build(mv.context)
+                    icon = UserLocationIcon.build(mv.context, extended.userDot.toArgb(), extended.userHalo.toArgb(), extended.userRing.toArgb())
                     setInfoWindow(null)
                 },
             )

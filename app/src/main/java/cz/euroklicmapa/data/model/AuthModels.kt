@@ -30,7 +30,7 @@ data class ApiResult(
     val id: Int? = null,
 )
 
-/** `GET /api_admin_list.php` → new places (`locations`) + photo suggestions for approved places. */
+/** `GET /api_admin_list.php` → places, photo/comment suggestions and location reports. */
 @Serializable
 data class AdminListResponse(
     val error: String? = null,
@@ -40,6 +40,27 @@ data class AdminListResponse(
     val photo_suggestions: List<PhotoSuggestion> = emptyList(),
     val comment_count: Int = 0,
     val comment_suggestions: List<CommentSuggestion> = emptyList(),
+    val report_count: Int = 0,
+    val location_reports: List<LocationReport> = emptyList(),
+)
+
+/** One pending location report, JOINed with its target place. */
+@Serializable
+data class LocationReport(
+    val id: Int,
+    val location_id: Int,
+    val location_name: String? = null,
+    val location_lat: Double? = null,
+    val location_lon: Double? = null,
+    val reason: String,
+    val note: String? = null,
+    val author_name: String? = null,
+    val discord_user_id: String? = null,
+    val submitted_via: String? = null,
+    val status: String? = null,
+    val created_at: String? = null,
+    val resolved_at: String? = null,
+    val resolved_by: String? = null,
 )
 
 /** One pending `photo_suggestions` row, JOINed with its target place for a preview. */

@@ -66,18 +66,33 @@ class DetailViewModel(
     // WC detail observes Room so a successful vote (which writes back the new counts) reflects
     // immediately here and on the map/list. When the live row is absent (feed scoped it out,
     // removed server-side, never synced) but the place is favourited, fall back to the stored
-    // full-detail snapshot so it still opens offline. Pickup detail is a one-shot lookup with
-    // the same snapshot fallback.
+    // full-detail snapshot so it still opens offline. With neither row, fetch this WC once
+    // by id (reports may refer to places outside the scoped feed). Pickup detail is a
+    // one-shot lookup with the same snapshot fallback.
+    private var locationFetchStarted = false
+    private val locationFetchFailed = MutableStateFlow(false)
+
     val state: StateFlow<DetailState> =
         if (type == "WC") {
             combine(
                 repository.observeLocation(id),
                 favorites.observeFavorite(id, false),
-            ) { live, fav ->
+                locationFetchFailed,
+            ) { live, fav, fetchFailed ->
                 when {
                     live != null -> DetailState.WcDetail(live)
                     fav != null -> DetailState.WcDetail(fav.toWcLocationEntity())
-                    else -> DetailState.Error
+                    fetchFailed -> DetailState.Error
+                    else -> {
+                        if (!locationFetchStarted) {
+                            locationFetchStarted = true
+                            // Survives WhileSubscribed stopping/restarting the Room collector.
+                            viewModelScope.launch {
+                                locationFetchFailed.value = !repository.fetchLocation(id)
+                            }
+                        }
+                        DetailState.Loading
+                    }
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DetailState.Loading)
         } else {

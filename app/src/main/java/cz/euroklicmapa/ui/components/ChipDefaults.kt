@@ -16,7 +16,7 @@ import cz.euroklicmapa.ui.theme.EuroklicTheme
  */
 @Composable
 fun brandChipColors() = FilterChipDefaults.filterChipColors(
-    selectedContainerColor = EuroklicTheme.extended.brandButton,
-    selectedLabelColor = EuroklicTheme.extended.onBrandButton,
-    selectedLeadingIconColor = EuroklicTheme.extended.onBrandButton,
+    selectedContainerColor = EuroklicTheme.extended.selectedChip,
+    selectedLabelColor = EuroklicTheme.extended.onSelectedChip,
+    selectedLeadingIconColor = EuroklicTheme.extended.onSelectedChip,
 )

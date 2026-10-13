@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.components
 
+import cz.euroklicmapa.ui.theme.EuroklicTheme
 import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -56,7 +57,7 @@ fun rememberImagePicker(onPicked: (Uri) -> Unit): ImagePickerHandle {
             title = { Text("Přidat fotku") },
             text = { Text("Vyfoťte místo, nebo vyberte fotku z galerie.") },
             confirmButton = {
-                Button(onClick = {
+                Button(shape = EuroklicTheme.shapes.pill, onClick = {
                     showDialog = false
                     val uri = newCameraUri(context)
                     pendingCameraUri = uri
@@ -68,7 +69,7 @@ fun rememberImagePicker(onPicked: (Uri) -> Unit): ImagePickerHandle {
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = {
+                OutlinedButton(shape = EuroklicTheme.shapes.pill, onClick = {
                     showDialog = false
                     pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 }) {

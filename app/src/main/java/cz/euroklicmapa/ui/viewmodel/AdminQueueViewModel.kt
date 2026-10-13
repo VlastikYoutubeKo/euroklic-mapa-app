@@ -33,6 +33,9 @@ class AdminQueueViewModel(private val adminRepository: AdminRepository) : ViewMo
     var actingCommentId by mutableStateOf<Int?>(null)
         private set
 
+    var actingReportId by mutableStateOf<Int?>(null)
+        private set
+
     init { load() }
 
     fun load() {
@@ -90,6 +93,23 @@ class AdminQueueViewModel(private val adminRepository: AdminRepository) : ViewMo
                 is AdminActionResult.Failed -> _snack.trySend(result.message)
             }
             actingCommentId = null
+        }
+    }
+
+    fun reviewReport(reportId: Int, resolve: Boolean) {
+        if (actingReportId != null) return
+        actingReportId = reportId
+        viewModelScope.launch {
+            when (val result = adminRepository.reviewReport(reportId, resolve)) {
+                is AdminActionResult.Ok -> {
+                    _snack.trySend(result.message)
+                    (_state.value as? AdminListState.Loaded)?.let { loaded ->
+                        _state.value = loaded.copy(reports = loaded.reports.filterNot { it.id == reportId })
+                    }
+                }
+                is AdminActionResult.Failed -> _snack.trySend(result.message)
+            }
+            actingReportId = null
         }
     }
 }

@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.ui.theme.contrastBorder
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -137,9 +137,10 @@ fun ArticlesScreen(onOpenArticle: (String) -> Unit, onBack: () -> Unit) {
         ) {
             Articles.all.forEach { article ->
                 Surface(
+                    border = contrastBorder(),
                     onClick = { onOpenArticle(article.slug) },
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(14.dp),
+                    color = EuroklicTheme.extended.cardSurface,
+                    shape = EuroklicTheme.shapes.tile,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(
@@ -231,8 +232,9 @@ fun ArticleDetailScreen(slug: String, onBack: () -> Unit) {
 @Composable
 private fun ArticleWarning(text: String) {
     Surface(
+        border = contrastBorder(),
         color = EuroklicTheme.extended.accent.copy(alpha = 0.14f),
-        shape = RoundedCornerShape(14.dp),
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(

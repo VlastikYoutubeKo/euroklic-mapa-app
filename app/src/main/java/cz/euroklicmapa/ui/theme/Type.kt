@@ -8,6 +8,7 @@ import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
 import cz.euroklicmapa.R
+import cz.euroklicmapa.data.prefs.DesignVariant
 
 private val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts",
@@ -51,3 +52,41 @@ val Typography = Typography(
     labelMedium = plex(FontWeight.SemiBold, 12, 16, 0.4),
     labelSmall = plex(FontWeight.Medium, 11, 14, 0.4),
 )
+
+private fun downloadableFamily(name: String) = FontFamily(
+    Font(GoogleFont(name), provider, weight = FontWeight.Normal),
+    Font(GoogleFont(name), provider, weight = FontWeight.Medium),
+    Font(GoogleFont(name), provider, weight = FontWeight.SemiBold),
+    Font(GoogleFont(name), provider, weight = FontWeight.Bold),
+)
+
+// This family provides regular and bold; let font matching choose those for intermediate weights.
+private val atkinson = FontFamily(
+    Font(GoogleFont("Atkinson Hyperlegible"), provider, weight = FontWeight.Normal),
+    Font(GoogleFont("Atkinson Hyperlegible"), provider, weight = FontWeight.Bold),
+)
+private val publicSans = downloadableFamily("Public Sans")
+private val overpass = downloadableFamily("Overpass")
+
+internal fun designTypography(variant: DesignVariant): Typography {
+    if (variant == DesignVariant.SOUCASNY) return Typography
+    val family = when (variant) {
+        DesignVariant.KONTRAST -> atkinson
+        DesignVariant.SVEZI -> publicSans
+        DesignVariant.ZNACENI -> overpass
+        else -> IBMPlexSans
+    }
+    val extra = if (variant == DesignVariant.KONTRAST) 2f else 0f
+    fun TextStyle.adapt() = copy(
+        fontFamily = family, fontSize = (fontSize.value + extra).sp, lineHeight = (lineHeight.value + extra).sp,
+        fontWeight = if (variant == DesignVariant.KONTRAST && fontWeight == FontWeight.SemiBold) FontWeight.Bold else fontWeight,
+    )
+    return Typography.copy(
+        displayLarge = Typography.displayLarge.adapt(), displayMedium = Typography.displayMedium.adapt(),
+        displaySmall = Typography.displaySmall.adapt(), headlineLarge = Typography.headlineLarge.adapt(),
+        headlineMedium = Typography.headlineMedium.adapt(), headlineSmall = Typography.headlineSmall.adapt(),
+        titleLarge = Typography.titleLarge.adapt(), titleMedium = Typography.titleMedium.adapt(), titleSmall = Typography.titleSmall.adapt(),
+        bodyLarge = Typography.bodyLarge.adapt(), bodyMedium = Typography.bodyMedium.adapt(), bodySmall = Typography.bodySmall.adapt(),
+        labelLarge = Typography.labelLarge.adapt(), labelMedium = Typography.labelMedium.adapt(), labelSmall = Typography.labelSmall.adapt(),
+    )
+}

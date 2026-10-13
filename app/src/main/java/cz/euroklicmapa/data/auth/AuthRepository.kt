@@ -41,15 +41,14 @@ private val TOKEN_KEY = stringPreferencesKey("bearer_token_enc")
 
 /**
  * Token-based auth with a PKCE code exchange (RFC 8252). Login opens the web OAuth flow in the
- * browser (`/auth.php?client=app&state=<nonce>&code_challenge=<S256>`); the backend redirects
+ * browser (`/app-login.php?client=app&state=<nonce>&code_challenge=<S256>`); the backend redirects
  * to `euroklicmapa://auth-callback` **or** the verified App Link
  * `https://euroklic.odjezdy.online/app/auth-callback` with `?code=…&state=…`, which
  * `MainActivity` feeds to [handleCallback]. The app then swaps that one-time `code` (+ the
  * locally-held `code_verifier`) for the real Bearer token at `/api_token.php` — so a leaked
  * redirect URL is useless without the verifier.
  *
- * (Back-compat: if the callback still carries `token=` directly, that path still works until the
- * backend cuts over.) The token is stored **AES-GCM encrypted** ([SecureTokenStore]); it has no
+ * The token is stored **AES-GCM encrypted** ([SecureTokenStore]); it has no
  * expiry but the server may hand back a fresher one via `X-Refreshed-Token`.
  */
 class AuthRepository(
@@ -118,15 +117,16 @@ class AuthRepository(
         }
         uri.getQueryParameter("error")?.let {
             Log.w("AuthRepository", "callback error: $it")
-            _events.tryEmit(AuthEvent.Error("Přihlášení se nezdařilo."))
+            _events.tryEmit(AuthEvent.Error(
+                if (it == "pkce_required") "Přihlášení se nezdařilo. Aktualizujte prosím aplikaci."
+                else "Přihlášení se nezdařilo.",
+            ))
             return
         }
 
         val code = uri.getQueryParameter("code")
-        val directToken = uri.getQueryParameter("token")
         when {
             !code.isNullOrBlank() && verifier != null -> scope.launch { exchangeCode(code, verifier) }
-            !directToken.isNullOrBlank() -> scope.launch { adoptToken(directToken, announceSignIn = true) }
             else -> _events.tryEmit(AuthEvent.Error("Přihlášení se nezdařilo (chybí kód)."))
         }
     }

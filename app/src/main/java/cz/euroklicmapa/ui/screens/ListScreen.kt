@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.ui.theme.contrastBorder
 import android.Manifest
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -165,7 +166,7 @@ fun ListScreen(
                     icon = Icons.Rounded.CloudOff,
                     title = "Nepodařilo se načíst data",
                     subtitle = "Zkontrolujte připojení k internetu.",
-                    action = { Button(onClick = viewModel::retry) { Text("Zkusit znovu") } },
+                    action = { Button(shape = EuroklicTheme.shapes.pill, onClick = viewModel::retry) { Text("Zkusit znovu") } },
                 )
 
             items.isEmpty() && category != PlaceCategory.ALL ->
@@ -180,7 +181,7 @@ fun ListScreen(
                     icon = Icons.Rounded.WrongLocation,
                     title = "Zatím tu nic není",
                     subtitle = "Zkuste to znovu, až budete online.",
-                    action = { Button(onClick = viewModel::retry) { Text("Zkusit znovu") } },
+                    action = { Button(shape = EuroklicTheme.shapes.pill, onClick = viewModel::retry) { Text("Zkusit znovu") } },
                 )
 
             else -> LazyColumn(
@@ -263,10 +264,10 @@ private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: 
             }
         },
         confirmButton = {
-            TextButton(onClick = { onApply(PlaceFilters(statuses, distance)) }) { Text("Použít") }
+            TextButton(shape = EuroklicTheme.shapes.pill, onClick = { onApply(PlaceFilters(statuses, distance)) }) { Text("Použít") }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Zrušit") }
+            TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDismiss) { Text("Zrušit") }
         },
     )
 }
@@ -285,8 +286,9 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
 @Composable
 private fun LocationHint(onEnable: () -> Unit) {
     Surface(
+        border = contrastBorder(),
         color = MaterialTheme.colorScheme.primaryContainer,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        shape = EuroklicTheme.shapes.card,
         modifier = Modifier.padding(top = 2.dp),
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -301,6 +303,7 @@ private fun LocationHint(onEnable: () -> Unit) {
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             TextButton(
+                shape = EuroklicTheme.shapes.pill,
                 onClick = onEnable,
                 contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
             ) { Text("Povolit polohu") }

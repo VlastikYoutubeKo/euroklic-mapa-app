@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.ui.theme.contrastBorder
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,8 +13,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -56,6 +62,8 @@ import coil.compose.AsyncImage
 import cz.euroklicmapa.EuroklicApplication
 import cz.euroklicmapa.data.auth.AuthState
 import cz.euroklicmapa.data.prefs.ThemeMode
+import cz.euroklicmapa.data.prefs.DesignVariant
+import cz.euroklicmapa.ui.theme.designPalette
 import cz.euroklicmapa.ui.components.LoginDialog
 import cz.euroklicmapa.ui.components.brandChipColors
 import cz.euroklicmapa.ui.theme.EuroklicTheme
@@ -82,6 +90,7 @@ fun MoreScreen(
     val app = context.applicationContext as EuroklicApplication
     val scope = rememberCoroutineScope()
     val themeMode by app.themeRepository.mode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+    val designVariant by app.themeRepository.variant.collectAsStateWithLifecycle(initialValue = DesignVariant.SOUCASNY)
 
     val authState by app.authRepository.state.collectAsStateWithLifecycle()
     var showLoginDialog by remember { mutableStateOf(false) }
@@ -153,6 +162,55 @@ fun MoreScreen(
                         },
                         colors = brandChipColors(),
                     )
+                }
+            }
+
+            SectionLabel("Vzhled aplikace")
+            Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                DesignVariant.entries.forEach { variant ->
+                    val preview = designPalette(variant, false)
+                    val selected = designVariant == variant
+                    val current = designVariant == DesignVariant.SOUCASNY
+                    val selectedBackground = if (current) MaterialTheme.colorScheme.primaryContainer else EuroklicTheme.extended.selectedChip
+                    val selectedText = if (selected) {
+                        if (current) MaterialTheme.colorScheme.onPrimaryContainer else EuroklicTheme.extended.onSelectedChip
+                    } else MaterialTheme.colorScheme.onSurface
+                    Row(
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)
+                            .selectable(
+                                selected = designVariant == variant,
+                                onClick = { scope.launch { app.themeRepository.setVariant(variant) } },
+                                role = Role.RadioButton,
+                            ).background(
+                                if (selected) selectedBackground else Color.Transparent,
+                                EuroklicTheme.shapes.card,
+                            ).padding(vertical = 8.dp, horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        RadioButton(selected = selected, onClick = null,
+                            colors = RadioButtonDefaults.colors(selectedColor = selectedText))
+                        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                            listOf(preview.colors.primary, preview.extended.selectedChip).forEach { color ->
+                                Box(Modifier.size(16.dp).clip(EuroklicTheme.shapes.small).background(color))
+                            }
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(when (variant) {
+                                DesignVariant.SOUCASNY -> "Současný"
+                                DesignVariant.KONTRAST -> "Kontrast"
+                                DesignVariant.SVEZI -> "Svěží"
+                                DesignVariant.ZNACENI -> "Značení"
+                            }, style = MaterialTheme.typography.titleMedium, color = selectedText)
+                            Text(when (variant) {
+                                DesignVariant.SOUCASNY -> "Původní modrý vzhled aplikace."
+                                DesignVariant.KONTRAST -> "Větší písmo, výrazné obrysy a žlutý výběr."
+                                DesignVariant.SVEZI -> "Zelené tóny a měkké zaoblené tvary."
+                                DesignVariant.ZNACENI -> "Tmavě modré značení a hranatější tvary."
+                            }, style = MaterialTheme.typography.bodySmall,
+                                color = if (selected) selectedText else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
             }
 
@@ -233,6 +291,7 @@ fun MoreScreen(
             },
             confirmButton = {
                 TextButton(
+                    shape = EuroklicTheme.shapes.pill,
                     enabled = !deleting,
                     onClick = {
                         scope.launch {
@@ -256,7 +315,7 @@ fun MoreScreen(
                 }
             },
             dismissButton = {
-                TextButton(enabled = !deleting, onClick = { showDeleteDialog = false }) { Text("Zrušit") }
+                TextButton(shape = EuroklicTheme.shapes.pill, enabled = !deleting, onClick = { showDeleteDialog = false }) { Text("Zrušit") }
             },
         )
     }
@@ -270,8 +329,9 @@ private fun AuthCard(
     onDeleteAccount: () -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(16.dp),
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.card,
         modifier = Modifier.fillMaxWidth(),
     ) {
       Column(modifier = Modifier.padding(16.dp)) {
@@ -314,7 +374,7 @@ private fun AuthCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    Button(onClick = onRequestLogin) { Text("Přihlásit se") }
+                    Button(shape = EuroklicTheme.shapes.pill, onClick = onRequestLogin) { Text("Přihlásit se") }
                 }
 
                 is AuthState.LoggedIn -> {
@@ -346,14 +406,14 @@ private fun AuthCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    TextButton(onClick = onLogout) { Text("Odhlásit") }
+                    TextButton(shape = EuroklicTheme.shapes.pill, onClick = onLogout) { Text("Odhlásit") }
                 }
             }
         }
 
         if (state is AuthState.LoggedIn) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onDeleteAccount) {
+                TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDeleteAccount) {
                     Text("Smazat účet a data", color = MaterialTheme.colorScheme.error)
                 }
             }
@@ -370,8 +430,9 @@ private fun SwitchRow(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(14.dp),
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
@@ -408,9 +469,10 @@ private fun SwitchRow(
 @Composable
 private fun BatteryNote(onOpenSettings: () -> Unit) {
     Surface(
+        border = contrastBorder(),
         onClick = onOpenSettings,
         color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(14.dp),
+        shape = EuroklicTheme.shapes.tile,
         // Clickable Surface carries no role by default — announce it as a button; the
         // clickable already merges the title + body into one focus stop.
         modifier = Modifier
@@ -447,9 +509,10 @@ private fun SectionLabel(text: String) {
 @Composable
 private fun LinkRow(title: String, subtitle: String, onClick: () -> Unit) {
     Surface(
+        border = contrastBorder(),
         onClick = onClick,
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(14.dp),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
     ) {
         Row(

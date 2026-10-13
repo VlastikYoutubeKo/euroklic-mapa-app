@@ -14,6 +14,10 @@ import androidx.compose.ui.graphics.Color
 val BrandBlue = Color(0xFF2C60F4)        // filled buttons / FAB background — same in both modes
 val BrandBluePressed = Color(0xFF1E4CD6)
 
+// Photo captions must stay readable even over an entirely white photograph.
+val PhotoCaptionScrim = Color.Black.copy(alpha = 0.6f)
+val PhotoCaptionText = Color.White
+
 // ---- Light ----
 val LightPrimary = BrandBlue
 val LightOnPrimary = Color(0xFFFFFFFF)

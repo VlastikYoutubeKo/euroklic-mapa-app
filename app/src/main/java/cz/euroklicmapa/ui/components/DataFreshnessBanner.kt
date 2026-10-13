@@ -1,11 +1,11 @@
 package cz.euroklicmapa.ui.components
 
+import cz.euroklicmapa.ui.theme.EuroklicTheme
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material3.Icon
@@ -42,9 +42,9 @@ fun dataAgeText(lastSyncMillis: Long?, now: Long = System.currentTimeMillis()): 
 fun DataFreshnessBanner(lastSyncMillis: Long?, modifier: Modifier = Modifier) {
     val text = dataAgeText(lastSyncMillis) ?: return
     Surface(
-        shape = RoundedCornerShape(999.dp),
+        shape = EuroklicTheme.shapes.pill,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(EuroklicTheme.shapes.outlineWidth, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier.clearAndSetSemantics { contentDescription = text },
     ) {
         Row(

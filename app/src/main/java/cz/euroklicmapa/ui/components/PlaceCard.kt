@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -70,9 +69,9 @@ fun PlaceCard(
 
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = EuroklicTheme.shapes.cardLarge,
+        color = EuroklicTheme.extended.cardSurface,
+        border = BorderStroke(EuroklicTheme.shapes.outlineWidth, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 76.dp)
@@ -86,7 +85,7 @@ fun PlaceCard(
             Box(
                 modifier = Modifier
                     .size(44.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(EuroklicTheme.shapes.tile)
                     .background(glyphTint.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center,
             ) {
@@ -128,7 +127,7 @@ fun PlaceCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(999.dp))
+                                .clip(EuroklicTheme.shapes.pill)
                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                 .padding(horizontal = 8.dp, vertical = 2.dp),
                         )

@@ -1,5 +1,7 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.ui.theme.contrastBorder
+import cz.euroklicmapa.ui.theme.EuroklicTheme
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +16,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -130,7 +131,7 @@ fun AddPlaceScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .clip(EuroklicTheme.shapes.card),
             ) {
                 LocationPickerMap(
                     initial = viewModel.initialCenter,
@@ -157,6 +158,7 @@ fun AddPlaceScreen(
             }
 
             Button(
+                shape = EuroklicTheme.shapes.pill,
                 onClick = { showReview = true },
                 enabled = viewModel.canSubmit,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -208,7 +210,7 @@ private fun ReviewDialog(
                     AsyncImage(
                         model = photoUri,
                         contentDescription = "Vybraná fotka",
-                        modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(12.dp)),
+                        modifier = Modifier.fillMaxWidth().height(140.dp).clip(EuroklicTheme.shapes.small),
                     )
                 }
                 Text(name, style = MaterialTheme.typography.titleMedium)
@@ -232,8 +234,8 @@ private fun ReviewDialog(
                 )
             }
         },
-        confirmButton = { TextButton(onClick = onConfirm) { Text("Odeslat") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Zpět a upravit") } },
+        confirmButton = { TextButton(shape = EuroklicTheme.shapes.pill, onClick = onConfirm) { Text("Odeslat") } },
+        dismissButton = { TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDismiss) { Text("Zpět a upravit") } },
     )
 }
 
@@ -241,9 +243,10 @@ private fun ReviewDialog(
 private fun PhotoField(uri: Uri?, onPick: () -> Unit, onClear: () -> Unit) {
     if (uri == null) {
         Surface(
+            border = contrastBorder(),
             onClick = onPick,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shape = RoundedCornerShape(16.dp),
+            shape = EuroklicTheme.shapes.card,
             modifier = Modifier.fillMaxWidth().height(120.dp),
         ) {
             Column(
@@ -265,16 +268,17 @@ private fun PhotoField(uri: Uri?, onPick: () -> Unit, onClear: () -> Unit) {
             }
         }
     } else {
-        Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(16.dp))) {
+        Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(EuroklicTheme.shapes.card)) {
             AsyncImage(
                 model = uri,
                 contentDescription = "Vybraná fotka",
                 modifier = Modifier.fillMaxSize(),
             )
             Surface(
+                border = contrastBorder(),
                 onClick = onClear,
-                shape = RoundedCornerShape(999.dp),
-                color = MaterialTheme.colorScheme.surface,
+                shape = EuroklicTheme.shapes.pill,
+                color = EuroklicTheme.extended.cardSurface,
                 modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(36.dp),
             ) {
                 Icon(

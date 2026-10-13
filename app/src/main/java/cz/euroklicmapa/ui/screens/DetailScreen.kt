@@ -1,5 +1,10 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.ui.theme.VariantStatusBar
+import cz.euroklicmapa.ui.theme.PhotoCaptionScrim
+import cz.euroklicmapa.ui.theme.PhotoCaptionText
+
+import cz.euroklicmapa.ui.theme.contrastBorder
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -23,7 +28,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -225,11 +229,14 @@ fun DetailScreen(
             Spacer(Modifier.height(96.dp)) // room for the sticky bar
         }
 
+        VariantStatusBar(EuroklicTheme.extended.hero)
+
         // Back button floating over the hero
         Surface(
+            border = contrastBorder(),
             onClick = onBack,
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface,
+            shape = EuroklicTheme.shapes.round,
+            color = EuroklicTheme.extended.cardSurface,
             shadowElevation = 3.dp,
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -260,6 +267,7 @@ fun DetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Surface(
+                    border = contrastBorder(),
                     onClick = {
                         try {
                             val send = Intent(Intent.ACTION_SEND)
@@ -270,8 +278,8 @@ fun DetailScreen(
                             Toast.makeText(context, "Nelze sdílet.", Toast.LENGTH_SHORT).show()
                         }
                     },
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surface,
+                    shape = EuroklicTheme.shapes.round,
+                    color = EuroklicTheme.extended.cardSurface,
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     shadowElevation = 3.dp,
                     // 48dp touch target (an outer .size() clamps Surface's built-in
@@ -283,9 +291,10 @@ fun DetailScreen(
                     }
                 }
                 Surface(
+                    border = contrastBorder(),
                     onClick = viewModel::toggleFavorite,
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surface,
+                    shape = EuroklicTheme.shapes.round,
+                    color = EuroklicTheme.extended.cardSurface,
                     contentColor = if (isFavorite) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                     shadowElevation = 3.dp,
@@ -373,8 +382,9 @@ private fun PhotoViewerDialog(url: String, author: String?, contentDescription: 
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             ZoomableImage(model = url, contentDescription = contentDescription)
             Surface(
+                border = contrastBorder(),
                 onClick = onDismiss,
-                shape = CircleShape,
+                shape = EuroklicTheme.shapes.round,
                 color = Color.Black.copy(alpha = 0.5f),
                 contentColor = Color.White,
                 modifier = Modifier
@@ -390,14 +400,14 @@ private fun PhotoViewerDialog(url: String, author: String?, contentDescription: 
             if (!author.isNullOrBlank()) {
                 Text(
                     "Foto: $author",
-                    color = Color.White,
+                    color = PhotoCaptionText,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding()
                         .padding(16.dp)
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(Color.Black.copy(alpha = 0.5f))
+                        .clip(EuroklicTheme.shapes.pill)
+                        .background(PhotoCaptionScrim)
                         .padding(horizontal = 14.dp, vertical = 6.dp),
                 )
             }
@@ -520,7 +530,7 @@ private fun WcBody(
         MiniMap(
             lat = wc.latitude,
             lon = wc.longitude,
-            modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)),
+            modifier = Modifier.fillMaxWidth().height(140.dp).clip(EuroklicTheme.shapes.card),
         )
         OpeningHoursSection(hall = wc.openingHours, wc = wc.wcOpeningHours)
         wc.description?.takeIf { it.isNotBlank() }?.let {
@@ -565,9 +575,10 @@ private fun WcBody(
 private fun AddPhotoRow(hasPhoto: Boolean, uploading: Boolean, onClick: () -> Unit) {
     val label = if (hasPhoto) "Navrhnout jinou fotku" else "Přidat fotku"
     Surface(
+        border = contrastBorder(),
         onClick = { if (!uploading) onClick() },
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(14.dp),
+        shape = EuroklicTheme.shapes.tile,
         // One focus stop announced as a button; the two Texts below carry the label.
         modifier = Modifier
             .fillMaxWidth()
@@ -615,7 +626,7 @@ private fun ForeignBadge(country: String?) {
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
+            .clip(EuroklicTheme.shapes.pill)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(horizontal = 10.dp, vertical = 4.dp),
     )
@@ -625,6 +636,7 @@ private fun ForeignBadge(country: String?) {
  *  full-width cards for two one-line facts read as clutter; one card, two lines doesn't. */
 @Composable
 private fun AccessCard(requiresKey: Boolean, wheelchair: String?) {
+    val alternate = EuroklicTheme.variant != cz.euroklicmapa.data.prefs.DesignVariant.SOUCASNY
     val wheelchairLine = when (wheelchair) {
         "yes" -> "Bezbariérový přístup do budovy: ano" to false
         "no" -> "Bezbariérový přístup do budovy: ne" to true
@@ -632,8 +644,9 @@ private fun AccessCard(requiresKey: Boolean, wheelchair: String?) {
     }
     if (!requiresKey && wheelchairLine == null) return
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(14.dp),
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.key,
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -644,14 +657,15 @@ private fun AccessCard(requiresKey: Boolean, wheelchair: String?) {
                 Text(
                     "Zamčeno – pro vstup je nutný Euroklíč.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = EuroklicTheme.extended.onKey,
                 )
             }
             wheelchairLine?.let { (text, warn) ->
                 Text(
                     text,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (warn) MaterialTheme.colorScheme.error else EuroklicTheme.extended.success,
+                    color = if (alternate) EuroklicTheme.extended.onKey
+                        else if (warn) MaterialTheme.colorScheme.onErrorContainer else EuroklicTheme.extended.verifiedText,
                 )
             }
         }
@@ -675,6 +689,7 @@ private fun ExpandableSection(label: String, value: String) {
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
         )
         TextButton(
+            shape = EuroklicTheme.shapes.pill,
             onClick = { expanded = !expanded },
             contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
         ) {
@@ -711,12 +726,13 @@ private fun FloorPlanSection(locationId: Int, sourceUrl: String) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(190.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(EuroklicTheme.shapes.tile)
                 .background(Color.White) // plans are white-background line art in both app themes
                 .clickable(onClickLabel = "Otevřít na celou obrazovku", onClick = { showViewer = true })
                 .semantics { role = Role.Button },
         )
         TextButton(
+            shape = EuroklicTheme.shapes.pill,
             onClick = { uriHandler.openUri(sourceUrl) },
             contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
         ) {
@@ -738,6 +754,7 @@ private fun FloorPlanSection(locationId: Int, sourceUrl: String) {
 private fun ReportLink(webUrl: String?) {
     val uriHandler = LocalUriHandler.current
     TextButton(
+        shape = EuroklicTheme.shapes.pill,
         onClick = { uriHandler.openUri(webUrl ?: "https://euroklic.odjezdy.online/") },
         contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
     ) {
@@ -762,9 +779,10 @@ private fun ReportProblemRow(
 ) {
     var showDialog by remember { mutableStateOf(false) }
     Surface(
+        border = contrastBorder(),
         onClick = { if (loggedIn) showDialog = true else onRequestLogin() },
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(14.dp),
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) { role = Role.Button },
@@ -841,6 +859,7 @@ private fun ReportProblemDialog(
         },
         confirmButton = {
             TextButton(
+                shape = EuroklicTheme.shapes.pill,
                 enabled = reason != null && !sending,
                 onClick = { reason?.let { onSubmit(it, note) } },
             ) {
@@ -855,7 +874,7 @@ private fun ReportProblemDialog(
             }
         },
         dismissButton = {
-            TextButton(enabled = !sending, onClick = onDismiss) { Text("Zrušit") }
+            TextButton(shape = EuroklicTheme.shapes.pill, enabled = !sending, onClick = onDismiss) { Text("Zrušit") }
         },
     )
 }
@@ -874,7 +893,7 @@ private fun PickupBody(pp: PickupPointEntity, userLocation: GeoPoint?) {
         MiniMap(
             lat = pp.latitude,
             lon = pp.longitude,
-            modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(16.dp)),
+            modifier = Modifier.fillMaxWidth().height(140.dp).clip(EuroklicTheme.shapes.card),
         )
 
         if (pp.precision == "approx") {
@@ -892,6 +911,7 @@ private fun PickupBody(pp: PickupPointEntity, userLocation: GeoPoint?) {
                 "chybějícímu financování. Než se vydáte, ověřte si aktuální stav.",
         )
         TextButton(
+            shape = EuroklicTheme.shapes.pill,
             onClick = { uriHandler.openUri(KEY_STATUS_URL) },
             contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
         ) {
@@ -907,8 +927,9 @@ private fun PickupBody(pp: PickupPointEntity, userLocation: GeoPoint?) {
 private fun DistanceCard(target: GeoPoint, userLocation: GeoPoint?) {
     val meters = userLocation?.let { distanceBetween(target, it) } ?: return
     Surface(
+        border = contrastBorder(),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(16.dp),
+        shape = EuroklicTheme.shapes.card,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
@@ -959,8 +980,9 @@ private fun CommentsSection(
         }
         list.forEach { c ->
             Surface(
+                border = contrastBorder(),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(14.dp),
+                shape = EuroklicTheme.shapes.tile,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(
@@ -1007,6 +1029,7 @@ private fun CommentComposer(
 ) {
     if (!loggedIn) {
         OutlinedButton(
+            shape = EuroklicTheme.shapes.pill,
             onClick = onRequestLogin,
             modifier = Modifier.fillMaxWidth().height(48.dp),
         ) {
@@ -1034,6 +1057,7 @@ private fun CommentComposer(
             },
         )
         Button(
+            shape = EuroklicTheme.shapes.pill,
             onClick = {
                 onSubmit(text)
                 text = ""
@@ -1113,7 +1137,7 @@ private fun OpeningHoursSection(hall: String?, wc: String?) {
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = if (open) EuroklicTheme.extended.onSuccess else MaterialTheme.colorScheme.onError,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
+                        .clip(EuroklicTheme.shapes.pill)
                         .background(
                             if (open) EuroklicTheme.extended.success else MaterialTheme.colorScheme.error,
                         )
@@ -1141,8 +1165,9 @@ private fun OpeningHoursSection(hall: String?, wc: String?) {
 @Composable
 private fun VerifyPresenceCard(voting: Boolean, onVote: (Boolean) -> Unit) {
     Surface(
+        border = contrastBorder(),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(14.dp),
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -1189,11 +1214,13 @@ private fun CompactVoteButton(
     modifier: Modifier = Modifier,
 ) {
     Surface(
+        border = contrastBorder(),
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
+        shape = EuroklicTheme.shapes.small,
         color = tint.copy(alpha = 0.12f),
-        contentColor = tint,
+        contentColor = if (tint == EuroklicTheme.extended.success) EuroklicTheme.extended.verifiedText
+            else MaterialTheme.colorScheme.onErrorContainer,
         modifier = modifier
             .height(48.dp)
             .semantics { this.contentDescription = contentDescription },
@@ -1273,18 +1300,20 @@ private fun VoteButton(
     Surface(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(14.dp),
+        shape = EuroklicTheme.shapes.tile,
         color = when {
             selected -> tint
             active -> tint.copy(alpha = 0.12f)
             else -> MaterialTheme.colorScheme.surfaceContainerHigh
         },
         contentColor = when {
-            selected -> Color.White
-            active -> tint
+            selected -> if (tint == EuroklicTheme.extended.success) EuroklicTheme.extended.onSuccess
+                else MaterialTheme.colorScheme.onError
+            active -> if (tint == EuroklicTheme.extended.success) EuroklicTheme.extended.verifiedText
+                else MaterialTheme.colorScheme.onErrorContainer
             else -> MaterialTheme.colorScheme.onSurfaceVariant
         },
-        border = if (active) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = contrastBorder() ?: if (active) null else BorderStroke(EuroklicTheme.shapes.outlineWidth, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier.height(52.dp),
     ) {
         Row(
@@ -1305,8 +1334,9 @@ private fun VoteButton(
 @Composable
 private fun NoticeCard(text: String) {
     Surface(
+        border = contrastBorder(),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(14.dp),
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(modifier = Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1319,12 +1349,14 @@ private fun NoticeCard(text: String) {
 @Composable
 private fun NavigateBar(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.cardSurface,
         shadowElevation = 12.dp,
         modifier = modifier.fillMaxWidth(),
     ) {
         Box(modifier = Modifier.navigationBarsPadding().padding(16.dp)) {
             Button(
+                shape = EuroklicTheme.shapes.pill,
                 onClick = onClick,
                 modifier = Modifier.fillMaxWidth().height(54.dp),
                 colors = ButtonDefaults.buttonColors(

@@ -1,5 +1,11 @@
 package cz.euroklicmapa.ui.screens
 
+import androidx.compose.foundation.background
+import cz.euroklicmapa.ui.theme.VariantStatusBar
+import cz.euroklicmapa.ui.theme.variantFabModifier
+import cz.euroklicmapa.ui.theme.variantFabElevation
+
+import cz.euroklicmapa.ui.theme.contrastBorder
 import android.Manifest
 import android.content.Context
 import android.widget.Toast
@@ -20,7 +26,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -222,16 +227,17 @@ fun MapScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
+                TextButton(shape = EuroklicTheme.shapes.pill, onClick = {
                     showRationale = false
                     locationPermissions.launchMultiplePermissionRequest()
                 }) { Text("Povolit polohu") }
             },
-            dismissButton = { TextButton(onClick = { showRationale = false }) { Text("Teď ne") } },
+            dismissButton = { TextButton(shape = EuroklicTheme.shapes.pill, onClick = { showRationale = false }) { Text("Teď ne") } },
         )
     }
 
     BottomSheetScaffold(
+        sheetShape = EuroklicTheme.shapes.sheetTop,
         scaffoldState = scaffoldState,
         // The selected-place card is taller than a couple of list rows — give it enough peek
         // that "Navigovat" and "Zobrazit podrobnosti" are both visible without dragging.
@@ -279,10 +285,14 @@ fun MapScreen(
                 onMapReady = { mapViewRef = it },
             )
 
+            VariantStatusBar()
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
+                    .background(if (EuroklicTheme.variant == cz.euroklicmapa.data.prefs.DesignVariant.ZNACENI)
+                        EuroklicTheme.extended.navBackground else Color.Transparent)
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -321,6 +331,9 @@ fun MapScreen(
                         // action (see startOfflineDownload's MAX_TILES guard), not a "cache
                         // everything" toggle.
                         SmallFloatingActionButton(
+                    modifier = variantFabModifier(),
+                    elevation = variantFabElevation(),
+                    shape = if (EuroklicTheme.variant == cz.euroklicmapa.data.prefs.DesignVariant.SOUCASNY) EuroklicTheme.shapes.small else EuroklicTheme.shapes.fab,
                             onClick = {
                                 val mv = mapViewRef
                                 if (mv == null || downloading) return@SmallFloatingActionButton
@@ -369,6 +382,9 @@ fun MapScreen(
                         // Same "Přidat místo" action as More, just reachable without leaving
                         // the map.
                         SmallFloatingActionButton(
+                    modifier = variantFabModifier(),
+                    elevation = variantFabElevation(),
+                    shape = if (EuroklicTheme.variant == cz.euroklicmapa.data.prefs.DesignVariant.SOUCASNY) EuroklicTheme.shapes.small else EuroklicTheme.shapes.fab,
                             onClick = {
                                 secondaryActionsExpanded = false
                                 if (loggedIn) onAddPlace() else showLoginDialog = true
@@ -381,6 +397,9 @@ fun MapScreen(
                     }
                 }
                 SmallFloatingActionButton(
+                    modifier = variantFabModifier(),
+                    elevation = variantFabElevation(),
+                    shape = if (EuroklicTheme.variant == cz.euroklicmapa.data.prefs.DesignVariant.SOUCASNY) EuroklicTheme.shapes.small else EuroklicTheme.shapes.fab,
                     onClick = { secondaryActionsExpanded = !secondaryActionsExpanded },
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = MaterialTheme.colorScheme.onSurface,
@@ -396,6 +415,9 @@ fun MapScreen(
                 // selecting the nearest place always brings the camera back to your area,
                 // and the you-are-here dot stays visible on the map anyway.
                 FloatingActionButton(
+                    modifier = variantFabModifier(),
+                    elevation = variantFabElevation(),
+                    shape = EuroklicTheme.shapes.fab,
                     onClick = {
                         if (hasLocationPermission) viewModel.findNearest() else showRationale = true
                     },
@@ -427,8 +449,9 @@ private fun SearchField(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surface,
+        border = contrastBorder(),
+        shape = EuroklicTheme.shapes.sheet,
+        color = EuroklicTheme.extended.cardSurface,
         shadowElevation = 6.dp,
         modifier = modifier,
     ) {
@@ -495,19 +518,22 @@ private fun MapFilterChip(label: String, selected: Boolean, onClick: () -> Unit)
         } else {
             null
         },
-        shape = RoundedCornerShape(999.dp),
+        shape = EuroklicTheme.shapes.pill,
         elevation = FilterChipDefaults.filterChipElevation(elevation = 2.dp),
         border = FilterChipDefaults.filterChipBorder(
             enabled = true,
             selected = selected,
             borderColor = MaterialTheme.colorScheme.outlineVariant,
+            selectedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            borderWidth = EuroklicTheme.shapes.outlineWidth,
+            selectedBorderWidth = if (EuroklicTheme.variant == cz.euroklicmapa.data.prefs.DesignVariant.KONTRAST) 2.dp else 0.dp,
         ),
         colors = FilterChipDefaults.filterChipColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            selectedContainerColor = EuroklicTheme.extended.brandButton,
-            selectedLabelColor = EuroklicTheme.extended.onBrandButton,
-            selectedLeadingIconColor = EuroklicTheme.extended.onBrandButton,
+            containerColor = EuroklicTheme.extended.chipBackground,
+            labelColor = EuroklicTheme.extended.chipText,
+            selectedContainerColor = EuroklicTheme.extended.selectedChip,
+            selectedLabelColor = EuroklicTheme.extended.onSelectedChip,
+            selectedLeadingIconColor = EuroklicTheme.extended.onSelectedChip,
         ),
     )
 }
@@ -515,7 +541,8 @@ private fun MapFilterChip(label: String, selected: Boolean, onClick: () -> Unit)
 @Composable
 private fun PillNotice(text: String) {
     Surface(
-        shape = RoundedCornerShape(999.dp),
+        border = contrastBorder(),
+        shape = EuroklicTheme.shapes.pill,
         color = MaterialTheme.colorScheme.errorContainer,
     ) {
         Text(
@@ -574,7 +601,7 @@ private fun NearbySheetList(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    OutlinedButton(onClick = onRetry) { Text("Zkusit znovu") }
+                    OutlinedButton(shape = EuroklicTheme.shapes.pill, onClick = onRetry) { Text("Zkusit znovu") }
                 }
             }
         }
@@ -631,6 +658,7 @@ private fun SelectedPlaceCard(
         }
         Spacer(Modifier.size(2.dp))
         Button(
+            shape = EuroklicTheme.shapes.pill,
             onClick = {
                 launchNavigation(context, marker.position.latitude, marker.position.longitude, marker.title)
             },
@@ -650,6 +678,7 @@ private fun SelectedPlaceCard(
             VerifyNudge(onVerify = onOpenDetail)
         }
         TextButton(
+            shape = EuroklicTheme.shapes.pill,
             onClick = onOpenDetail,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) { Text("Zobrazit podrobnosti") }
@@ -663,8 +692,9 @@ private fun SelectedPlaceCard(
 @Composable
 private fun VerifyNudge(onVerify: () -> Unit) {
     Surface(
+        border = contrastBorder(),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(14.dp),
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -677,8 +707,9 @@ private fun VerifyNudge(onVerify: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Surface(
+                border = contrastBorder(),
                 onClick = onVerify,
-                shape = RoundedCornerShape(12.dp),
+                shape = EuroklicTheme.shapes.small,
                 color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
                 contentColor = MaterialTheme.colorScheme.error,
                 modifier = Modifier

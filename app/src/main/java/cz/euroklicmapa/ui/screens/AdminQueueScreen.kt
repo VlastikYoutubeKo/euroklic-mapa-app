@@ -1,5 +1,7 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.ui.theme.contrastBorder
+import cz.euroklicmapa.ui.theme.EuroklicTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,11 +10,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
@@ -52,7 +54,9 @@ import coil.compose.AsyncImage
 import cz.euroklicmapa.EuroklicApplication
 import cz.euroklicmapa.data.model.AdminPlace
 import cz.euroklicmapa.data.model.CommentSuggestion
+import cz.euroklicmapa.data.model.LocationReport
 import cz.euroklicmapa.data.model.PhotoSuggestion
+import cz.euroklicmapa.data.model.ReportReason
 import cz.euroklicmapa.data.repository.AdminListState
 import cz.euroklicmapa.ui.components.EmptyState
 import cz.euroklicmapa.ui.viewmodel.AdminQueueViewModel
@@ -62,6 +66,7 @@ import cz.euroklicmapa.ui.viewmodel.AdminQueueViewModelFactory
 @Composable
 fun AdminQueueScreen(
     onBack: () -> Unit,
+    onOpenPlace: (Int) -> Unit,
     viewModel: AdminQueueViewModel = viewModel(
         factory = with(LocalContext.current.applicationContext as EuroklicApplication) {
             AdminQueueViewModelFactory(adminRepository)
@@ -85,7 +90,7 @@ fun AdminQueueScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = viewModel::load) { Text("Obnovit") }
+                    TextButton(shape = EuroklicTheme.shapes.pill, onClick = viewModel::load) { Text("Obnovit") }
                 },
             )
         },
@@ -103,21 +108,22 @@ fun AdminQueueScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(s.message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(onClick = viewModel::load) { Text("Zkusit znovu") }
+                    Button(shape = EuroklicTheme.shapes.pill, onClick = viewModel::load) { Text("Zkusit znovu") }
                 }
             }
 
-            is AdminListState.Loaded -> if (s.pending.isEmpty() && s.photos.isEmpty() && s.comments.isEmpty()) {
+            is AdminListState.Loaded -> if (s.pending.isEmpty() && s.photos.isEmpty() && s.comments.isEmpty() && s.reports.isEmpty()) {
                 EmptyState(
                     icon = Icons.Rounded.Inbox,
                     title = "Fronta je prázdná",
-                    subtitle = "Žádné nové návrhy ke schválení.",
+                    subtitle = "Žádné nové návrhy ani nahlášené problémy.",
                 )
             } else {
                 val showHeaders = listOf(
                     s.pending.isNotEmpty(),
                     s.photos.isNotEmpty(),
                     s.comments.isNotEmpty(),
+                    s.reports.isNotEmpty(),
                 ).count { it } > 1
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -158,6 +164,89 @@ fun AdminQueueScreen(
                             onReject = { viewModel.reviewComment(c.id, approve = false) },
                         )
                     }
+                    if (s.reports.isNotEmpty() && showHeaders) item("h_reports") { SectionHeader("Nahlášené problémy") }
+                    items(s.reports, key = { "r_${it.id}" }) { report ->
+                        LocationReportCard(
+                            report = report,
+                            busy = viewModel.actingReportId == report.id,
+                            enabled = viewModel.actingReportId == null,
+                            onOpenPlace = { onOpenPlace(report.location_id) },
+                            onResolve = { viewModel.reviewReport(report.id, resolve = true) },
+                            onDismiss = { viewModel.reviewReport(report.id, resolve = false) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LocationReportCard(
+    report: LocationReport,
+    busy: Boolean,
+    enabled: Boolean,
+    onOpenPlace: () -> Unit,
+    onResolve: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Surface(
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.card,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val placeLabel = report.location_name?.takeIf { it.isNotBlank() }
+                ?: "Místo #${report.location_id}"
+            Text(
+                placeLabel,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                ReportReason.entries.firstOrNull { it.wireValue == report.reason }?.label ?: report.reason,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            report.note?.takeIf { it.isNotBlank() }?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Text(
+                listOfNotNull(
+                    report.author_name?.takeIf { it.isNotBlank() } ?: "Neznámý autor",
+                    report.created_at?.substringBefore(" ")?.takeIf { it.isNotBlank() },
+                ).joinToString(" · "),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TextButton(
+                shape = EuroklicTheme.shapes.pill,
+                onClick = onOpenPlace,
+                modifier = Modifier.heightIn(min = 48.dp)
+                    .semantics { contentDescription = "Otevřít místo $placeLabel" },
+            ) { Text("Otevřít místo") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    shape = EuroklicTheme.shapes.pill,
+                    onClick = onDismiss,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) {
+                    Icon(Icons.Rounded.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text("Zamítnout")
+                }
+                Button(shape = EuroklicTheme.shapes.pill, onClick = onResolve, enabled = enabled, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                    if (busy) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(18.dp).semantics { contentDescription = "Vyřizuji nahlášení" },
+                        )
+                    } else {
+                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text("Vyřešeno")
+                    }
                 }
             }
         }
@@ -185,8 +274,9 @@ private fun PhotoSuggestionCard(
     onReject: () -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(16.dp),
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.card,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -197,7 +287,7 @@ private fun PhotoSuggestionCard(
                     model = photo.photo_url,
                     // Photo under review is content, not decoration.
                     contentDescription = "Navrhovaná fotka pro $placeLabel",
-                    modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)),
+                    modifier = Modifier.fillMaxWidth().height(200.dp).clip(EuroklicTheme.shapes.small),
                 )
             }
             Text(
@@ -215,6 +305,7 @@ private fun PhotoSuggestionCard(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedButton(
+                    shape = EuroklicTheme.shapes.pill,
                     onClick = onReject,
                     enabled = enabled,
                     modifier = Modifier.weight(1f),
@@ -223,7 +314,7 @@ private fun PhotoSuggestionCard(
                     Icon(Icons.Rounded.Close, contentDescription = null, modifier = Modifier.size(18.dp))
                     Text("Zamítnout")
                 }
-                Button(onClick = onApprove, enabled = enabled, modifier = Modifier.weight(1f)) {
+                Button(shape = EuroklicTheme.shapes.pill, onClick = onApprove, enabled = enabled, modifier = Modifier.weight(1f)) {
                     if (busy) {
                         CircularProgressIndicator(
                             strokeWidth = 2.dp,
@@ -250,8 +341,9 @@ private fun CommentSuggestionCard(
     onReject: () -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(16.dp),
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.card,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -272,6 +364,7 @@ private fun CommentSuggestionCard(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedButton(
+                    shape = EuroklicTheme.shapes.pill,
                     onClick = onReject,
                     enabled = enabled,
                     modifier = Modifier.weight(1f),
@@ -280,7 +373,7 @@ private fun CommentSuggestionCard(
                     Icon(Icons.Rounded.Close, contentDescription = null, modifier = Modifier.size(18.dp))
                     Text("Zamítnout")
                 }
-                Button(onClick = onApprove, enabled = enabled, modifier = Modifier.weight(1f)) {
+                Button(shape = EuroklicTheme.shapes.pill, onClick = onApprove, enabled = enabled, modifier = Modifier.weight(1f)) {
                     if (busy) {
                         CircularProgressIndicator(
                             strokeWidth = 2.dp,
@@ -307,8 +400,9 @@ private fun PendingCard(
     onReject: () -> Unit,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(16.dp),
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.card,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -319,7 +413,7 @@ private fun PendingCard(
                     contentDescription = place.name.trim().takeIf { it.isNotEmpty() }
                         ?.let { "Fotka navrženého místa $it" }
                         ?: "Fotka navrženého místa",
-                    modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(12.dp)),
+                    modifier = Modifier.fillMaxWidth().height(160.dp).clip(EuroklicTheme.shapes.small),
                 )
             }
             Text(
@@ -347,6 +441,7 @@ private fun PendingCard(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedButton(
+                    shape = EuroklicTheme.shapes.pill,
                     onClick = onReject,
                     enabled = enabled,
                     modifier = Modifier.weight(1f),
@@ -356,6 +451,7 @@ private fun PendingCard(
                     Text("Zamítnout")
                 }
                 Button(
+                    shape = EuroklicTheme.shapes.pill,
                     onClick = onApprove,
                     enabled = enabled,
                     modifier = Modifier.weight(1f),

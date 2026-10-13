@@ -83,6 +83,12 @@ private class RenderState {
     var selectedId: String? = null
     var userLocation: GeoPoint? = null
     var highlightArgb: Int = 0
+    var clusterArgb: Int = 0
+    var clusterTextArgb: Int = 0
+    var clusterRingArgb: Int = 0
+    var userDotArgb: Int = 0
+    var userHaloArgb: Int = 0
+    var userRingArgb: Int = 0
     var onMarkerClick: (MapMarker) -> Unit = {}
 
     /** Fired (debounced by the DelayedMapListener) after every pan/zoom so the caller can persist it. */
@@ -107,7 +113,8 @@ fun EuroklicMap(
     val context = LocalContext.current
     val camera = remember { CameraState() }
     val render = remember { RenderState() }
-    val highlightArgb = EuroklicTheme.extended.brandButton.toArgb()
+    val extended = EuroklicTheme.extended
+    val highlightArgb = extended.selectionHalo.toArgb()
     val onMapClickState = rememberUpdatedState(onMapClick)
     val onMapReadyState = rememberUpdatedState(onMapReady)
 
@@ -184,6 +191,12 @@ fun EuroklicMap(
             render.selectedId = selectedMarkerId
             render.userLocation = userLocation
             render.highlightArgb = highlightArgb
+            render.clusterArgb = extended.cluster.toArgb()
+            render.clusterTextArgb = extended.onCluster.toArgb()
+            render.clusterRingArgb = extended.clusterRing.toArgb()
+            render.userDotArgb = extended.userDot.toArgb()
+            render.userHaloArgb = extended.userHalo.toArgb()
+            render.userRingArgb = extended.userRing.toArgb()
             render.onMarkerClick = onMarkerClick
             render.onCameraIdle = onCameraIdle
             renderMarkers(mv, render)
@@ -293,7 +306,7 @@ private fun renderMarkers(mv: MapView, s: RenderState) {
                 lon += b.position.longitude
             }
             val center = GeoPoint(lat / bucket.size, lon / bucket.size)
-            mv.overlays.add(clusterMarker(mv, center, bucket.size, s.highlightArgb))
+            mv.overlays.add(clusterMarker(mv, center, bucket.size, s))
         }
         drawIndividual(mv, singles, s)
     } else {
@@ -306,7 +319,7 @@ private fun renderMarkers(mv: MapView, s: RenderState) {
                 position = loc
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                 title = "Vaše poloha"
-                icon = UserLocationIcon.build(mv.context)
+                icon = UserLocationIcon.build(mv.context, s.userDotArgb, s.userHaloArgb, s.userRingArgb)
                 setInfoWindow(null)
             },
         )
@@ -314,11 +327,11 @@ private fun renderMarkers(mv: MapView, s: RenderState) {
     mv.invalidate()
 }
 
-private fun clusterMarker(mv: MapView, center: GeoPoint, count: Int, brandArgb: Int): Marker =
+private fun clusterMarker(mv: MapView, center: GeoPoint, count: Int, s: RenderState): Marker =
     Marker(mv).apply {
         position = center
         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-        icon = android.graphics.drawable.BitmapDrawable(mv.context.resources, clusterBitmap(mv.context, count, brandArgb))
+        icon = android.graphics.drawable.BitmapDrawable(mv.context.resources, clusterBitmap(mv.context, count, s))
         title = null
         setInfoWindow(null)
         setOnMarkerClickListener { _, _ ->
@@ -328,13 +341,14 @@ private fun clusterMarker(mv: MapView, center: GeoPoint, count: Int, brandArgb: 
         }
     }
 
-private val clusterBitmapCache = HashMap<Int, Bitmap>()
+private data class ClusterKey(val count: Int, val fill: Int, val text: Int, val ring: Int, val density: Float)
+private val clusterBitmapCache = HashMap<ClusterKey, Bitmap>()
 
-private fun clusterBitmap(context: Context, count: Int, brandArgb: Int): Bitmap {
+private fun clusterBitmap(context: Context, count: Int, s: RenderState): Bitmap {
     val label = if (count > 999) 1000 else count
-    clusterBitmapCache[label]?.let { return it }
-
     val d = context.resources.displayMetrics.density
+    val key = ClusterKey(label, s.clusterArgb, s.clusterTextArgb, s.clusterRingArgb, d)
+    clusterBitmapCache[key]?.let { return it }
     val text = if (count > 999) "999+" else count.toString()
     val diameter = (34f + (min(count, 250) / 250f) * 22f) * d
     val sizePx = diameter.toInt().coerceAtLeast(1)
@@ -342,21 +356,21 @@ private fun clusterBitmap(context: Context, count: Int, brandArgb: Int): Bitmap 
     val c = Canvas(bmp)
     val r = sizePx / 2f
     val stroke = 2f * d
-    val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = brandArgb; style = Paint.Style.FILL }
+    val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = s.clusterArgb; style = Paint.Style.FILL }
     c.drawCircle(r, r, r - stroke, fill)
     val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.WHITE; style = Paint.Style.STROKE; strokeWidth = stroke
+        color = s.clusterRingArgb; style = Paint.Style.STROKE; strokeWidth = stroke
     }
     c.drawCircle(r, r, r - stroke, ring)
     val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.WHITE
+        color = s.clusterTextArgb
         textAlign = Paint.Align.CENTER
         isFakeBoldText = true
         textSize = 13f * d
     }
     val fm = tp.fontMetrics
     c.drawText(text, r, r - (fm.ascent + fm.descent) / 2f, tp)
-    clusterBitmapCache[label] = bmp
+    clusterBitmapCache[key] = bmp
     return bmp
 }
 

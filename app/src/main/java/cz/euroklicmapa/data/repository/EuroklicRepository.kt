@@ -12,10 +12,12 @@ import cz.euroklicmapa.data.model.PostCommentRequest
 import cz.euroklicmapa.data.model.WcComment
 import cz.euroklicmapa.data.remote.EuroklicApi
 import cz.euroklicmapa.util.nowUtcTimestamp
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import org.osmdroid.util.GeoPoint
 import retrofit2.HttpException
 
 object SyncKeys {
@@ -48,6 +50,8 @@ interface EuroklicRepository {
     fun observeLocationsSync(): Flow<Long?>
     suspend fun getLocation(id: Int): WcLocationEntity?
     fun observeLocation(id: Int): Flow<WcLocationEntity?>
+    /** Fetch one WC into the cache without replacing the feed or changing its sync timestamp. */
+    suspend fun fetchLocation(id: Int): Boolean
     suspend fun getPickupPoint(id: Int): PickupPointEntity?
     /** One-shot ids of every cached WC (no refresh side effect) — for the notification poll worker. */
     suspend fun getAllLocationIds(): List<Int>
@@ -71,18 +75,21 @@ interface EuroklicRepository {
     suspend fun reportProblem(locationId: Int, reason: cz.euroklicmapa.data.model.ReportReason, note: String?): ReportResult
 }
 
-class EuroklicRepositoryImpl(
+class EuroklicRepositoryImpl internal constructor(
     private val api: EuroklicApi,
     private val dao: EuroklicDao,
-    private val locationRepository: LocationRepository,
+    private val lastKnownLocation: () -> GeoPoint?,
 ) : EuroklicRepository {
+
+    constructor(api: EuroklicApi, dao: EuroklicDao, locationRepository: LocationRepository) :
+        this(api, dao, { locationRepository.lastKnown.value })
 
     /**
      * When we know where the user is, scope the fetch to 500 km — the whole CZ/SK area plus
      * every neighbouring region a road trip reaches, without downloading the global feed.
      * No location → the full feed (still correct, just larger).
      */
-    private fun near(): String? = locationRepository.lastKnown.value
+    private fun near(): String? = lastKnownLocation()
         ?.let { "%.5f,%.5f".format(java.util.Locale.US, it.latitude, it.longitude) }
 
     override fun getLocations(): Flow<List<WcLocationEntity>> =
@@ -97,6 +104,23 @@ class EuroklicRepositoryImpl(
     override suspend fun getLocation(id: Int): WcLocationEntity? = dao.getLocationById(id)
 
     override fun observeLocation(id: Int): Flow<WcLocationEntity?> = dao.observeLocationById(id)
+
+    override suspend fun fetchLocation(id: Int): Boolean {
+        return try {
+            val feature = api.getLocations(id = id).features.singleOrNull { it.properties.id == id }
+                ?: return false
+            val entity = feature.toEntity()
+            if (!entity.latitude.isFinite() || !entity.longitude.isFinite()) return false
+            // insertLocations uses REPLACE on the primary key: only this WC is upserted.
+            dao.insertLocations(listOf(entity))
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // The detail shows its error state; leave the existing cache and freshness intact.
+            false
+        }
+    }
 
     override suspend fun getPickupPoint(id: Int): PickupPointEntity? = dao.getPickupPointById(id)
 

@@ -1,5 +1,7 @@
 package cz.euroklicmapa.ui.components
 
+import cz.euroklicmapa.ui.theme.contrastBorder
+import cz.euroklicmapa.ui.theme.EuroklicTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -108,8 +110,9 @@ fun PlaceListSkeleton(modifier: Modifier = Modifier, count: Int = 6) {
 private fun SkeletonCard() {
     val bar = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.16f)
     Surface(
+        border = contrastBorder(),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(20.dp),
+        shape = EuroklicTheme.shapes.cardLarge,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {

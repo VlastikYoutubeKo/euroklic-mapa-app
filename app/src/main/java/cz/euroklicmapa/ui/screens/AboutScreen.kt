@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.ui.theme.contrastBorder
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -114,8 +114,9 @@ fun AboutScreen(
 @Composable
 private fun StatsCard(stats: AppStats) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(14.dp),
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -165,8 +166,9 @@ private fun StatsCard(stats: AppStats) {
 @Composable
 private fun Disclaimer() {
     Surface(
+        border = contrastBorder(),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(16.dp),
+        shape = EuroklicTheme.shapes.card,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -189,9 +191,10 @@ private fun Disclaimer() {
 @Composable
 private fun LinkRow(title: String, subtitle: String, onClick: () -> Unit) {
     Surface(
+        border = contrastBorder(),
         onClick = onClick,
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(14.dp),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
     ) {
         Row(
@@ -230,8 +233,9 @@ private fun FaqSection() {
         )
         FAQ_ITEMS.forEach { (question, answer) ->
             Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(14.dp),
+                border = contrastBorder(),
+                color = EuroklicTheme.extended.cardSurface,
+                shape = EuroklicTheme.shapes.tile,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -304,9 +308,10 @@ private fun SupportSection(context: android.content.Context) {
 @Composable
 private fun InfoCard(text: String, warning: Boolean = false) {
     Surface(
+        border = contrastBorder(),
         color = if (warning) EuroklicTheme.extended.accent.copy(alpha = 0.14f)
         else MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(14.dp),
+        shape = EuroklicTheme.shapes.tile,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(

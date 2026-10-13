@@ -174,15 +174,19 @@ request, calls `onUnauthorized()` on a 401, and swaps in a fresher token from an
   (`singleTop` + `onNewIntent`, handles both URIs) → `handleCallback` checks the nonce, then
   `POST /api_token.php` with `code` + the local `code_verifier` → real Bearer token → `/api_me.php`.
   A leaked redirect URL is useless without the verifier (which the app never transmits except
-  to `/api_token.php` over HTTPS). **Back-compat:** a `?token=…` callback still works directly
-  until the backend cuts the `token=` branch.
+  to `/api_token.php` over HTTPS). **2026-10-13:** the legacy `?token=…` callback is gone on both
+  sides; a login without PKCE now redirects with `?error=pkce_required&state=…`, which
+  `handleCallback` turns into "Přihlášení se nezdařilo. Aktualizujte prosím aplikaci."
 - Token has **no hard expiry** — server-side revoke + the 60-day sliding renewal above.
   `logout()` hits `/api_logout.php` (revokes *that* token) then clears locally. Backend tags
   each token `via = app`; `/api_add.php` records `locations.submitted_via` — the app neither
   sends nor shows it.
 - **App Link** — `<intent-filter android:autoVerify="true">` for
   `https://euroklic.odjezdy.online/app/auth-callback` is live; the debug signing SHA-256 is in
-  the server's `assetlinks.json`. Custom scheme stays as the fallback. Release fingerprint →
+  the server's `assetlinks.json` — **two** debug fingerprints since 2026-10-13 (`46:8F:11…` old,
+  `A8:40:7E…` current: `~/.android/debug.keystore` was regenerated, which also forced an
+  uninstall on the Honor — signatures didn't match). Verified there with
+  `pm get-app-links cz.euroklicmapa` → `verified`. Custom scheme stays as the fallback. Release fingerprint →
   assetlinks at release.
 - `MoreScreen` `AuthCard` (login dialog with one "Pokračovat" → `/app-login.php`, or avatar +
   username + Odhlásit). `MainScreen` collects `authRepository.events` → `Toast`.
@@ -204,8 +208,17 @@ rotation) — `/uploads/` caps at 8 MB. Server sets `source='user'`, `approved=0
 `photo_suggestions` (`PhotoSuggestionCard`) and, since 2026-09-08, `comment_suggestions`
 (`CommentSuggestionCard` — text + author + place, `adminReview(action=approve_comment|
 reject_comment, commentId=)`, `AdminListState.Loaded.comments`, `AdminQueueViewModel.reviewComment`
-+ `actingCommentId`). Section headers ("Nová místa" / "Návrhy fotek" / "Návrhy komentářů")
-show only when more than one of the three lists is non-empty.
++ `actingCommentId`). **Since 2026-10-13 also `location_reports`** (+ `report_count`): structured
+problem reports from `/api_report.php`, `LocationReportCard` (reason via `ReportReason.label`,
+note, author · date, "Otevřít místo" → `Destinations.Detail(id, "WC")`),
+`adminReview(action=resolve_report|dismiss_report, reportId=)` — status-only on the server.
+Queues are shared with the web + Discord, so a 404 ("Nahlášení nenalezeno.") means someone
+else already handled it → the row is dropped. `AdminRepository.act()` now shows the server's
+`message`/`error` for every action. Section headers ("Nová místa" / "Návrhy fotek" / "Návrhy
+komentářů" / "Nahlášené problémy") show only when more than one list is non-empty.
+"Otevřít místo" for a place outside the `near` 500 km cache: `DetailViewModel` calls
+`EuroklicRepository.fetchLocation(id)` (`?id=` on `/api_locations.php`, upserts one row, no
+`sync_metadata` touch) once before showing Error.
 
 **Verified live on the Pixel 10 AVD (2026-09-04, with backend test tokens):** admin login →
 LoggedIn card + `is_admin` → Moderace section; queue list renders; reject removes the row;
@@ -396,6 +409,15 @@ add Hilt.
   `brandButton`/`onBrandButton` — the filled-button blue `#2454E0`, identical in both modes,
   used explicitly on the FAB, Navigate CTA, and layer toggle). The composable also drives the
   status/nav-bar icon appearance via `WindowCompat`.
+  **Design variants (2026-10-13):** `DesignVariant { SOUCASNY, KONTRAST, SVEZI, ZNACENI }`
+  (`ThemeRepository.variant`, key `design_variant` in the shared `"settings"` DataStore),
+  picked in More → "Vzhled aplikace". `EuroklicTheme(darkTheme, variant)` → 8 palettes
+  (`VariantPalettes.kt`; SOUCASNY = the original `Color.kt` tokens), per-variant typography
+  (Plex / Atkinson Hyperlegible +2 sp / Public Sans / Overpass, `Type.kt`) and
+  `EuroklicTheme.shapes` (`Shapes.kt` — use these tokens, **not** `RoundedCornerShape(…)`
+  literals, or the variant won't apply). Map clusters, selection halo and the location dot read
+  `ExtendedColors` too. **`ThemeContrastTest`** asserts WCAG AA for every scheme — run it after
+  any colour change. Mockup: https://claude.ai/artifact/S85RyPnrNUNm3DmQfoXjdF
 - UI strings are hardcoded Czech in composables, not in `res/values/strings.xml`.
 
 ## Current state

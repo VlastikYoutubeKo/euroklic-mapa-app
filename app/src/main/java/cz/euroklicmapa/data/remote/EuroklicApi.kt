@@ -27,6 +27,7 @@ interface EuroklicApi {
     suspend fun getLocations(
         @Query("near") near: String? = null,
         @Query("radius_km") radiusKm: Int? = null,
+        @Query("id") id: Int? = null,
     ): FeatureCollection<WcProperties>
 
     @GET("api_pickup_points.php")
@@ -119,7 +120,8 @@ interface EuroklicApi {
     /**
      * Admin (Bearer). New places: `action` ∈ `approve | reject` + `id`. Photo suggestions:
      * `action` ∈ `approve_photo | reject_photo` + `photoId`. Comment suggestions: `action` ∈
-     * `approve_comment | reject_comment` + `commentId`. The three id fields are kept separate
+     * `approve_comment | reject_comment` + `commentId`, or
+     * `resolve_report | dismiss_report` + `reportId`. The four id fields are kept separate
      * so the id spaces don't mix.
      */
     @FormUrlEncoded
@@ -129,6 +131,7 @@ interface EuroklicApi {
         @Field("id") id: Int? = null,
         @Field("photo_id") photoId: Int? = null,
         @Field("comment_id") commentId: Int? = null,
+        @Field("report_id") reportId: Int? = null,
     ): ApiResult
 
     /**

@@ -10,11 +10,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import cz.euroklicmapa.data.prefs.DesignVariant
 
-private val LightColors = lightColorScheme(
+internal val LightColors = lightColorScheme(
     primary = LightPrimary,
     onPrimary = LightOnPrimary,
     primaryContainer = LightPrimaryContainer,
@@ -44,7 +46,7 @@ private val LightColors = lightColorScheme(
     onError = Color.White,
 )
 
-private val DarkColors = darkColorScheme(
+internal val DarkColors = darkColorScheme(
     primary = DarkPrimary,
     onPrimary = DarkOnPrimary,
     primaryContainer = DarkPrimaryContainer,
@@ -85,9 +87,32 @@ data class ExtendedColors(
     val brandButton: Color,
     val onBrandButton: Color,
     val scrim: Color,
+    val cardSurface: Color = LightSurface,
+    val navBackground: Color = LightSurfaceContainer,
+    val navText: Color = LightOnSurfaceVariant,
+    val navActive: Color = LightPrimary,
+    val navIndicator: Color = LightPrimaryContainer,
+    val onNavIndicator: Color = LightOnPrimaryContainer,
+    val chipBackground: Color = LightSurface,
+    val chipText: Color = LightOnSurfaceVariant,
+    val selectedChip: Color = BrandBlue,
+    val onSelectedChip: Color = Color.White,
+    val hero: Color = LightPrimaryContainer,
+    val onHero: Color = LightOnPrimaryContainer,
+    val key: Color = LightSurfaceContainerHigh,
+    val onKey: Color = LightOnPrimaryContainer,
+    val cluster: Color = BrandBlue,
+    val onCluster: Color = Color.White,
+    val clusterRing: Color = Color.White,
+    val selectionHalo: Color = BrandBlue,
+    val userDot: Color = Color(0xFF0D8259),
+    val userHalo: Color = Color(0xFF0D8259).copy(alpha = 55f / 255f),
+    val userRing: Color = Color.White,
+    val verifiedText: Color = LightOnTertiaryContainer,
+    val reportedText: Color = LightOnSecondaryContainer,
 )
 
-private val LightExtended = ExtendedColors(
+internal val LightExtended = ExtendedColors(
     success = LightSuccess,
     onSuccess = Color.White,
     warning = LightWarning,
@@ -98,7 +123,7 @@ private val LightExtended = ExtendedColors(
     scrim = Color(0x14000000),
 )
 
-private val DarkExtended = ExtendedColors(
+internal val DarkExtended = ExtendedColors(
     success = DarkSuccess,
     onSuccess = Color(0xFF07231A),
     warning = DarkWarning,
@@ -107,6 +132,20 @@ private val DarkExtended = ExtendedColors(
     brandButton = BrandBlue,
     onBrandButton = Color.White,
     scrim = Color(0x33000000),
+    cardSurface = DarkSurface,
+    navBackground = DarkSurfaceContainer,
+    navText = DarkOnSurfaceVariant,
+    navActive = DarkPrimary,
+    navIndicator = DarkPrimaryContainer,
+    onNavIndicator = DarkOnPrimaryContainer,
+    chipBackground = DarkSurface,
+    chipText = DarkOnSurfaceVariant,
+    hero = DarkPrimaryContainer,
+    onHero = DarkOnPrimaryContainer,
+    key = DarkSurfaceContainerHigh,
+    onKey = DarkOnPrimaryContainer,
+    verifiedText = DarkOnTertiaryContainer,
+    reportedText = DarkOnSecondaryContainer,
 )
 
 val LocalExtendedColors = staticCompositionLocalOf { LightExtended }
@@ -115,7 +154,13 @@ val LocalExtendedColors = staticCompositionLocalOf { LightExtended }
 object EuroklicTheme {
     val extended: ExtendedColors
         @Composable get() = LocalExtendedColors.current
+    val shapes: ExtendedShapes
+        @Composable get() = LocalExtendedShapes.current
+    val variant: DesignVariant
+        @Composable get() = LocalDesignVariant.current
 }
+
+val LocalDesignVariant = staticCompositionLocalOf { DesignVariant.SOUCASNY }
 
 /**
  * Dynamic color is intentionally NOT used: the brand palette is contrast-verified and must
@@ -124,10 +169,15 @@ object EuroklicTheme {
 @Composable
 fun EuroklicTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    variant: DesignVariant = DesignVariant.SOUCASNY,
     content: @Composable () -> Unit,
 ) {
-    val colors = if (darkTheme) DarkColors else LightColors
-    val extended = if (darkTheme) DarkExtended else LightExtended
+    val palette = remember(variant, darkTheme) { designPalette(variant, darkTheme) }
+    val shapes = remember(variant) { designShapes(variant) }
+    val typography = remember(variant) { designTypography(variant) }
+    val materialShapes = remember(variant) { designMaterialShapes(variant) }
+    val colors = palette.colors
+    val extended = palette.extended
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -138,10 +188,15 @@ fun EuroklicTheme(
         }
     }
 
-    CompositionLocalProvider(LocalExtendedColors provides extended) {
+    CompositionLocalProvider(
+        LocalExtendedColors provides extended,
+        LocalExtendedShapes provides shapes,
+        LocalDesignVariant provides variant,
+    ) {
         MaterialTheme(
             colorScheme = colors,
-            typography = Typography,
+            typography = typography,
+            shapes = materialShapes,
             content = content,
         )
     }

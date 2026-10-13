@@ -26,6 +26,7 @@ import android.widget.Toast
 import cz.euroklicmapa.EuroklicApplication
 import cz.euroklicmapa.data.auth.AuthEvent
 import cz.euroklicmapa.ui.navigation.Destinations
+import cz.euroklicmapa.ui.theme.EuroklicTheme
 
 @Composable
 fun MainScreen() {
@@ -68,11 +69,11 @@ fun MainScreen() {
 
     val itemColors = NavigationSuiteDefaults.itemColors(
         navigationBarItemColors = NavigationBarItemDefaults.colors(
-            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            selectedTextColor = MaterialTheme.colorScheme.primary,
-            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            selectedIconColor = EuroklicTheme.extended.onNavIndicator,
+            selectedTextColor = EuroklicTheme.extended.navActive,
+            indicatorColor = EuroklicTheme.extended.navIndicator,
+            unselectedIconColor = EuroklicTheme.extended.navText,
+            unselectedTextColor = EuroklicTheme.extended.navText,
         ),
     )
 
@@ -81,6 +82,11 @@ fun MainScreen() {
     }
 
     NavigationSuiteScaffold(
+        navigationSuiteColors = if (EuroklicTheme.variant == cz.euroklicmapa.data.prefs.DesignVariant.SOUCASNY)
+            NavigationSuiteDefaults.colors() else NavigationSuiteDefaults.colors(
+            navigationBarContainerColor = EuroklicTheme.extended.navBackground,
+            navigationRailContainerColor = EuroklicTheme.extended.navBackground,
+        ),
         containerColor = MaterialTheme.colorScheme.background,
         navigationSuiteItems = {
             item(
@@ -176,6 +182,7 @@ fun MainScreen() {
                 is Destinations.AdminQueue -> NavEntry(key) {
                     AdminQueueScreen(
                         onBack = { if (backStack.size > 1) backStack.removeAt(backStack.size - 1) },
+                        onOpenPlace = { id -> backStack.add(Destinations.Detail(id.toString(), "WC")) },
                     )
                 }
 

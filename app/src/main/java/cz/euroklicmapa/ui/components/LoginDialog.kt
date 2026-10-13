@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.components
 
+import cz.euroklicmapa.ui.theme.EuroklicTheme
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -26,10 +27,10 @@ fun LoginDialog(
             )
         },
         confirmButton = {
-            Button(onClick = { onDismiss(); onContinue() }) { Text("Pokračovat") }
+            Button(shape = EuroklicTheme.shapes.pill, onClick = { onDismiss(); onContinue() }) { Text("Pokračovat") }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Zrušit") }
+            TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDismiss) { Text("Zrušit") }
         },
     )
 }

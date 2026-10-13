@@ -75,9 +75,9 @@ fun SourceBadge(
     val label = if (isPickup) "Výdejní místo klíče" else sourceLabel(source)
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
+            .clip(EuroklicTheme.shapes.pill)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(999.dp))
+            .border(BorderStroke(EuroklicTheme.shapes.outlineWidth, MaterialTheme.colorScheme.outlineVariant), EuroklicTheme.shapes.pill)
             .padding(start = 8.dp, end = 12.dp, top = 5.dp, bottom = 5.dp)
             .clearAndSetSemantics { contentDescription = "Zdroj: $label" },
         verticalAlignment = Alignment.CenterVertically,
@@ -113,8 +113,8 @@ fun StatusBadge(
     val neutralFg = MaterialTheme.colorScheme.onSurfaceVariant
     val neutralBg = MaterialTheme.colorScheme.surfaceContainerHigh
     val (fg, bg, glyph) = when (badge) {
-        VoteBadge.REPORTED -> Triple(warn, warn.copy(alpha = 0.16f), "⚠")
-        VoteBadge.VERIFIED -> Triple(ok, ok.copy(alpha = 0.14f), "✓")
+        VoteBadge.REPORTED -> Triple(EuroklicTheme.extended.reportedText, warn.copy(alpha = 0.16f), "⚠")
+        VoteBadge.VERIFIED -> Triple(EuroklicTheme.extended.verifiedText, ok.copy(alpha = 0.14f), "✓")
         VoteBadge.CD_NO_VOTES, VoteBadge.NONE -> Triple(neutralFg, neutralBg, "")
     }
     val fullLabel = badge.label(likes, dislikes)
@@ -126,7 +126,7 @@ fun StatusBadge(
 
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
+            .clip(EuroklicTheme.shapes.pill)
             .background(bg)
             .padding(horizontal = 9.dp, vertical = 4.dp)
             .clearAndSetSemantics { contentDescription = "Stav: $fullLabel" },
