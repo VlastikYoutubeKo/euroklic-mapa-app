@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -591,37 +592,59 @@ private fun TransitStopsCard(lat: Double, lon: Double, name: String?) {
         value = cz.euroklicmapa.data.remote.NearbyStopsRepository().nearby(lat, lon)
     }
     if (stops.isEmpty()) return
-    val summary = stops.joinToString(", ") { "${it.name} ${it.distanceM} metrů" }
     Surface(
         border = contrastBorder(),
-        onClick = { openUrl(context, url) },
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = EuroklicTheme.shapes.tile,
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .semantics(mergeDescendants = true) {
-                role = Role.Button
-                contentDescription = "Zastávky a odjezdy poblíž${name?.let { " u $it" } ?: ""}: $summary. Otevře se v prohlížeči."
-            },
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon(Icons.Rounded.DirectionsBus, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            Column(modifier = Modifier.weight(1f)) {
+        Column {
+            Row(
+                modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(Icons.Rounded.DirectionsBus, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("Zastávky a odjezdy poblíž", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                stops.forEach {
+            }
+            stops.forEach { stop ->
+                val stopUrl = "https://app.odjezdy.online/zastavka/" + android.net.Uri.encode(stop.id)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .clickable(role = Role.Button, onClickLabel = "Zobrazit odjezdy") { openUrl(context, stopUrl) }
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = "${stop.name}, ${stop.distanceM} metrů. Zobrazit odjezdy v prohlížeči."
+                        }
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
-                        "${it.name} · ${formatDistance(it.distanceM.toDouble())}",
+                        stop.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        formatDistance(stop.distanceM.toDouble()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Rounded.OpenInNew, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Icon(Icons.Rounded.OpenInNew, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .clickable(role = Role.Button, onClickLabel = "Otevřít mapu zastávek") { openUrl(context, url) }
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Všechny zastávky v okolí", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }
