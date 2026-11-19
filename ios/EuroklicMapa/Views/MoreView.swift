@@ -9,6 +9,8 @@ struct MoreView: View {
     var body: some View {
         NavigationStack {
             List {
+                ModePickerSection()
+
                 Section {
                     AuthCard()
                 }

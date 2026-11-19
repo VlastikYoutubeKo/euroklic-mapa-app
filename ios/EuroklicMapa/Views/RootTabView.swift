@@ -5,16 +5,24 @@ struct RootTabView: View {
     @AppStorage("last_seen_version") private var lastSeenVersion = ""
     @State private var whatsNew: ChangelogEntry?
 
+    @AppStorage(AppMode.storageKey) private var mode: AppMode = .euroklic
+
     var body: some View {
-        TabView {
-            MapScreen()
-                .tabItem { Label("Mapa", systemImage: "map.fill") }
-            PlacesListView()
-                .tabItem { Label("Seznam", systemImage: "list.bullet") }
-            FavoritesView()
-                .tabItem { Label("Oblíbené", systemImage: "bookmark.fill") }
-            MoreView()
-                .tabItem { Label("Více", systemImage: "ellipsis") }
+        Group {
+            if mode == .odjezdy {
+                OdjezdyRootView()
+            } else {
+                TabView {
+                    MapScreen()
+                        .tabItem { Label("Mapa", systemImage: "map.fill") }
+                    PlacesListView()
+                        .tabItem { Label("Seznam", systemImage: "list.bullet") }
+                    FavoritesView()
+                        .tabItem { Label("Oblíbené", systemImage: "bookmark.fill") }
+                    MoreView()
+                        .tabItem { Label("Více", systemImage: "ellipsis") }
+                }
+            }
         }
         .sheet(item: $whatsNew) { WhatsNewSheet(entry: $0) }
         .onAppear(perform: checkWhatsNew)

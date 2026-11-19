@@ -9,6 +9,8 @@ struct MapView: UIViewRepresentable {
     var selectedKey: String?
     var userLocation: CLLocation?
     var provider: MapProvider = .mapy
+    /// Set by the address search: the map flies there once per distinct target.
+    var recenterTarget: CLLocationCoordinate2D?
     var onSelect: (PlaceItem?) -> Void
 
     func makeUIView(context: Context) -> MKMapView {
@@ -43,6 +45,16 @@ struct MapView: UIViewRepresentable {
         if context.coordinator.appliedProvider != provider {
             map.applyBasemap(provider, attribution: true)
             context.coordinator.appliedProvider = provider
+        }
+
+        if let t = recenterTarget {
+            let key = "\(t.latitude),\(t.longitude)"
+            if context.coordinator.lastRecenterKey != key {
+                context.coordinator.lastRecenterKey = key
+                map.setRegion(MKCoordinateRegion(center: t, latitudinalMeters: 1500, longitudinalMeters: 1500), animated: true)
+            }
+        } else {
+            context.coordinator.lastRecenterKey = nil
         }
 
         // Diff annotations (keep the tile overlay + user location).
@@ -87,6 +99,7 @@ struct MapView: UIViewRepresentable {
         var lastSelectedKey: String?
         var appliedProvider: MapProvider?
         var didCenterOnUser = false
+        var lastRecenterKey: String?
 
         init(parent: MapView) { self.parent = parent }
 

@@ -14,6 +14,11 @@ struct MapScreen: View {
     @State private var refreshing = false
     @State private var showAddPlace = false
     @State private var nearestMessage: String?
+    @State private var searchText = ""
+    @State private var searchResults: [GeoResult] = []
+    @State private var searching = false
+    @State private var recenterTarget: CLLocationCoordinate2D?
+    @FocusState private var searchFocused: Bool
     @AppStorage(MapProvider.storageKey) private var mapProvider: MapProvider = .mapy
 
     var body: some View {
@@ -24,12 +29,13 @@ struct MapScreen: View {
                     selectedKey: selected?.favoriteKey,
                     userLocation: location.lastLocation,
                     provider: mapProvider,
+                    recenterTarget: recenterTarget,
                     onSelect: { selected = $0 },
                 )
                 .ignoresSafeArea()
 
                 VStack {
-                    categoryChips
+                    topControls
                     Spacer()
                     if selected == nil, let loc = location.lastLocation {
                         NearbyPanel(
@@ -98,6 +104,67 @@ struct MapScreen: View {
             .task {
                 if places.wc.isEmpty { await refresh() }
             }
+        }
+    }
+
+    /// Address search (Nominatim, CZ/SK) above the category chips; picking a hit flies the map there.
+    private var topControls: some View {
+        VStack(spacing: 8) {
+            VStack(spacing: 0) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                    TextField("Hledat adresu", text: $searchText)
+                        .focused($searchFocused)
+                        .submitLabel(.search)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onSubmit { runSearch() }
+                    if searching { ProgressView() }
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                            searchResults = []
+                        } label: {
+                            Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                        }
+                        .accessibilityLabel("Smazat hledání")
+                    }
+                }
+                .padding(.horizontal, 14)
+                .frame(minHeight: 44)
+
+                ForEach(searchResults) { hit in
+                    Divider()
+                    Button {
+                        recenterTarget = hit.coordinate
+                        searchResults = []
+                        searchFocused = false
+                    } label: {
+                        Text(hit.name)
+                            .font(.subheadline)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .background(RoundedRectangle(cornerRadius: 22).fill(.regularMaterial))
+            .padding(.horizontal)
+
+            categoryChips
+        }
+    }
+
+    private func runSearch() {
+        let q = searchText
+        searching = true
+        Task {
+            let hits = await Geocoder.search(q)
+            searchResults = hits
+            searching = false
         }
     }
 

@@ -8,6 +8,9 @@ struct ODMoreTab: View {
     var body: some View {
         NavigationStack {
             List {
+                ModePickerSection()
+                    .listRowBackground(c.surface)
+
                 Section {
                     NavigationLink {
                         ODAlertsView()

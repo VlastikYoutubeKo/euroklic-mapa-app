@@ -6,6 +6,13 @@ Při vydání verze (git tag `v*`) se text příslušné sekce použije jako pop
 a stejný soubor je zabalený i v aplikaci (Více → Co je nového; po aktualizaci se ukáže sám).
 Nadpis sekce musí mít tvar `## <verze> — <datum>`, položky jsou odrážky `- `.
 
+## 1.1.0 — 2026-11-19
+- Nový režim Odjezdy (veřejná doprava): živé polohy vozidel na mapě s číslem linky, filtr typů dopravy, karta vozidla se směrem, zpožděním a trasou, odjezdy ze zastávek, hledání zastávek i vozidel, oblíbené zastávky a aktuality. Přepíná se v Více → Režim aplikace.
+- Widgety: Nejbližší WC a Odjezdy poblíž (na ploše i na zamčené obrazovce).
+- Profilová fotka a jméno přihlášeného uživatele v Více.
+- Přidání komentáře a fotky k místu, nahlášení problému a (pro správce) fronta ke schválení.
+- Hledání adres na mapě Euroklíče.
+
 ## 1.0.1 — 2026-11-19
 - Fotku místa lze rozkliknout na celou obrazovku (přiblížení dvěma prsty nebo dvojitým klepnutím).
 - Odjezdy: opraveno načítání spojů DÚK (dopravce posílal čas v jiném tvaru, takže se zahazovaly) a přidán přepínač dopravců.
