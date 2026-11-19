@@ -14,7 +14,7 @@ struct EuroklicMapaApp: App {
                 .environmentObject(location)
                 .environmentObject(favorites)
                 .environmentObject(auth)
-                .tint(Theme.brand)
+                .tint(Theme.tint)
         }
     }
 }

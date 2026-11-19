@@ -20,11 +20,26 @@ struct MapView: UIViewRepresentable {
         map.applyBasemap(provider, attribution: true)
         context.coordinator.appliedProvider = provider
 
+        // Start on CZ/SK (MKMapView would open on the whole world); the first
+        // location fix re-centres on the user in updateUIView.
+        map.setRegion(MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 49.8, longitude: 15.5),
+            span: MKCoordinateSpan(latitudeDelta: 5, longitudeDelta: 6),
+        ), animated: false)
+
         return map
     }
 
     func updateUIView(_ map: MKMapView, context: Context) {
         context.coordinator.parent = self
+        if !context.coordinator.didCenterOnUser, let userLocation {
+            context.coordinator.didCenterOnUser = true
+            map.setRegion(MKCoordinateRegion(
+                center: userLocation.coordinate,
+                latitudinalMeters: 2500,
+                longitudinalMeters: 2000,
+            ), animated: false)
+        }
         if context.coordinator.appliedProvider != provider {
             map.applyBasemap(provider, attribution: true)
             context.coordinator.appliedProvider = provider
@@ -68,6 +83,7 @@ struct MapView: UIViewRepresentable {
         var parent: MapView
         var lastSelectedKey: String?
         var appliedProvider: MapProvider?
+        var didCenterOnUser = false
 
         init(parent: MapView) { self.parent = parent }
 

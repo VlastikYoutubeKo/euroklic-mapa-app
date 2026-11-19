@@ -82,7 +82,7 @@ struct AuthCard: View {
         HStack(spacing: 14) {
             Image(systemName: auth.isLoggedIn ? "person.crop.circle.fill" : "person.crop.circle")
                 .font(.system(size: 40))
-                .foregroundStyle(auth.isLoggedIn ? Theme.brand : .secondary)
+                .foregroundStyle(auth.isLoggedIn ? Theme.tint : .secondary)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(auth.isLoggedIn ? (auth.username ?? "Přihlášen") : "Nepřihlášen")

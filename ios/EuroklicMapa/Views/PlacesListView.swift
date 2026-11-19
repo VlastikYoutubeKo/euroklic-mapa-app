@@ -94,7 +94,7 @@ struct PlaceRow: View {
                 let d = userLocation.distance(from: CLLocation(latitude: place.latitude, longitude: place.longitude))
                 Text(formatDistance(d))
                     .font(.callout.bold())
-                    .foregroundStyle(Theme.brand)
+                    .foregroundStyle(Theme.tint)
             }
         }
         // 44pt minimum touch targets, WCAG.

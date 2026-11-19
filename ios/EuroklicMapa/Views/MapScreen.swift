@@ -26,11 +26,20 @@ struct MapScreen: View {
                     provider: mapProvider,
                     onSelect: { selected = $0 },
                 )
-                .ignoresSafeArea(edges: .bottom)
+                .ignoresSafeArea()
 
                 VStack {
                     categoryChips
                     Spacer()
+                    if selected == nil, let loc = location.lastLocation {
+                        NearbyPanel(
+                            items: Array(places.flattened(category: category, userLocation: loc).prefix(3)),
+                            userLocation: loc,
+                            onSelect: { selected = $0 },
+                        )
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
+                    }
                     if let selected {
                         SelectedPlaceCard(
                             place: selected,
@@ -61,7 +70,7 @@ struct MapScreen: View {
                             Button(action: { showAddPlace = true }) {
                                 Image(systemName: "plus")
                                     .font(.title3)
-                                    .foregroundStyle(Theme.brand)
+                                    .foregroundStyle(Theme.tint)
                                     .frame(width: 44, height: 44)
                                     .background(Circle().fill(.thinMaterial))
                                     .shadow(radius: 3, y: 1)
@@ -69,24 +78,11 @@ struct MapScreen: View {
                             .accessibilityLabel("Přidat místo")
                         }
                         .padding(.trailing, 16)
-                        .padding(.bottom, selected == nil ? 8 : 240)
+                        .padding(.bottom, selected != nil ? 240 : (location.lastLocation != nil ? 190 : 8))
                     }
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if refreshing { ProgressView() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showAddPlace = true
-                    } label: {
-                        Image(systemName: "plus.circle")
-                    }
-                    .accessibilityLabel("Přidat místo")
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showAddPlace) {
                 AddPlaceView()
             }
@@ -126,6 +122,7 @@ struct MapScreen: View {
                 .buttonStyle(.plain)
             }
             Spacer()
+            if refreshing { ProgressView().padding(8).background(Circle().fill(.thinMaterial)) }
         }
         .padding(.horizontal)
     }
@@ -241,5 +238,49 @@ struct SelectedPlaceCard: View {
         } else if let geo {
             UIApplication.shared.open(geo)
         }
+    }
+}
+
+/// Compact "nearby" strip — the Android sheet's peek state, without the full list.
+struct NearbyPanel: View {
+    let items: [PlaceItem]
+    let userLocation: CLLocation
+    let onSelect: (PlaceItem) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Nejbližší místa")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 14)
+                .padding(.top, 12)
+                .padding(.bottom, 4)
+            ForEach(items) { item in
+                Button { onSelect(item) } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: item.isPickup ? "shippingbox.fill" : "figure.stand")
+                            .foregroundStyle(Theme.tint)
+                            .frame(width: 24)
+                        Text(item.name).lineLimit(1)
+                        Spacer(minLength: 8)
+                        Text(formatDistance(distance(item)))
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(item.name), \(formatDistance(distance(item)))")
+            }
+        }
+        .padding(.bottom, 6)
+        .background(RoundedRectangle(cornerRadius: 20).fill(.regularMaterial))
+        .shadow(radius: 6, y: 2)
+    }
+
+    private func distance(_ item: PlaceItem) -> CLLocationDistance {
+        userLocation.distance(from: CLLocation(latitude: item.latitude, longitude: item.longitude))
     }
 }

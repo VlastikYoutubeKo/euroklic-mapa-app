@@ -5,6 +5,13 @@ import SwiftUI
 enum Theme {
     /// Filled-button blue — identical in light/dark on Android.
     static let brand = Color(hex: 0x2454E0)
+    /// Brand blue for TEXT, icons and links: the same hue, lightened in Dark Mode
+    /// so it keeps AA contrast on black (the filled-button blue above does not).
+    static let tint = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0x8F / 255, green: 0xAE / 255, blue: 0xFF / 255, alpha: 1)
+            : UIColor(red: 0x24 / 255, green: 0x54 / 255, blue: 0xE0 / 255, alpha: 1)
+    })
     /// Official source (ČD).
     static let official = Color(hex: 0x3B82F6)
     /// Community source (OSM, WCkompas, users).

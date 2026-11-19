@@ -1,7 +1,8 @@
 import MapKit
 import SwiftUI
 
-/// Place detail — same sections/order as Android `DetailScreen.WcBody`.
+/// Place detail — native inset-grouped list: header with the one primary action
+/// (Navigovat), locator map, nearby stops, info rows, vote, comments, links.
 struct DetailView: View {
     @EnvironmentObject private var favorites: FavoritesStore
     @EnvironmentObject private var location: LocationService
@@ -18,6 +19,7 @@ struct DetailView: View {
 
     @State private var comments: [WcComment]?
     @State private var loadingComments = false
+    @State private var stops: [NearbyStop] = []
 
     init(place: PlaceItem) {
         self.place = place
@@ -26,57 +28,126 @@ struct DetailView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                header
-                if place.access == "eurokey" { KeyRequiredCard() }
-                wheelchairCard
-                if let userLocation = location.lastLocation {
-                    distanceCard(userLocation)
-                }
+        List {
+            Section { header }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 8, trailing: 4))
+
+            Section {
                 MiniMap(lat: place.latitude, lon: place.longitude)
-                    .frame(height: 140)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .frame(height: 150)
+                    .listRowInsets(EdgeInsets())
+                    .accessibilityHidden(true)
+            } footer: {
+                if let userLocation = location.lastLocation {
+                    Text(distanceText(userLocation))
+                }
+            }
 
-                if let openingHours = nonBlank(place.openingHours) {
-                    Section2(label: "Otevírací doba", value: openingHours)
+            if !stops.isEmpty {
+                Section {
+                    ForEach(stops) { stop in
+                        if let url = URL(string: "https://app.odjezdy.online/zastavka/\(stop.id)") {
+                            Link(destination: url) {
+                                HStack {
+                                    Image(systemName: "bus.fill").foregroundStyle(Theme.tint).frame(width: 28)
+                                    Text(stop.name).foregroundStyle(.primary)
+                                    Spacer(minLength: 8)
+                                    Text(formatDistance(Double(stop.distanceM)))
+                                        .font(.subheadline.monospacedDigit())
+                                        .foregroundStyle(.secondary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.footnote.weight(.semibold))
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .accessibilityLabel("\(stop.name), \(stop.distanceM) metrů. Zobrazit odjezdy.")
+                        }
+                    }
+                    if let all = URL(string: String(format: "https://app.odjezdy.online/blizko?lat=%.6f&lng=%.6f", place.latitude, place.longitude)) {
+                        Link("Všechny zastávky v okolí", destination: all)
+                    }
+                } header: {
+                    Text("Zastávky a odjezdy")
                 }
-                if let description = nonBlank(place.description) {
-                    Section2(label: "Popis", value: prettifyDescription(description))
-                }
-                if let note = nonBlank(place.note) {
-                    Section2(label: "Poznámka", value: note)
-                }
-                if let accessibilityNote = nonBlank(place.accessibilityNote) {
-                    Section2(label: "Přístupnost stanice", value: accessibilityNote)
-                }
-                if let floorPlan = nonBlank(place.floorPlanUrl) {
-                    Link("Plán stanice (ČD)", destination: URL(string: floorPlan)!)
-                        .font(.callout.weight(.semibold))
-                }
-                if !place.isPickup, let source = nonBlank(place.source) {
-                    Section2(label: "Původní zdroj", value: originalSourceLabel(source))
-                }
-                if let lastVerified = nonBlank(place.lastVerified) {
-                    Section2(label: "Naposledy ověřeno", value: String(lastVerified.prefix(10)))
-                }
+            }
 
-                if !place.isPickup {
-                    AddPhotoHint()
+            if hasInfo {
+                Section("Informace") {
+                    if place.access == "eurokey" {
+                        Label("Otevírá se Euroklíčem", systemImage: "key.fill")
+                    }
+                    if let text = wheelchairText { InfoRow(label: "Bezbariérovost budovy", value: text) }
+                    if let hours = nonBlank(place.openingHours) { InfoRow(label: "Otevírací doba", value: hours) }
+                    if let description = nonBlank(place.description) {
+                        InfoRow(label: "Popis", value: prettifyDescription(description))
+                    }
+                    if let note = nonBlank(place.note) { InfoRow(label: "Poznámka", value: note) }
+                }
+            }
+
+            if let accessibilityNote = nonBlank(place.accessibilityNote) {
+                Section {
+                    DisclosureGroup("Přístupnost stanice") {
+                        Text(accessibilityNote).font(.callout).foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if !place.isPickup {
+                Section {
                     VoteRow(
                         likes: displayLikes,
                         dislikes: displayDislikes,
                         myVote: myVote,
                         voting: voting,
-                        message: voteMessage,
                         onVote: vote,
                     )
-                    commentsSection
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                } header: {
+                    Text("Funguje to?")
+                } footer: {
+                    if let voteMessage { Text(voteMessage) }
                 }
             }
-            .padding(16)
+
+            if let comments, !comments.isEmpty {
+                Section("Komentáře") {
+                    ForEach(comments) { comment in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(alignment: .firstTextBaseline) {
+                                Text(comment.authorName).font(.subheadline.weight(.semibold))
+                                Spacer()
+                                if let day = comment.dayLabel {
+                                    Text(day).font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                            Text(comment.text).font(.callout)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+            }
+
+            Section {
+                if let floorPlan = nonBlank(place.floorPlanUrl), let url = URL(string: floorPlan) {
+                    LinkRow(title: "Plán stanice (ČD)", systemImage: "map", url: url)
+                }
+                if let url = webURL {
+                    LinkRow(title: "Otevřít na webu", systemImage: "safari", url: url)
+                }
+                if !place.isPickup, let source = nonBlank(place.source) {
+                    InfoRow(label: "Původní zdroj", value: originalSourceLabel(source))
+                }
+                if let lastVerified = nonBlank(place.lastVerified) {
+                    InfoRow(label: "Naposledy ověřeno", value: String(lastVerified.prefix(10)))
+                }
+            } footer: {
+                if !place.isPickup { Text("Fotku nebo komentář k místu přidáš na webu.") }
+            }
         }
-        .navigationTitle(place.name)
+        .listStyle(.insetGrouped)
+        .navigationTitle("Detail")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -94,6 +165,9 @@ struct DetailView: View {
             comments = (try? await EuroklicAPI().comments(locationId: place.id))?.comments ?? []
             loadingComments = false
         }
+        .task(id: "\(place.latitude),\(place.longitude)") {
+            stops = await NearbyStopsService.nearby(lat: place.latitude, lon: place.longitude)
+        }
         .task(id: voteMessage) {
             if voteMessage != nil {
                 try? await Task.sleep(nanoseconds: 3_500_000_000)
@@ -105,32 +179,38 @@ struct DetailView: View {
     // MARK: - Pieces
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Text(place.sourceLabel)
-                    .font(.caption)
-                    .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(Capsule().fill(.quaternary.opacity(0.6)))
+        VStack(alignment: .leading, spacing: 12) {
+            Text(place.name)
+                .font(.title2.bold())
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Label(place.sourceLabel, systemImage: place.isOfficialSource ? "checkmark.seal.fill" : "person.2.fill")
+                    .foregroundStyle(.secondary)
                 if let badge = currentBadge {
                     Text(badge)
-                        .font(.caption)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(Capsule().fill(currentStatus == .reported ? Theme.accent.opacity(0.15) : Theme.success.opacity(0.15)))
                         .foregroundStyle(currentStatus == .reported ? Theme.accent : Theme.success)
                 }
                 if let country = place.countryLabel, country.hasPrefix("Zahraničí") {
-                    Text(country)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Text(country).foregroundStyle(.secondary)
                 }
             }
+            .font(.subheadline)
+
             if let phone = place.phonePrimary, let url = URL(string: "tel:\(phone.replacingOccurrences(of: " ", with: ""))") {
-                Link(destination: url) {
-                    Label(phone, systemImage: "phone.fill")
-                        .font(.callout)
-                }
+                Link(destination: url) { Label(phone, systemImage: "phone.fill") }
+                    .font(.subheadline)
             }
+
+            Button(action: openNavigation) {
+                Label("Navigovat", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.brand)
+            .controlSize(.large)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var currentStatus: PlaceStatus {
@@ -142,60 +222,36 @@ struct DetailView: View {
         return badge == .none ? nil : badge.label(likes: displayLikes, dislikes: displayDislikes)
     }
 
-    @ViewBuilder
-    private var wheelchairCard: some View {
-        if let w = place.wheelchair {
-            let text: String? = switch w {
-            case "yes": "Budova bezbariérová: ano"
-            case "no": "Budova bezbariérová: ne"
-            case "unknown": "Budova bezbariérová: nevíme"
-            default: nil
-            }
-            if let text {
-                Section2(label: "Bezbariérovost budovy", value: text)
-            }
+    private var wheelchairText: String? {
+        switch place.wheelchair {
+        case "yes": return "Ano"
+        case "no": return "Ne"
+        case "unknown": return "Nevíme"
+        default: return nil
         }
     }
 
-    private func distanceCard(_ userLocation: CLLocation) -> some View {
+    private var hasInfo: Bool {
+        place.access == "eurokey" || wheelchairText != nil || nonBlank(place.openingHours) != nil
+            || nonBlank(place.description) != nil || nonBlank(place.note) != nil
+    }
+
+    private var webURL: URL? {
+        guard let raw = nonBlank(place.webUrl) else { return nil }
+        if raw.hasPrefix("http") { return URL(string: raw) }
+        return URL(string: "https://euroklic.odjezdy.online" + (raw.hasPrefix("/") ? "" : "/") + raw)
+    }
+
+    private func distanceText(_ userLocation: CLLocation) -> String {
         let d = userLocation.distance(from: CLLocation(latitude: place.latitude, longitude: place.longitude))
-        return HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(formatDistance(d)).font(.title2.bold()).foregroundStyle(Theme.brand)
-            VStack(alignment: .leading) {
-                Text(formatWalkingTime(d)).font(.subheadline)
-                Text("vzdušnou čarou, přibližně").font(.caption2).foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Theme.brand.opacity(0.08)))
+        return "\(formatDistance(d)) · \(formatWalkingTime(d)) pěšky, vzdušnou čarou"
     }
 
-    private var commentsSection: some View {
-        Group {
-            if let comments, !comments.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Komentáře").font(.headline)
-                    ForEach(comments) { comment in
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 6) {
-                                Text(comment.authorName).font(.subheadline.bold())
-                                if let day = comment.dayLabel {
-                                    Text(day).font(.caption2).foregroundStyle(.secondary)
-                                }
-                            }
-                            Text(comment.text).font(.callout)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(12)
-                        .background(RoundedRectangle(cornerRadius: 14).fill(.quaternary.opacity(0.5)))
-                    }
-                    Text("Komentáře se přidávají na webu (odkaz níže).")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
+    /// Hands off to the system Maps app (walking directions) — the native route.
+    private func openNavigation() {
+        let item = MKMapItem(placemark: MKPlacemark(coordinate: place.coordinate))
+        item.name = place.name
+        item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking])
     }
 
     // MARK: - Vote (CSRF + cookie flow, one 403 retry — mirrors Android)
@@ -272,45 +328,37 @@ struct DetailView: View {
 
 // MARK: - Small shared pieces
 
-struct Section2: View {
+/// Label above value — the Contacts / Settings detail-row pattern.
+struct InfoRow: View {
     let label: String
     let value: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label.uppercased())
-                .font(.caption.bold())
-                .foregroundStyle(.secondary)
-            Text(value).font(.callout)
+            Text(label).font(.subheadline).foregroundStyle(.secondary)
+            Text(value)
         }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
     }
 }
 
-struct KeyRequiredCard: View {
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "key.fill").foregroundStyle(Theme.brand)
-            Text("Místo se otevírá Euroklíčem.")
-                .font(.callout.weight(.medium))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Theme.brand.opacity(0.08)))
-    }
-}
+/// Tappable row that leaves the app (browser): SF Symbol, title, trailing arrow.
+struct LinkRow: View {
+    let title: String
+    let systemImage: String
+    let url: URL
 
-struct AddPhotoHint: View {
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "camera.fill").foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Fotku k místu přidáš na webu").font(.callout.weight(.medium))
-                Text("Odkaz na web je dole na této stránce.").font(.caption).foregroundStyle(.secondary)
+        Link(destination: url) {
+            HStack {
+                Label(title, systemImage: systemImage)
+                Spacer()
+                Image(systemName: "arrow.up.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 14).fill(.quaternary.opacity(0.5)))
     }
 }
 
@@ -348,48 +396,31 @@ struct MiniMap: UIViewRepresentable {
     }
 }
 
-
-
 struct VoteRow: View {
     let likes: Int
     let dislikes: Int
     let myVote: Bool?
     let voting: Bool
-    let message: String?
     let onVote: (Bool) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Funguje?").font(.headline)
-            HStack(spacing: 10) {
-                Button {
-                    onVote(true)
-                } label: {
-                    Label("\(likes)", systemImage: "hand.thumbsup.fill")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(myVote == true ? Theme.success.opacity(0.2) : Color.secondary.opacity(0.15)))
-                        .foregroundStyle(myVote == true ? Theme.success : .primary)
-                }
-                .disabled(voting)
-                .accessibilityLabel("Hlasovat: funguje")
+        HStack(spacing: 12) {
+            Button { onVote(true) } label: {
+                Label("\(likes)", systemImage: myVote == true ? "hand.thumbsup.fill" : "hand.thumbsup")
+                    .frame(maxWidth: .infinity)
+            }
+            .tint(myVote == true ? Theme.success : .secondary)
+            .accessibilityLabel("Hlasovat: funguje. Zatím \(likes).")
 
-                Button {
-                    onVote(false)
-                } label: {
-                    Label("\(dislikes)", systemImage: "hand.thumbsdown.fill")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(myVote == false ? Theme.accent.opacity(0.2) : Color.secondary.opacity(0.15)))
-                        .foregroundStyle(myVote == false ? Theme.accent : .primary)
-                }
-                .disabled(voting)
-                .accessibilityLabel("Hlasovat: nefunguje")
+            Button { onVote(false) } label: {
+                Label("\(dislikes)", systemImage: myVote == false ? "hand.thumbsdown.fill" : "hand.thumbsdown")
+                    .frame(maxWidth: .infinity)
             }
-            if voting { ProgressView() }
-            if let message {
-                Text(message).font(.footnote).foregroundStyle(.secondary)
-            }
+            .tint(myVote == false ? Theme.accent : .secondary)
+            .accessibilityLabel("Hlasovat: nefunguje. Zatím \(dislikes).")
         }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+        .disabled(voting)
     }
 }
