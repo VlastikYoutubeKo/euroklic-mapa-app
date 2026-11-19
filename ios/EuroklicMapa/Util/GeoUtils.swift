@@ -13,7 +13,7 @@ func formatDistance(_ meters: Double) -> String {
 
 /// Rough straight-line walking time at 4.5 km/h — "~7 min".
 func formatWalkingTime(_ meters: Double) -> String {
-    let minutes = Int((meters / 1000 / 4.5 * 60).rounded()).max(1)
+    let minutes = max(1, Int((meters / 1000 / 4.5 * 60).rounded()))
     if minutes < 90 { return "~\(minutes) min" }
     if minutes < 24 * 60 { return "~\(Int((Double(minutes) / 60).rounded())) h" }
     return "přes 1 den"

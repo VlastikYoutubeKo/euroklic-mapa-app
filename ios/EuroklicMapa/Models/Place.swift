@@ -3,7 +3,7 @@ import Foundation
 
 /// Unified row over both feeds (WC + pickup), the Swift mirror of Android's
 /// `PlaceListItem`. All trust fields are recomputed per render — never cached.
-struct PlaceItem: Identifiable, Hashable {
+struct PlaceItem: Identifiable, Hashable, Codable {
     let id: Int
     let isPickup: Bool
     let name: String
@@ -26,6 +26,8 @@ struct PlaceItem: Identifiable, Hashable {
     let precision: String?
     /// Pickup only: first phone out of a possibly comma-separated list.
     let phone: String?
+    let description: String?
+    let note: String?
 
     var favoriteKey: String { "\(isPickup ? "pp" : "wc")_\(id)" }
     var coordinate: CLLocationCoordinate2D {

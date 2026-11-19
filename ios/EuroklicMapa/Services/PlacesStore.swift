@@ -57,8 +57,8 @@ final class PlacesStore: ObservableObject {
                 raw = try await api.locations().features // user abroad → full feed
             }
             return raw.compactMap { feature in
-                guard let g = feature.geometry, g.coordinates.count >= 2 else { return nil }
-                let lon = g.coordinates[0], lat = g.coordinates[1]
+                guard let c = feature.geometry?.coordinates, c.count >= 2 else { return nil }
+                let lon = c[0], lat = c[1]
                 guard lon.isFinite, lat.isFinite else { return nil }
                 let p = feature.properties
                 return PlaceItem(
@@ -82,6 +82,8 @@ final class PlacesStore: ObservableObject {
                     photoUrl: p.photo_url,
                     precision: nil,
                     phone: nil,
+                    description: p.description,
+                    note: p.note,
                 )
             }
         } catch {
@@ -97,8 +99,8 @@ final class PlacesStore: ObservableObject {
                 features = try await api.pickupPoints().features
             }
             return features.compactMap { feature in
-                guard let g = feature.geometry, g.coordinates.count >= 2 else { return nil }
-                let lon = g.coordinates[0], lat = g.coordinates[1]
+                guard let c = feature.geometry?.coordinates, c.count >= 2 else { return nil }
+                let lon = c[0], lat = c[1]
                 guard lon.isFinite, lat.isFinite else { return nil }
                 let p = feature.properties
                 let subtitle = [p.district, p.kraj].compactMap { $0 }.joined(separator: ", ")
@@ -123,6 +125,8 @@ final class PlacesStore: ObservableObject {
                     photoUrl: nil,
                     precision: p.precision,
                     phone: p.phone,
+                    description: nil,
+                    note: nil,
                 )
             }
         } catch {

@@ -98,10 +98,10 @@ struct MapView: UIViewRepresentable {
             if annotation is MKUserLocation { return nil }
 
             if let cluster = annotation as? MKClusterAnnotation {
-                let view = (mapView.dequeueReusableAnnotationView(withIdentifier: "cluster", for: cluster) as? MKMarkerAnnotationView)
+                let view = (mapView.dequeueReusableAnnotationView(withIdentifier: "cluster") as? MKMarkerAnnotationView)
                     ?? MKMarkerAnnotationView(annotation: cluster, reuseIdentifier: "cluster")
                 view.glyphText = String(cluster.memberAnnotations.count)
-                view.markerTintColor = Theme.brand
+                view.markerTintColor = UIColor(Theme.brand)
                 view.displayPriority = .defaultHigh
                 return view
             }
@@ -109,7 +109,7 @@ struct MapView: UIViewRepresentable {
             guard let placeAnnotation = annotation as? PlaceAnnotation else { return nil }
             let place = placeAnnotation.place
             let identifier = "place-\(place.isPickup)-\(place.status == .reported)"
-            let view = (mapView.dequeueReusableAnnotationView(withIdentifier: identifier, for: placeAnnotation) as? MKMarkerAnnotationView)
+            let view = (mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView)
                 ?? MKMarkerAnnotationView(annotation: placeAnnotation, reuseIdentifier: identifier)
             view.annotation = placeAnnotation
             view.clusteringIdentifier = "place"
@@ -117,10 +117,10 @@ struct MapView: UIViewRepresentable {
             view.canShowCallout = false
 
             if place.isPickup {
-                view.markerTintColor = Theme.pickup
+                view.markerTintColor = UIColor(Theme.pickup)
                 view.glyphImage = UIImage(systemName: "shippingbox.fill")
             } else {
-                view.markerTintColor = place.isOfficialSource ? Theme.official : Theme.community
+                view.markerTintColor = UIColor(place.isOfficialSource ? Theme.official : Theme.community)
                 view.glyphImage = UIImage(systemName: "figure.stand")
             }
             if place.status == .reported {
@@ -136,8 +136,8 @@ struct MapView: UIViewRepresentable {
             if let cluster = view.annotation as? MKClusterAnnotation {
                 // Tapping a cluster drills in (Android zooms in +2 too).
                 var region = mapView.region
-                region.span.latitudeSpan /= 4
-                region.span.longitudeSpan /= 4
+                region.span.latitudeDelta /= 4
+                region.span.longitudeDelta /= 4
                 region.center = cluster.coordinate
                 mapView.setRegion(region, animated: true)
                 mapView.deselectAnnotation(cluster, animated: false)

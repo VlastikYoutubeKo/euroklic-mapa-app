@@ -1,3 +1,4 @@
+import MapKit
 import CoreLocation
 import PhotosUI
 import SwiftUI
@@ -96,7 +97,7 @@ struct AddPlaceView: View {
     }
 
     private func submit() {
-        guard let coordinate, !submitting else { return }
+        guard let picked = coordinate, !submitting else { return }
         submitting = true
         resultMessage = nil
         Task {
@@ -105,8 +106,8 @@ struct AddPlaceView: View {
                 let result = try await EuroklicAPI().addPlace(
                     name: name.trimmingCharacters(in: .whitespaces),
                     desc: desc.trimmingCharacters(in: .whitespaces),
-                    lat: coordinate.latitude,
-                    lon: coordinate.longitude,
+                    lat: picked.latitude,
+                    lon: picked.longitude,
                     photoJPEG: photoJPEG,
                 )
                 if result.success {
@@ -166,9 +167,11 @@ struct MapPickerRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> MKMapView {
         let map = MKMapView()
         map.delegate = context.coordinator
-        let tiles = MKTileOverlay(urlTemplate: MapViewTemplate.url)
-        tiles.canReplaceMapContent = true
-        map.addOverlay(tiles)
+        if !MapyTiles.urlTemplate.isEmpty {
+            let tiles = MKTileOverlay(urlTemplate: MapyTiles.urlTemplate)
+            tiles.canReplaceMapContent = true
+            map.addOverlay(tiles)
+        }
         map.setRegion(MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 49.8, longitude: 15.5),
             span: MKCoordinateSpan(latitudeDelta: 4, longitudeDelta: 4),

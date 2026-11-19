@@ -108,17 +108,18 @@ struct MapScreen: View {
                 Button {
                     category = c
                 } label: {
+                    let isOn = category == c
+                    let fill: AnyShapeStyle = isOn ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(.thinMaterial)
+                    let textColor: Color = isOn ? Color.white : Color.primary
                     HStack(spacing: 4) {
-                        if category == c { Image(systemName: "checkmark").font(.caption2) }
+                        if isOn { Image(systemName: "checkmark").font(.caption2) }
                         Text(c.label)
                     }
-                    .font(.footnote.weight(category == c ? .semibold : .regular))
+                    .font(.footnote.weight(isOn ? .semibold : .regular))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(
-                        Capsule().fill(category == c ? Theme.brand : .thinMaterial),
-                    )
-                    .foregroundStyle(category == c ? .white : .primary)
+                    .background(Capsule().fill(fill))
+                    .foregroundStyle(textColor)
                 }
                 .buttonStyle(.plain)
             }

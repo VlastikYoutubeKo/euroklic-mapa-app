@@ -372,7 +372,7 @@ struct VoteRow: View {
                     Label("\(likes)", systemImage: "hand.thumbsup.fill")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(myVote == true ? Theme.success.opacity(0.2) : .quaternary.opacity(0.5)))
+                        .background(RoundedRectangle(cornerRadius: 12).fill(myVote == true ? Theme.success.opacity(0.2) : Color.secondary.opacity(0.15)))
                         .foregroundStyle(myVote == true ? Theme.success : .primary)
                 }
                 .disabled(voting)
@@ -384,7 +384,7 @@ struct VoteRow: View {
                     Label("\(dislikes)", systemImage: "hand.thumbsdown.fill")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(myVote == false ? Theme.accent.opacity(0.2) : .quaternary.opacity(0.5)))
+                        .background(RoundedRectangle(cornerRadius: 12).fill(myVote == false ? Theme.accent.opacity(0.2) : Color.secondary.opacity(0.15)))
                         .foregroundStyle(myVote == false ? Theme.accent : .primary)
                 }
                 .disabled(voting)
