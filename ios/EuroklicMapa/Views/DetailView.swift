@@ -47,6 +47,7 @@ struct DetailView: View {
                 if let note = nonBlank(place.accessibilityNote) { accessibilityBlock(note) }
                 if !place.isPickup { voteBlock }
                 if let comments, !comments.isEmpty { commentsBlock(comments) }
+                if !place.isPickup { ContributeBlock(place: place) }
             }
             .padding(.horizontal, 16)
             .padding(.top, asSheet ? 14 : 8)
@@ -363,9 +364,6 @@ struct DetailView: View {
                 }
             }
             .background(RoundedRectangle(cornerRadius: 20).fill(Color(.secondarySystemBackground)))
-            Text("Komentář nebo fotku k místu přidáš na webu.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
         }
     }
 

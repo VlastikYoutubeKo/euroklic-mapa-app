@@ -43,6 +43,13 @@ struct MoreView: View {
                     } label: {
                         Label("Přidat místo", systemImage: "plus.circle")
                     }
+                    if auth.isAdmin {
+                        NavigationLink {
+                            AdminQueueView()
+                        } label: {
+                            Label("Ke schválení", systemImage: "checkmark.seal")
+                        }
+                    }
                 }
 
                 Section("Odkazy") {
@@ -92,14 +99,12 @@ struct AuthCard: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: auth.isLoggedIn ? "person.crop.circle.fill" : "person.crop.circle")
-                .font(.system(size: 40))
-                .foregroundStyle(auth.isLoggedIn ? Theme.tint : .secondary)
+            avatar
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(auth.isLoggedIn ? (auth.username ?? "Přihlášen") : "Nepřihlášen")
                     .font(.headline)
-                Text(auth.isLoggedIn ? "Můžete přidávat místa." : "Přihlaste se pro přidávání míst.")
+                Text(auth.isLoggedIn ? "Můžete přidávat místa, fotky a komentáře." : "Přihlaste se pro přidávání míst, fotek a komentářů.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -120,5 +125,35 @@ struct AuthCard: View {
             }
         }
         .padding(.vertical, 4)
+    }
+
+    /// Profilová fotka (Discord/Google) v kruhu; bez ní nebo při chybě SF Symbol.
+    @ViewBuilder
+    private var avatar: some View {
+        if auth.isLoggedIn, let raw = auth.me?.avatar_url, !raw.isEmpty, let url = URL(string: raw) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image.resizable().scaledToFill()
+                case .failure:
+                    fallbackIcon
+                default:
+                    Color(.secondarySystemFill).overlay(ProgressView())
+                }
+            }
+            .frame(width: 48, height: 48)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(Color(.separator), lineWidth: 0.5))
+            .accessibilityHidden(true)
+        } else {
+            fallbackIcon.accessibilityHidden(true)
+        }
+    }
+
+    private var fallbackIcon: some View {
+        Image(systemName: auth.isLoggedIn ? "person.crop.circle.fill" : "person.crop.circle")
+            .font(.system(size: 44))
+            .foregroundStyle(auth.isLoggedIn ? Theme.tint : .secondary)
+            .frame(width: 48, height: 48)
     }
 }
