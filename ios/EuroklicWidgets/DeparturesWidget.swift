@@ -44,13 +44,13 @@ struct DeparturesEntry: TimelineEntry {
         date: Date(),
         snapshot: DeparturesSnapshot(
             stopId: "CIS-1",
-            stopName: "Hlavní nádraží",
+            stopName: L("Hlavní nádraží"),
             stopLat: 50.0, stopLon: 14.0, originLat: 50.0, originLon: 14.0,
             distanceM: 180,
             departures: [
-                DepartureItem(id: "a", line: "9", destination: "Sídliště", time: Date().addingTimeInterval(3 * 60), delayMinutes: 0),
-                DepartureItem(id: "b", line: "22", destination: "Náměstí", time: Date().addingTimeInterval(8 * 60), delayMinutes: 2),
-                DepartureItem(id: "c", line: "136", destination: "Nemocnice", time: Date().addingTimeInterval(14 * 60), delayMinutes: 0),
+                DepartureItem(id: "a", line: "9", destination: L("Sídliště"), time: Date().addingTimeInterval(3 * 60), delayMinutes: 0),
+                DepartureItem(id: "b", line: "22", destination: L("Náměstí"), time: Date().addingTimeInterval(8 * 60), delayMinutes: 2),
+                DepartureItem(id: "c", line: "136", destination: L("Nemocnice"), time: Date().addingTimeInterval(14 * 60), delayMinutes: 0),
             ],
             fetchedAt: Date()
         ),
@@ -352,7 +352,7 @@ struct DeparturesWidgetView: View {
     /// "za 4 min" / "teď"
     private func relative(_ d: DepartureItem) -> String {
         let minutes = Int((d.time.timeIntervalSince(entry.date) / 60).rounded(.up))
-        if minutes <= 0 { return "teď" }
+        if minutes <= 0 { return L("teď") }
         if minutes < 60 { return "za \(minutes) min" }
         return pragueClock(d.time)
     }
@@ -362,7 +362,7 @@ struct DeparturesWidgetView: View {
             Image(systemName: "bus.fill")
                 .foregroundStyle(WidgetColors.odjezdyText)
                 .accessibilityHidden(true)
-            Text(entry.snapshot?.stopName ?? "Odjezdy poblíž")
+            Text(entry.snapshot?.stopName ?? L("Odjezdy poblíž"))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(WidgetColors.odjezdyText)
                 .lineLimit(1)
@@ -412,7 +412,7 @@ struct DeparturesWidgetView: View {
             header
             if entry.snapshot == nil {
                 Spacer(minLength: 0)
-                Text(entry.needsLocation ? "Povolte polohu v appce" : "V okolí není žádná zastávka")
+                Text(entry.needsLocation ? L("Povolte polohu v appce") : L("V okolí není žádná zastávka"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(entry.needsLocation ? WidgetColors.warning : Color.primary)
                 Spacer(minLength: 0)
@@ -452,7 +452,7 @@ struct DeparturesWidgetView: View {
                     .widgetAccentable()
                 let deps = Array(entry.upcoming.prefix(2))
                 if deps.isEmpty {
-                    Text(entry.needsLocation ? "Povolte polohu v appce" : "Žádné další odjezdy")
+                    Text(entry.needsLocation ? L("Povolte polohu v appce") : L("Žádné další odjezdy"))
                         .font(.caption)
                 } else {
                     ForEach(deps) { d in
@@ -463,7 +463,7 @@ struct DeparturesWidgetView: View {
                 }
             } else {
                 Text("Odjezdy poblíž").font(.headline).widgetAccentable()
-                Text(entry.needsLocation ? "Povolte polohu v appce" : "Žádná zastávka")
+                Text(entry.needsLocation ? L("Povolte polohu v appce") : L("Žádná zastávka"))
                     .font(.caption)
             }
         }
@@ -475,7 +475,7 @@ struct DeparturesWidgetView: View {
             if let d = entry.upcoming.first {
                 Text("\(d.line) → \(d.destination) \(pragueClock(d.time))")
             } else {
-                Text(entry.needsLocation ? "Odjezdy: povolte polohu" : "Odjezdy: nic")
+                Text(entry.needsLocation ? L("Odjezdy: povolte polohu") : L("Odjezdy: nic"))
             }
         }
     }

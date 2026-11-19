@@ -1,6 +1,7 @@
 name: EuroklicMapa
 options:
   bundleIdPrefix: cz.euroklicmapa
+  developmentLanguage: en
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -23,10 +24,13 @@ targets:
       - EuroklicMapa
       - path: ../CHANGELOG.md
         buildPhase: resources
+      - path: ../CHANGELOG.cs.md
+        buildPhase: resources
     info:
       path: EuroklicMapa/Info.plist
       properties:
         CFBundleDisplayName: Euroklíč Mapa
+        CFBundleLocalizations: [en, cs]
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -37,14 +41,14 @@ targets:
             CFBundleURLSchemes:
               - euroklicmapa
         NSLocationWhenInUseUsageDescription: >-
-          Polohu použijeme jen k seřazení míst podle vzdálenosti a k vycentrování
-          mapy na vás. Nikam mimo aplikaci ji neposíláme.
+          We use your location only to sort places by distance and to center the
+          map on you. It is never sent anywhere outside the app.
         NSPhotoLibraryAddUsageDescription: >-
-          Fotku vašeho zařízení připojíme k novému místu, které odešlete ke schválení.
+          Your device's photo will be attached to the new place you submit for approval.
         NSCameraUsageDescription: >-
-          Fotoaparát použijeme k vyfocení místa, které navrhujete k doplnění.
+          The camera is used to take a photo of the place you are suggesting.
         NSPhotoLibraryUsageDescription: >-
-          Vybraná fotka se odešle k místu jako návrh pro moderátora.
+          The photo you choose is sent with the place as a suggestion for the moderator.
         ITSAppUsesNonExemptEncryption: false
         MapyApiKey: $(MAPY_APIKEY)
         CFBundleShortVersionString: $(MARKETING_VERSION)
@@ -64,12 +68,13 @@ targets:
       path: EuroklicWidgets/Info.plist
       properties:
         CFBundleDisplayName: Euroklíč widgety
+        CFBundleLocalizations: [en, cs]
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         NSWidgetWantsLocation: true
         NSLocationWhenInUseUsageDescription: >-
-          Widget použije vaši polohu k zobrazení nejbližší toalety a zastávky a jejích odjezdů.
-          Poloha se nikam neukládá, jen se pošle službě pro vyhledání míst v okolí.
+          The widget uses your location to show the nearest toilet and the nearest stop with its departures.
+          Location is not stored; it is only sent to the service that looks up nearby places.
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
   EuroklicMapaTests:

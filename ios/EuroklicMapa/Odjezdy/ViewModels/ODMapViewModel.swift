@@ -10,11 +10,11 @@ enum ODMapFilter: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .bus: return "Autobus"
-        case .train: return "Vlak"
-        case .tram: return "Tramvaj a trolejbus"
-        case .ferry: return "Přívoz"
-        case .stops: return "Zastávky"
+        case .bus: return L("Autobus")
+        case .train: return L("Vlak")
+        case .tram: return L("Tramvaj a trolejbus")
+        case .ferry: return L("Přívoz")
+        case .stops: return L("Zastávky")
         }
     }
 
@@ -160,11 +160,11 @@ final class ODMapViewModel: ObservableObject {
                 notice = .offline
                 return 30
             default:
-                notice = .error(error.errorDescription ?? "Chyba")
+                notice = .error(error.errorDescription ?? L("Chyba"))
                 return 30
             }
         } catch {
-            notice = .error("Nepodařilo se načíst vozidla.")
+            notice = .error(L("Nepodařilo se načíst vozidla."))
             return 30
         }
     }

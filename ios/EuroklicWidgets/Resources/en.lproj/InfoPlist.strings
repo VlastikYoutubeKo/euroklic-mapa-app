@@ -1,0 +1,2 @@
+/* Permission prompts */
+"NSLocationWhenInUseUsageDescription" = "The widget uses your location to show the nearest toilet and the nearest stop with its departures. Location is not stored; it is only sent to the service that looks up nearby places.";

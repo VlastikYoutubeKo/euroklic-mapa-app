@@ -101,13 +101,13 @@ enum ODTransportType: String, CaseIterable, Hashable {
 
     var label: String {
         switch self {
-        case .bus: return "Autobus"
-        case .tram: return "Tramvaj"
-        case .trolleybus: return "Trolejbus"
+        case .bus: return L("Autobus")
+        case .tram: return L("Tramvaj")
+        case .trolleybus: return L("Trolejbus")
         case .subway: return "Metro"
-        case .train: return "Vlak"
-        case .ferry: return "Přívoz"
-        case .other: return "Spoj"
+        case .train: return L("Vlak")
+        case .ferry: return L("Přívoz")
+        case .other: return L("Spoj")
         }
     }
 
@@ -247,18 +247,18 @@ struct ODVehicle: Identifiable, Hashable, Decodable {
 
     var delayText: String? {
         guard isInService, let m = delayMinutes else { return nil }
-        return m <= 0 ? "včas" : "+\(m) min"
+        return m <= 0 ? L("včas") : "+\(m) min"
     }
 
     var accessibilityText: String {
         var parts: [String] = []
         if isInService {
-            parts.append("\(type.label) linka \(line)")
+            parts.append(L("\(type.label) linka \(line)"))
         } else {
-            parts.append("\(type.label) mimo provoz")
+            parts.append(L("\(type.label) mimo provoz"))
         }
-        if let destination, !destination.isEmpty { parts.append("směr \(destination)") }
-        if let d = delayText { parts.append(d == "včas" ? "jede včas" : "zpoždění \(delayMinutes ?? 0) minut") }
+        if let destination, !destination.isEmpty { parts.append(L("směr \(destination)")) }
+        if delayText != nil { parts.append((delayMinutes ?? 0) <= 0 ? L("jede včas") : L("zpoždění \(delayMinutes ?? 0) minut")) }
         return parts.joined(separator: ", ")
     }
 }
@@ -371,21 +371,21 @@ struct ODDeparture: Identifiable, Hashable, Decodable {
 enum ODProvider {
     static func label(_ raw: String) -> String {
         switch raw.uppercased() {
-        case "": return "Ostatní"
+        case "": return L("Ostatní")
         case "PID": return "PID"
-        case "DUK": return "DÚK"
+        case "DUK": return L("DÚK")
         case "IDSJMK": return "IDS JMK"
         case "ODIS": return "ODIS"
         case "IDOL": return "IDOL"
-        case "ZLIN": return "Zlín"
+        case "ZLIN": return L("Zlín")
         case "JIKORD": return "JIKORD"
         case "IDPK": return "IDPK"
         case "IDSOK": return "IDSOK"
         case "ARRIVA": return "Arriva"
         case "DPMD": return "DPMD"
-        case "CZPTT": return "Vlaky SŽ"
-        case "ČD", "CD": return "České dráhy"
-        case "SZ": return "Správa železnic"
+        case "CZPTT": return L("Vlaky SŽ")
+        case "ČD", "CD": return L("České dráhy")
+        case "SZ": return L("Správa železnic")
         default: return raw
         }
     }
@@ -584,9 +584,9 @@ struct ODAlert: Identifiable, Hashable, Decodable {
     var categoryLabel: String? {
         switch (category ?? "").lowercased() {
         case "": return nil
-        case "closure": return "Výluka"
-        case "replacement": return "Náhradní doprava"
-        case "delay": return "Zpoždění"
+        case "closure": return L("Výluka")
+        case "replacement": return L("Náhradní doprava")
+        case "delay": return L("Zpoždění")
         default: return category
         }
     }

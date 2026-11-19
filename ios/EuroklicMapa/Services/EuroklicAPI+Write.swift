@@ -27,7 +27,7 @@ enum AdminListResult {
 
 /// Zápisové endpointy s Bearerem (komentáře, hlášení, fotky, admin). Tokeny se nikdy nelogují.
 extension EuroklicAPI {
-    static let offlineMessage = "Bez připojení. Zkuste to znovu, až budete online."
+    static let offlineMessage = L("Bez připojení. Zkuste to znovu, až budete online.")
     static let maxPhotoBytes = 8 * 1024 * 1024
 
     // MARK: - Komentář
@@ -35,7 +35,7 @@ extension EuroklicAPI {
     func postComment(locationId: Int, text: String) async -> WriteResult {
         let payload: [String: Any] = ["location_id": locationId, "text": text.trimmingCharacters(in: .whitespacesAndNewlines)]
         guard let body = try? JSONSerialization.data(withJSONObject: payload) else {
-            return .failed("Komentář se nepodařilo odeslat.")
+            return .failed(L("Komentář se nepodařilo odeslat."))
         }
         var request = URLRequest(url: Self.baseURL.appendingPathComponent("api_comments.php"))
         request.httpMethod = "POST"
@@ -46,15 +46,15 @@ extension EuroklicAPI {
         let outcome = await perform(request)
         return translate(
             outcome,
-            okMessage: "Díky! Komentář čeká na schválení moderátorem a pak se objeví u místa.",
-            fallback: "Komentář se nepodařilo odeslat.",
+            okMessage: L("Díky! Komentář čeká na schválení moderátorem a pak se objeví u místa."),
+            fallback: L("Komentář se nepodařilo odeslat."),
             byStatus: [
-                401: "Přihlášení vypršelo. Přihlaste se prosím znovu.",
-                403: "Přihlášení vypršelo. Přihlaste se prosím znovu.",
-                400: "Komentář se nepodařilo odeslat (zkontrolujte délku 3–2000 znaků, max 1 odkaz).",
-                404: "Tohle místo se nepodařilo najít.",
-                409: "Tenhle komentář jste už přidali.",
-                429: "Za poslední dobu jste přidali hodně příspěvků. Zkuste to později.",
+                401: L("Přihlášení vypršelo. Přihlaste se prosím znovu."),
+                403: L("Přihlášení vypršelo. Přihlaste se prosím znovu."),
+                400: L("Komentář se nepodařilo odeslat (zkontrolujte délku 3–2000 znaků, max 1 odkaz)."),
+                404: L("Tohle místo se nepodařilo najít."),
+                409: L("Tenhle komentář jste už přidali."),
+                429: L("Za poslední dobu jste přidali hodně příspěvků. Zkuste to později."),
             ],
             serverTextFor: [400],
         )
@@ -68,7 +68,7 @@ extension EuroklicAPI {
             payload["note"] = note
         }
         guard let body = try? JSONSerialization.data(withJSONObject: payload) else {
-            return .failed("Hlášení se nepodařilo odeslat.")
+            return .failed(L("Hlášení se nepodařilo odeslat."))
         }
         var request = URLRequest(url: Self.baseURL.appendingPathComponent("api_report.php"))
         request.httpMethod = "POST"
@@ -79,15 +79,15 @@ extension EuroklicAPI {
         let outcome = await perform(request)
         return translate(
             outcome,
-            okMessage: "Díky, hlášení je odesláno. Prověří ho moderátor.",
-            fallback: "Hlášení se nepodařilo odeslat.",
+            okMessage: L("Díky, hlášení je odesláno. Prověří ho moderátor."),
+            fallback: L("Hlášení se nepodařilo odeslat."),
             byStatus: [
-                401: "Přihlášení vypršelo. Přihlaste se prosím znovu.",
-                403: "Přihlášení vypršelo. Přihlaste se prosím znovu.",
-                400: "Hlášení se nepodařilo odeslat (zkontrolujte vyplněná pole).",
-                404: "Tohle místo se nepodařilo najít.",
-                409: "Tohle už jste nahlásili — čeká to na vyřízení.",
-                429: "Za poslední hodinu jste toho nahlásili hodně. Zkuste to později.",
+                401: L("Přihlášení vypršelo. Přihlaste se prosím znovu."),
+                403: L("Přihlášení vypršelo. Přihlaste se prosím znovu."),
+                400: L("Hlášení se nepodařilo odeslat (zkontrolujte vyplněná pole)."),
+                404: L("Tohle místo se nepodařilo najít."),
+                409: L("Tohle už jste nahlásili — čeká to na vyřízení."),
+                429: L("Za poslední hodinu jste toho nahlásili hodně. Zkuste to později."),
             ],
             serverTextFor: [400],
         )
@@ -96,8 +96,8 @@ extension EuroklicAPI {
     // MARK: - Fotka k existujícímu místu
 
     func addPhoto(placeId: Int, jpeg: Data) async -> WriteResult {
-        guard !jpeg.isEmpty else { return .failed("Fotku se nepodařilo zpracovat.") }
-        guard jpeg.count <= Self.maxPhotoBytes else { return .failed("Fotka je příliš velká (max 8 MB).") }
+        guard !jpeg.isEmpty else { return .failed(L("Fotku se nepodařilo zpracovat.")) }
+        guard jpeg.count <= Self.maxPhotoBytes else { return .failed(L("Fotka je příliš velká (max 8 MB).")) }
 
         let boundary = "Boundary-\(UUID().uuidString)"
         var body = Data()
@@ -120,14 +120,14 @@ extension EuroklicAPI {
         let outcome = await perform(request)
         return translate(
             outcome,
-            okMessage: "Díky! Fotka čeká na schválení moderátorem.",
-            fallback: "Odeslání se nezdařilo.",
+            okMessage: L("Díky! Fotka čeká na schválení moderátorem."),
+            fallback: L("Odeslání se nezdařilo."),
             byStatus: [
-                401: "Přihlášení vypršelo. Přihlaste se prosím znovu.",
-                403: "Přihlášení vypršelo. Přihlaste se prosím znovu.",
-                404: "Tohle místo se nepodařilo najít.",
-                413: "Fotka je příliš velká (max 8 MB).",
-                429: "Za poslední hodinu jste přidali hodně fotek. Zkuste to za chvíli.",
+                401: L("Přihlášení vypršelo. Přihlaste se prosím znovu."),
+                403: L("Přihlášení vypršelo. Přihlaste se prosím znovu."),
+                404: L("Tohle místo se nepodařilo najít."),
+                413: L("Fotka je příliš velká (max 8 MB)."),
+                429: L("Za poslední hodinu jste přidali hodně fotek. Zkuste to za chvíli."),
             ],
         )
     }
@@ -140,10 +140,10 @@ extension EuroklicAPI {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-            if status == 401 || status == 403 { return .failed("Nemáte oprávnění.") }
+            if status == 401 || status == 403 { return .failed(L("Nemáte oprávnění.")) }
             guard status == 200 else { return .failed("Chyba serveru (\(status)).") }
             guard let list = try? JSONDecoder().decode(AdminListResponse.self, from: data) else {
-                return .failed("Odpověď serveru se nepodařilo zpracovat.")
+                return .failed(L("Odpověď serveru se nepodařilo zpracovat."))
             }
             if let error = list.error, !error.isEmpty { return .failed(error) }
             return .loaded(AdminQueue(
@@ -153,7 +153,7 @@ extension EuroklicAPI {
                 reports: list.location_reports ?? [],
             ))
         } catch {
-            return .failed("Bez připojení.")
+            return .failed(L("Bez připojení."))
         }
     }
 
@@ -171,16 +171,16 @@ extension EuroklicAPI {
         case 0:
             return .failed(Self.offlineMessage)
         case 200:
-            guard let reply = outcome.reply else { return .failed("Odpověď serveru se nepodařilo zpracovat.") }
+            guard let reply = outcome.reply else { return .failed(L("Odpověď serveru se nepodařilo zpracovat.")) }
             if reply.success == true {
                 return .ok(nonBlank(reply.message) ?? successMessage)
             }
-            return .failed(reply.text ?? "Akce se nezdařila.")
+            return .failed(reply.text ?? L("Akce se nezdařila."))
         case 404:
             // Frontu sdílí web i Discord: někdo jiný to už vyřídil → řádek zmizí.
-            return .gone(outcome.reply?.text ?? "Položku už vyřídil někdo jiný.")
+            return .gone(outcome.reply?.text ?? L("Položku už vyřídil někdo jiný."))
         case 401, 403:
-            return .failed(outcome.reply?.text ?? "Nemáte oprávnění.")
+            return .failed(outcome.reply?.text ?? L("Nemáte oprávnění."))
         default:
             return .failed(outcome.reply?.text ?? "Chyba serveru (\(outcome.status)).")
         }
@@ -222,7 +222,7 @@ extension EuroklicAPI {
             return .failed(Self.offlineMessage)
         case 200:
             // Chybějící cesta vrací HTML s 200 → reply == nil.
-            guard let reply = outcome.reply else { return .failed("Odpověď serveru se nepodařilo zpracovat.") }
+            guard let reply = outcome.reply else { return .failed(L("Odpověď serveru se nepodařilo zpracovat.")) }
             return reply.success == true ? .ok(okMessage) : .failed(reply.text ?? fallback)
         default:
             if serverTextFor.contains(outcome.status), let text = outcome.reply?.text { return .failed(text) }

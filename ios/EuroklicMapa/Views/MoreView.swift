@@ -104,9 +104,9 @@ struct AuthCard: View {
             avatar
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(auth.isLoggedIn ? (auth.username ?? "Přihlášen") : "Nepřihlášen")
+                Text(auth.isLoggedIn ? (auth.username ?? L("Přihlášen")) : L("Nepřihlášen"))
                     .font(.headline)
-                Text(auth.isLoggedIn ? "Můžete přidávat místa, fotky a komentáře." : "Přihlaste se pro přidávání míst, fotek a komentářů.")
+                Text(auth.isLoggedIn ? L("Můžete přidávat místa, fotky a komentáře.") : L("Přihlaste se pro přidávání míst, fotek a komentářů."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

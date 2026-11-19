@@ -44,7 +44,7 @@ extension MKMapView {
         // Mandatory Mapy.com attribution.
         let label = UILabel()
         label.tag = attributionTag
-        label.text = " © Seznam.cz a.s. a další"
+        label.text = L(" © Seznam.cz a.s. a další")
         label.font = .systemFont(ofSize: 10)
         label.textColor = .darkGray
         label.backgroundColor = .systemBackground.withAlphaComponent(0.7)

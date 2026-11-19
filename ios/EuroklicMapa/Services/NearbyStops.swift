@@ -21,9 +21,9 @@ struct Departure: Identifiable, Hashable {
     /// Czech label for the provider chip.
     var providerLabel: String {
         switch provider.uppercased() {
-        case "DUK": return "DÚK"
-        case "JDF": return "Linkové autobusy"
-        case "": return "Ostatní"
+        case "DUK": return L("DÚK")
+        case "JDF": return L("Linkové autobusy")
+        case "": return L("Ostatní")
         default: return provider
         }
     }

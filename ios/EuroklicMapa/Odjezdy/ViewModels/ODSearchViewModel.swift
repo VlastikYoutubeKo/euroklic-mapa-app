@@ -61,7 +61,7 @@ final class ODSearchViewModel: ObservableObject {
             stops = []
             vehicles = []
         } catch {
-            errorText = "Hledání se nepodařilo."
+            errorText = L("Hledání se nepodařilo.")
         }
         hasSearched = true
         isSearching = false

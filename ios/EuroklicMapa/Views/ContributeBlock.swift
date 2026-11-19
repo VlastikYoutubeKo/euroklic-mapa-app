@@ -23,11 +23,11 @@ struct ContributeBlock: View {
             Text("Přispějte").font(.title2.bold())
 
             VStack(spacing: 0) {
-                row("Přidat fotku", systemImage: "camera") { requireLogin { showPhotoSource = true } }
+                row(L("Přidat fotku"), systemImage: "camera") { requireLogin { showPhotoSource = true } }
                 Divider().padding(.leading, 14)
-                row("Přidat komentář", systemImage: "text.bubble") { requireLogin { showComposer = true } }
+                row(L("Přidat komentář"), systemImage: "text.bubble") { requireLogin { showComposer = true } }
                 Divider().padding(.leading, 14)
-                row("Nahlásit problém", systemImage: "exclamationmark.bubble") { requireLogin { showReport = true } }
+                row(L("Nahlásit problém"), systemImage: "exclamationmark.bubble") { requireLogin { showReport = true } }
             }
             .background(RoundedRectangle(cornerRadius: 20).fill(Color(.secondarySystemBackground)))
             .disabled(uploading)
@@ -114,7 +114,7 @@ struct ContributeBlock: View {
     private func sendLibrary(_ item: PhotosPickerItem) async {
         defer { libraryItem = nil }
         guard let data = try? await item.loadTransferable(type: Data.self) else {
-            show("Fotku se nepodařilo načíst.")
+            show(L("Fotku se nepodařilo načíst."))
             return
         }
         let jpeg = await Task.detached(priority: .userInitiated) {
@@ -132,7 +132,7 @@ struct ContributeBlock: View {
 
     private func upload(_ jpeg: Data?) async {
         guard let jpeg else {
-            show("Fotku se nepodařilo zpracovat.")
+            show(L("Fotku se nepodařilo zpracovat."))
             return
         }
         uploading = true
@@ -165,8 +165,8 @@ struct CommentComposer: View {
     }
 
     private var validationHint: String? {
-        if trimmed.count > Self.maxLength { return "Komentář je příliš dlouhý (max \(Self.maxLength) znaků)." }
-        if linkCount > 1 { return "Komentář může obsahovat nejvýš jeden odkaz." }
+        if trimmed.count > Self.maxLength { return L("Komentář je příliš dlouhý (max \(Self.maxLength) znaků).") }
+        if linkCount > 1 { return L("Komentář může obsahovat nejvýš jeden odkaz.") }
         return nil
     }
 

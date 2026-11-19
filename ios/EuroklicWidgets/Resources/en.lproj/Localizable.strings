@@ -1,0 +1,27 @@
+/* English strings for widgets */
+"teď" = "now";
+"přes 1 den" = "over 1 day";
+"Nejbližší WC" = "Nearest toilet";
+"Hlavní nádraží" = "Main station";
+"Sídliště" = "Housing estate";
+"Náměstí" = "Square";
+"Nemocnice" = "Hospital";
+"Odjezdy poblíž" = "Departures nearby";
+"Nejbližší zastávka a její nejbližší odjezdy." = "The nearest stop and its next departures.";
+"Povolte polohu v appce" = "Allow location in the app";
+"V okolí není žádná zastávka" = "No stop nearby";
+"%@ · pěšky %@" = "%@ · %@ on foot";
+"Žádné další odjezdy" = "No more departures";
+"Žádná zastávka" = "No stop";
+"Odjezdy: povolte polohu" = "Departures: allow location";
+"Odjezdy: nic" = "Departures: none";
+"Nákupní centrum" = "Shopping center";
+"Městský park" = "City park";
+"Toaleta" = "Toilet";
+"Nejbližší toalety s Euroklíčem podle vaší polohy." = "The nearest Euroklíč toilets based on your location.";
+"pěšky %@" = "%@ on foot";
+"⚠ Nahlášeno jako nefunguje" = "⚠ Reported as not working";
+"V okolí 20 km nic nenalezeno" = "Nothing found within 20 km";
+"Nic v okolí" = "Nothing nearby";
+"WC: povolte polohu" = "Toilet: allow location";
+"WC: nic v okolí" = "Toilet: none nearby";

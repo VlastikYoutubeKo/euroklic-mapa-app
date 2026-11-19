@@ -99,7 +99,7 @@ struct AdminQueueView: View {
     private func placeRow(_ place: AdminPlace) -> some View {
         let key = "place-\(place.id)"
         return VStack(alignment: .leading, spacing: 8) {
-            Text(place.name ?? "Bez názvu").font(.headline)
+            Text(place.name ?? L("Bez názvu")).font(.headline)
             if let description = nonBlank(place.description) {
                 Text(description).font(.callout).foregroundStyle(.secondary)
             }
@@ -110,9 +110,9 @@ struct AdminQueueView: View {
             if let raw = nonBlank(place.photo_url), let url = URL(string: raw) { thumbnail(url) }
             actionButtons(
                 key: key,
-                approveTitle: "Schválit", rejectTitle: "Zamítnout",
-                approve: { review(key, "approve", "id", place.id, "Schváleno.") { queue?.places.removeAll { $0.id == place.id } } },
-                reject: { review(key, "reject", "id", place.id, "Zamítnuto.") { queue?.places.removeAll { $0.id == place.id } } },
+                approveTitle: L("Schválit"), rejectTitle: L("Zamítnout"),
+                approve: { review(key, "approve", "id", place.id, L("Schváleno.")) { queue?.places.removeAll { $0.id == place.id } } },
+                reject: { review(key, "reject", "id", place.id, L("Zamítnuto.")) { queue?.places.removeAll { $0.id == place.id } } },
             )
         }
         .padding(.vertical, 4)
@@ -121,14 +121,14 @@ struct AdminQueueView: View {
     private func photoRow(_ photo: PhotoSuggestion) -> some View {
         let key = "photo-\(photo.id)"
         return VStack(alignment: .leading, spacing: 8) {
-            Text(photo.location_name ?? "Místo #\(photo.location_id ?? 0)").font(.headline)
+            Text(photo.location_name ?? L("Místo #\(photo.location_id ?? 0)")).font(.headline)
             meta(author: photo.author_name, date: nil)
             if let raw = nonBlank(photo.photo_url), let url = URL(string: raw) { thumbnail(url) }
             actionButtons(
                 key: key,
-                approveTitle: "Schválit", rejectTitle: "Zamítnout",
-                approve: { review(key, "approve_photo", "photo_id", photo.id, "Fotka schválena.") { queue?.photos.removeAll { $0.id == photo.id } } },
-                reject: { review(key, "reject_photo", "photo_id", photo.id, "Fotka zamítnuta.") { queue?.photos.removeAll { $0.id == photo.id } } },
+                approveTitle: L("Schválit"), rejectTitle: L("Zamítnout"),
+                approve: { review(key, "approve_photo", "photo_id", photo.id, L("Fotka schválena.")) { queue?.photos.removeAll { $0.id == photo.id } } },
+                reject: { review(key, "reject_photo", "photo_id", photo.id, L("Fotka zamítnuta.")) { queue?.photos.removeAll { $0.id == photo.id } } },
             )
         }
         .padding(.vertical, 4)
@@ -137,14 +137,14 @@ struct AdminQueueView: View {
     private func commentRow(_ comment: CommentSuggestion) -> some View {
         let key = "comment-\(comment.id)"
         return VStack(alignment: .leading, spacing: 8) {
-            Text(comment.location_name ?? "Místo #\(comment.location_id ?? 0)").font(.headline)
+            Text(comment.location_name ?? L("Místo #\(comment.location_id ?? 0)")).font(.headline)
             Text(comment.text ?? "").font(.callout)
             meta(author: comment.displayAuthor, date: nil)
             actionButtons(
                 key: key,
-                approveTitle: "Schválit", rejectTitle: "Zamítnout",
-                approve: { review(key, "approve_comment", "comment_id", comment.id, "Komentář schválen.") { queue?.comments.removeAll { $0.id == comment.id } } },
-                reject: { review(key, "reject_comment", "comment_id", comment.id, "Komentář zamítnut.") { queue?.comments.removeAll { $0.id == comment.id } } },
+                approveTitle: L("Schválit"), rejectTitle: L("Zamítnout"),
+                approve: { review(key, "approve_comment", "comment_id", comment.id, L("Komentář schválen.")) { queue?.comments.removeAll { $0.id == comment.id } } },
+                reject: { review(key, "reject_comment", "comment_id", comment.id, L("Komentář zamítnut.")) { queue?.comments.removeAll { $0.id == comment.id } } },
             )
         }
         .padding(.vertical, 4)
@@ -153,7 +153,7 @@ struct AdminQueueView: View {
     private func reportRow(_ report: LocationReport) -> some View {
         let key = "report-\(report.id)"
         return VStack(alignment: .leading, spacing: 8) {
-            Text(report.location_name ?? "Místo #\(report.location_id)").font(.headline)
+            Text(report.location_name ?? L("Místo #\(report.location_id)")).font(.headline)
             Text(ReportReason.label(forWire: report.reason ?? "other"))
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.accent)
@@ -169,9 +169,9 @@ struct AdminQueueView: View {
             }
             actionButtons(
                 key: key,
-                approveTitle: "Vyřešeno", rejectTitle: "Zamítnout",
-                approve: { review(key, "resolve_report", "report_id", report.id, "Nahlášení označeno jako vyřešené.") { queue?.reports.removeAll { $0.id == report.id } } },
-                reject: { review(key, "dismiss_report", "report_id", report.id, "Nahlášení zamítnuto.") { queue?.reports.removeAll { $0.id == report.id } } },
+                approveTitle: L("Vyřešeno"), rejectTitle: L("Zamítnout"),
+                approve: { review(key, "resolve_report", "report_id", report.id, L("Nahlášení označeno jako vyřešené.")) { queue?.reports.removeAll { $0.id == report.id } } },
+                reject: { review(key, "dismiss_report", "report_id", report.id, L("Nahlášení zamítnuto.")) { queue?.reports.removeAll { $0.id == report.id } } },
             )
         }
         .padding(.vertical, 4)

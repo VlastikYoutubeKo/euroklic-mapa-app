@@ -11,15 +11,15 @@ enum ODAPIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .offline:
-            return "Jste offline. Zkontrolujte připojení k internetu."
+            return L("Jste offline. Zkontrolujte připojení k internetu.")
         case .rateLimited:
-            return "Server odjezdy.online je dočasně přetížený. Zkusíme to za chvilku."
+            return L("Server odjezdy.online je dočasně přetížený. Zkusíme to za chvilku.")
         case .server(let code):
-            return "Server odjezdy.online neodpovídá správně (kód \(code))."
+            return L("Server odjezdy.online neodpovídá správně (kód \(code)).")
         case .api(let message):
-            return message.isEmpty ? "Server vrátil chybu." : message
+            return message.isEmpty ? L("Server vrátil chybu.") : message
         case .badData:
-            return "Odpověď serveru se nepodařilo přečíst."
+            return L("Odpověď serveru se nepodařilo přečíst.")
         }
     }
 
@@ -40,9 +40,9 @@ private struct ODErrorEnvelope: Decodable {
         if let s = try? c.decode(String.self, forKey: .error) {
             errorText = s
         } else if let inner = try? c.decode(Inner.self, forKey: .error) {
-            errorText = inner.message ?? "Chyba"
+            errorText = inner.message ?? L("Chyba")
         } else if let ok = try? c.decode(Bool.self, forKey: .success), ok == false {
-            errorText = (try? c.decode(String.self, forKey: .message)) ?? "Chyba"
+            errorText = (try? c.decode(String.self, forKey: .message)) ?? L("Chyba")
         } else {
             errorText = nil
         }

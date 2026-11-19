@@ -29,9 +29,9 @@ struct ToiletEntry: TimelineEntry {
     static let sample = ToiletEntry(
         date: Date(),
         places: [
-            ToiletPlace(id: 1, name: "Hlavní nádraží", distanceM: 240, reported: false),
-            ToiletPlace(id: 2, name: "Nákupní centrum", distanceM: 610, reported: false),
-            ToiletPlace(id: 3, name: "Městský park", distanceM: 1180, reported: false),
+            ToiletPlace(id: 1, name: L("Hlavní nádraží"), distanceM: 240, reported: false),
+            ToiletPlace(id: 2, name: L("Nákupní centrum"), distanceM: 610, reported: false),
+            ToiletPlace(id: 3, name: L("Městský park"), distanceM: 1180, reported: false),
         ],
         needsLocation: false,
         offline: false
@@ -111,7 +111,7 @@ enum ToiletFetcher {
             places.append(
                 ToiletPlace(
                     id: id,
-                    name: rawName.isEmpty ? "Toaleta" : rawName,
+                    name: rawName.isEmpty ? L("Toaleta") : rawName,
                     distanceM: straightLineMeters(lat, lon, coords[1], coords[0]),
                     reported: dislikes > 0 && dislikes > likes
                 )
@@ -218,7 +218,7 @@ struct ToiletWidgetView: View {
     }
 
     private var statusLine: String? {
-        if entry.needsLocation { return "Povolte polohu v appce" }
+        if entry.needsLocation { return L("Povolte polohu v appce") }
         if entry.offline { return "Offline" }
         return nil
     }
@@ -278,7 +278,7 @@ struct ToiletWidgetView: View {
                 if entry.needsLocation, let s = statusLine { hint(s) }
             } else {
                 Spacer(minLength: 0)
-                Text(entry.needsLocation ? "Povolte polohu v appce" : "V okolí 20 km nic nenalezeno")
+                Text(entry.needsLocation ? L("Povolte polohu v appce") : L("V okolí 20 km nic nenalezeno"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(entry.needsLocation ? WidgetColors.warning : Color.primary)
                 Spacer(minLength: 0)
@@ -292,7 +292,7 @@ struct ToiletWidgetView: View {
             header
             if entry.places.isEmpty {
                 Spacer(minLength: 0)
-                Text(entry.needsLocation ? "Povolte polohu v appce" : "V okolí 20 km nic nenalezeno")
+                Text(entry.needsLocation ? L("Povolte polohu v appce") : L("V okolí 20 km nic nenalezeno"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(entry.needsLocation ? WidgetColors.warning : Color.primary)
                 Spacer(minLength: 0)
@@ -337,7 +337,7 @@ struct ToiletWidgetView: View {
                 }
             } else {
                 Text("Nejbližší WC").font(.headline).widgetAccentable()
-                Text(entry.needsLocation ? "Povolte polohu v appce" : "Nic v okolí")
+                Text(entry.needsLocation ? L("Povolte polohu v appce") : L("Nic v okolí"))
                     .font(.caption)
             }
         }
@@ -349,7 +349,7 @@ struct ToiletWidgetView: View {
             if let first = entry.places.first {
                 Text("WC \(widgetDistance(first.distanceM)) · \(first.name)")
             } else {
-                Text(entry.needsLocation ? "WC: povolte polohu" : "WC: nic v okolí")
+                Text(entry.needsLocation ? L("WC: povolte polohu") : L("WC: nic v okolí"))
             }
         }
     }

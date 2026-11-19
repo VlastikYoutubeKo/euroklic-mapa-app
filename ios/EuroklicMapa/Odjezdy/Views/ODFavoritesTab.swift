@@ -15,8 +15,8 @@ struct ODFavoritesTab: View {
                     ScrollView {
                         ODEmptyState(
                             symbol: "star",
-                            title: "Zatím žádné oblíbené zastávky",
-                            message: "Otevřete zastávku a klepněte na hvězdičku. Najdete ji pak tady a odjezdy budou na jedno klepnutí."
+                            title: L("Zatím žádné oblíbené zastávky"),
+                            message: L("Otevřete zastávku a klepněte na hvězdičku. Najdete ji pak tady a odjezdy budou na jedno klepnutí.")
                         )
                         .padding(.top, 40)
                     }

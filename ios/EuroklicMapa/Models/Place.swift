@@ -37,16 +37,16 @@ struct PlaceItem: Identifiable, Hashable, Codable {
     var isOfficialSource: Bool { source?.lowercased() == "cd" }
 
     var sourceLabel: String {
-        if isPickup { return "Výdejní místo klíče" }
-        return isOfficialSource ? "Oficiální zdroj" : "Komunitní zdroj"
+        if isPickup { return L("Výdejní místo klíče") }
+        return isOfficialSource ? L("Oficiální zdroj") : L("Komunitní zdroj")
     }
 
     var countryLabel: String? {
         guard let country, !country.isEmpty else { return nil }
         switch country.uppercased() {
-        case "CZ": return "Česko"
-        case "SK": return "Slovensko"
-        default: return "Zahraničí (\(country.uppercased()))"
+        case "CZ": return L("Česko")
+        case "SK": return L("Slovensko")
+        default: return L("Zahraničí (\(country.uppercased()))")
         }
     }
 
@@ -118,9 +118,9 @@ func voteBadge(likes: Int, dislikes: Int, isCd: Bool) -> VoteBadge {
 extension VoteBadge {
     func label(likes: Int, dislikes: Int) -> String {
         switch self {
-        case .reported: return "Nahlášeno nefunguje (\(dislikes)👎)"
-        case .verified: return "Ověřeno · \(likes)👍"
-        case .cdNoVotes: return "Zatím bez hlasů"
+        case .reported: return L("Nahlášeno nefunguje (\(dislikes)👎)")
+        case .verified: return L("Ověřeno · \(likes)👍")
+        case .cdNoVotes: return L("Zatím bez hlasů")
         case .none: return ""
         }
     }

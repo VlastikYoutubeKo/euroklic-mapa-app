@@ -1,0 +1,2 @@
+/* Czech permission prompts */
+"NSLocationWhenInUseUsageDescription" = "Widget použije vaši polohu k zobrazení nejbližší toalety a zastávky a jejích odjezdů. Poloha se nikam neukládá, jen se pošle službě pro vyhledání míst v okolí.";

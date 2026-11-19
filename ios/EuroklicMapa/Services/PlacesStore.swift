@@ -64,7 +64,7 @@ final class PlacesStore: ObservableObject {
                 return PlaceItem(
                     id: p.id,
                     isPickup: false,
-                    name: (p.name?.isEmpty == false) ? p.name! : "Bezbariérové WC",
+                    name: (p.name?.isEmpty == false) ? p.name! : L("Bezbariérové WC"),
                     subtitle: nil,
                     latitude: lat,
                     longitude: lon,
@@ -87,7 +87,7 @@ final class PlacesStore: ObservableObject {
                 )
             }
         } catch {
-            lastError = (error as? LocalizedError)?.errorDescription ?? "Refresh se nepodařil."
+            lastError = (error as? LocalizedError)?.errorDescription ?? L("Refresh se nepodařil.")
             return []
         }
     }
@@ -107,7 +107,7 @@ final class PlacesStore: ObservableObject {
                 return PlaceItem(
                     id: p.id,
                     isPickup: true,
-                    name: (p.org_name?.isEmpty == false) ? p.org_name! : "Výdejní místo Euroklíče",
+                    name: (p.org_name?.isEmpty == false) ? p.org_name! : L("Výdejní místo Euroklíče"),
                     subtitle: subtitle.isEmpty ? p.address : subtitle,
                     latitude: lat,
                     longitude: lon,
@@ -130,7 +130,7 @@ final class PlacesStore: ObservableObject {
                 )
             }
         } catch {
-            lastError = (error as? LocalizedError)?.errorDescription ?? "Refresh se nepodařil."
+            lastError = (error as? LocalizedError)?.errorDescription ?? L("Refresh se nepodařil.")
             return []
         }
     }
@@ -157,9 +157,9 @@ final class PlacesStore: ObservableObject {
         var id: String { rawValue }
         var label: String {
             switch self {
-            case .all: return "Vše"
-            case .toilet: return "Toalety"
-            case .pickup: return "Výdejní místa"
+            case .all: return L("Vše")
+            case .toilet: return L("Toalety")
+            case .pickup: return L("Výdejní místa")
             }
         }
     }

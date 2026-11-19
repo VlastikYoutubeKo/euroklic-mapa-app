@@ -59,7 +59,7 @@ struct PlacesListView: View {
 
     private var placesHeader: String {
         let count = places.flattened(category: category, userLocation: location.lastLocation).count
-        return placesCount(count) + (location.lastLocation != nil ? " v okolí" : "")
+        return placesCount(count) + (location.lastLocation != nil ? L(" v okolí") : "")
     }
 }
 

@@ -1,0 +1,5 @@
+/* Permission prompts */
+"NSLocationWhenInUseUsageDescription" = "We use your location only to sort places by distance and to center the map on you. It is never sent anywhere outside the app.";
+"NSPhotoLibraryAddUsageDescription" = "Your device's photo will be attached to the new place you submit for approval.";
+"NSCameraUsageDescription" = "The camera is used to take a photo of the place you are suggesting.";
+"NSPhotoLibraryUsageDescription" = "The photo you choose is sent with the place as a suggestion for the moderator.";

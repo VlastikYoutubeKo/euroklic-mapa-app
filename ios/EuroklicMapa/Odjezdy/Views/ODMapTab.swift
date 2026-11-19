@@ -130,12 +130,12 @@ struct ODMapTab: View {
             switch vm.notice {
             case .offline:
                 if let t = vm.lastFetch {
-                    ODBanner(symbol: "wifi.slash", text: "Jste offline. Vozidla ukazují stav z \(ODTime.hm(t)).", tone: .warning)
+                    ODBanner(symbol: "wifi.slash", text: L("Jste offline. Vozidla ukazují stav z \(ODTime.hm(t))."), tone: .warning)
                 } else {
-                    ODBanner(symbol: "wifi.slash", text: "Jste offline. Vozidla se nepodařilo načíst.", tone: .warning)
+                    ODBanner(symbol: "wifi.slash", text: L("Jste offline. Vozidla se nepodařilo načíst."), tone: .warning)
                 }
             case .rateLimited:
-                ODBanner(symbol: "hourglass", text: "Server odjezdy.online je dočasně přetížený. Vozidla se obnoví za chvilku.", tone: .warning)
+                ODBanner(symbol: "hourglass", text: L("Server odjezdy.online je dočasně přetížený. Vozidla se obnoví za chvilku."), tone: .warning)
             case .error(let message):
                 ODBanner(symbol: "exclamationmark.triangle", text: message, tone: .warning)
             case nil:
@@ -143,9 +143,9 @@ struct ODMapTab: View {
             }
 
             if vm.tooFar && vm.enabled.contains(where: { $0.isVehicleFilter }) {
-                ODBanner(symbol: "plus.magnifyingglass", text: "Přibližte mapu, aby se zobrazila vozidla.")
+                ODBanner(symbol: "plus.magnifyingglass", text: L("Přibližte mapu, aby se zobrazila vozidla."))
             } else if vm.truncated {
-                ODBanner(symbol: "info.circle", text: "Zobrazeno \(ODMapViewModel.maxMarkers) nejbližších vozidel. Přibližte mapu pro další.")
+                ODBanner(symbol: "info.circle", text: L("Zobrazeno \(ODMapViewModel.maxMarkers) nejbližších vozidel. Přibližte mapu pro další."))
             }
 
             if vm.lastFetch == nil, vm.notice == nil, vm.enabled.contains(where: { $0.isVehicleFilter }) {

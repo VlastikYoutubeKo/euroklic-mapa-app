@@ -15,17 +15,17 @@ struct ODMoreTab: View {
                     NavigationLink {
                         ODAlertsView()
                     } label: {
-                        rowLabel("Aktuality", symbol: "exclamationmark.triangle", detail: "Výluky a mimořádnosti")
+                        rowLabel(L("Aktuality"), symbol: "exclamationmark.triangle", detail: L("Výluky a mimořádnosti"))
                     }
                     NavigationLink {
                         ODPalettePickerView()
                     } label: {
-                        rowLabel("Barevné schéma", symbol: "paintpalette", detail: "Vzhled režimu Odjezdy")
+                        rowLabel(L("Barevné schéma"), symbol: "paintpalette", detail: L("Vzhled režimu Odjezdy"))
                     }
                     NavigationLink {
                         ODAboutView()
                     } label: {
-                        rowLabel("O aplikaci", symbol: "info.circle", detail: "Zdroje dat a soukromí")
+                        rowLabel(L("O aplikaci"), symbol: "info.circle", detail: L("Zdroje dat a soukromí"))
                     }
                 }
                 .listRowBackground(c.surface)
@@ -34,7 +34,7 @@ struct ODMoreTab: View {
                     Button {
                         if let url = URL(string: "https://app.odjezdy.online") { openURL(url) }
                     } label: {
-                        rowLabel("Web Odjezdy Online", symbol: "safari", detail: "app.odjezdy.online")
+                        rowLabel(L("Web Odjezdy Online"), symbol: "safari", detail: "app.odjezdy.online")
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("Otevře web v prohlížeči")
@@ -144,20 +144,20 @@ struct ODAboutView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 block(
-                    "Co to je",
-                    "Režim Odjezdy ukazuje živou polohu autobusů, vlaků, tramvají a dalších vozidel a odjezdy ze zastávek v Česku. Funguje podobně jako web app.odjezdy.online."
+                    L("Co to je"),
+                    L("Režim Odjezdy ukazuje živou polohu autobusů, vlaků, tramvají a dalších vozidel a odjezdy ze zastávek v Česku. Funguje podobně jako web app.odjezdy.online.")
                 )
                 block(
-                    "Odkud jsou data",
-                    "Data poskytuje odjezdy.online ze zdrojů jednotlivých dopravců a integrovaných systémů (například PID, DÚK, České dráhy a Správa železnic). Poloha a zpoždění vozidel se obnovují po desítkách sekund a mohou být nepřesné. Pro rozhodující spoje se spoléhejte i na informace na zastávce."
+                    L("Odkud jsou data"),
+                    L("Data poskytuje odjezdy.online ze zdrojů jednotlivých dopravců a integrovaných systémů (například PID, DÚK, České dráhy a Správa železnic). Poloha a zpoždění vozidel se obnovují po desítkách sekund a mohou být nepřesné. Pro rozhodující spoje se spoléhejte i na informace na zastávce.")
                 )
                 block(
-                    "Soukromí",
-                    "Poloha zůstává v telefonu. Při zobrazení zastávek v okolí se na server odjezdy.online posílá jen přibližný čtverec kolem vás. Oblíbené zastávky se ukládají pouze lokálně a nepřihlašujete se nikam."
+                    L("Soukromí"),
+                    L("Poloha zůstává v telefonu. Při zobrazení zastávek v okolí se na server odjezdy.online posílá jen přibližný čtverec kolem vás. Oblíbené zastávky se ukládají pouze lokálně a nepřihlašujete se nikam.")
                 )
                 block(
-                    "Mapové podklady",
-                    "Mapa používá podklad Mapy.com (© Seznam.cz a.s. a další) nebo Apple Maps, podle nastavení v aplikaci."
+                    L("Mapové podklady"),
+                    L("Mapa používá podklad Mapy.com (© Seznam.cz a.s. a další) nebo Apple Maps, podle nastavení v aplikaci.")
                 )
                 if !version.isEmpty {
                     Text("Verze aplikace \(version)")
@@ -214,7 +214,7 @@ final class ODAlertsViewModel: ObservableObject {
         } catch let error as ODAPIError {
             errorText = error.errorDescription
         } catch {
-            errorText = "Aktuality se nepodařilo načíst."
+            errorText = L("Aktuality se nepodařilo načíst.")
         }
         isLoading = false
     }
@@ -268,7 +268,7 @@ struct ODAlertsView: View {
                 if vm.providers.count >= 2 {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 2) {
-                            ODChip(title: "Vše", isOn: vm.provider == nil) { vm.provider = nil }
+                            ODChip(title: L("Vše"), isOn: vm.provider == nil) { vm.provider = nil }
                             ForEach(vm.providers, id: \.self) { p in
                                 ODChip(title: ODProvider.label(p), isOn: vm.provider == p) { vm.provider = p }
                             }
@@ -293,8 +293,8 @@ struct ODAlertsView: View {
             } else if vm.filtered.isEmpty && vm.errorText == nil {
                 ODEmptyState(
                     symbol: "checkmark.circle",
-                    title: "Žádné aktuality",
-                    message: "Podle zvolených filtrů teď nic nehlásíme."
+                    title: L("Žádné aktuality"),
+                    message: L("Podle zvolených filtrů teď nic nehlásíme.")
                 )
                 .listRowBackground(Color.clear)
             } else {
@@ -382,13 +382,13 @@ struct ODAlertDetailView: View {
                 }
 
                 if !alert.lines.isEmpty {
-                    sectionTitle("Linky")
+                    sectionTitle(L("Linky"))
                     Text(alert.lines.joined(separator: ", "))
                         .font(.body)
                         .foregroundStyle(c.text)
                 }
                 if !alert.stops.isEmpty {
-                    sectionTitle("Zastávky")
+                    sectionTitle(L("Zastávky"))
                     Text(alert.stops.prefix(40).joined(separator: ", "))
                         .font(.body)
                         .foregroundStyle(c.text)

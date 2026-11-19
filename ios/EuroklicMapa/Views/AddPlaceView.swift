@@ -41,7 +41,7 @@ struct AddPlaceView: View {
 
                 Section("Fotka (nepovinné)") {
                     PhotosPicker(selection: $photoItem, matching: .images) {
-                        Label(photoJPEG == nil ? "Vybrat fotku" : "Fotka vybrána ✓", systemImage: "camera")
+                        Label(photoJPEG == nil ? L("Vybrat fotku") : L("Fotka vybrána ✓"), systemImage: "camera")
                     }
                     if photoJPEG != nil {
                         Button("Odebrat fotku", role: .destructive) {
@@ -111,13 +111,13 @@ struct AddPlaceView: View {
                     photoJPEG: photoJPEG,
                 )
                 if result.success {
-                    resultMessage = "Místo odesláno ke schválení. Po schválení se objeví na mapě všem."
+                    resultMessage = L("Místo odesláno ke schválení. Po schválení se objeví na mapě všem.")
                     name = ""; desc = ""; coordinate = nil; photoJPEG = nil; photoItem = nil
                 } else {
-                    resultMessage = result.message ?? result.error ?? "Server odeslání odmítl."
+                    resultMessage = result.message ?? result.error ?? L("Server odeslání odmítl.")
                 }
             } catch {
-                resultMessage = (error as? LocalizedError)?.errorDescription ?? "Odeslání se nepodařilo."
+                resultMessage = (error as? LocalizedError)?.errorDescription ?? L("Odeslání se nepodařilo.")
             }
         }
     }

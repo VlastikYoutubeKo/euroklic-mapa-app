@@ -9,36 +9,36 @@ struct ODDepartureRow: View {
 
     private var subtitle: String {
         var parts: [String] = []
-        if departure.terminatesHere { parts.append("konečná") }
-        if let p = departure.platform, !p.isEmpty { parts.append("nást. \(p)") }
+        if departure.terminatesHere { parts.append(L("konečná")) }
+        if let p = departure.platform, !p.isEmpty { parts.append(L("nást. \(p)")) }
         parts.append(departure.systemLabel)
         if let op = departure.operatorName, !op.isEmpty, op != departure.provider { parts.append(op) }
         if abs(departure.realTime.timeIntervalSince(departure.planned)) >= 60 {
-            parts.append("dle JŘ \(ODTime.hm(departure.planned))")
+            parts.append(L("dle JŘ \(ODTime.hm(departure.planned))"))
         }
         return parts.joined(separator: " · ")
     }
 
     private var spokenLabel: String {
         let d = departure
-        var s = "Linka \(d.line.isEmpty ? "bez čísla" : d.line)"
-        if !d.destination.isEmpty { s += ", směr \(d.destination)" }
+        var s = L("Linka \(d.line.isEmpty ? L("bez čísla") : d.line)")
+        if !d.destination.isEmpty { s += L(", směr \(d.destination)") }
         if d.cancelled {
-            s += ", zrušeno"
+            s += L(", zrušeno")
         } else {
             let mins = ODTime.minutesUntil(d.realTime, now: now)
             if mins <= 0 {
-                s += ", odjíždí právě teď"
+                s += L(", odjíždí právě teď")
             } else if mins < 60 {
                 s += ", odjede za \(mins) minut v \(ODTime.hm(d.realTime))"
             } else {
                 s += ", odjede v \(ODTime.hm(d.realTime))"
             }
             if let m = d.delayMinutes {
-                s += m > 0 ? ", zpoždění \(m) minut" : ", včas"
+                s += m > 0 ? L(", zpoždění \(m) minut") : L(", včas")
             }
         }
-        if let p = d.platform, !p.isEmpty { s += ", nástupiště \(p)" }
+        if let p = d.platform, !p.isEmpty { s += L(", nástupiště \(p)") }
         return s
     }
 
@@ -49,7 +49,7 @@ struct ODDepartureRow: View {
             HStack(alignment: .top, spacing: 12) {
                 ODLineBadge(line: d.line, cls: d.lineClass)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(d.destination.isEmpty ? "Směr neuveden" : d.destination)
+                    Text(d.destination.isEmpty ? L("Směr neuveden") : d.destination)
                         .font(.body.weight(.semibold))
                         .strikethrough(d.cancelled)
                         .foregroundStyle(c.text)
@@ -99,7 +99,7 @@ struct ODDepartureRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spokenLabel)
-        .accessibilityHint(isExpanded ? "Skryje podrobnosti" : "Zobrazí podrobnosti")
+        .accessibilityHint(isExpanded ? L("Skryje podrobnosti") : L("Zobrazí podrobnosti"))
         .accessibilityAddTraits(.isButton)
     }
 
@@ -174,7 +174,7 @@ struct ODStopSheet: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(isFavorite ? "Odebrat z oblíbených" : "Přidat do oblíbených")
+        .accessibilityLabel(isFavorite ? L("Odebrat z oblíbených") : L("Přidat do oblíbených"))
     }
 
     private var closeButton: some View {
@@ -233,7 +233,7 @@ struct ODStopSheet: View {
     private var chips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 2) {
-                ODChip(title: "Vše", isOn: vm.systemFilter == nil) { vm.systemFilter = nil }
+                ODChip(title: L("Vše"), isOn: vm.systemFilter == nil) { vm.systemFilter = nil }
                 ForEach(vm.systems, id: \.self) { s in
                     ODChip(title: s, isOn: vm.systemFilter == s) { vm.systemFilter = s }
                 }
@@ -250,7 +250,7 @@ struct ODStopSheet: View {
                 if let err = vm.errorText {
                     ODBanner(
                         symbol: "wifi.exclamationmark",
-                        text: vm.departures.isEmpty ? err : err + " Zobrazeny jsou poslední načtené odjezdy.",
+                        text: vm.departures.isEmpty ? err : err + L(" Zobrazeny jsou poslední načtené odjezdy."),
                         tone: .warning
                     )
                     .padding(12)
@@ -264,8 +264,8 @@ struct ODStopSheet: View {
                     if vm.errorText == nil {
                         ODEmptyState(
                             symbol: "clock.badge.questionmark",
-                            title: "Žádné odjezdy",
-                            message: "V nejbližších hodinách odsud nic nejede, nebo o spojích nemáme data."
+                            title: L("Žádné odjezdy"),
+                            message: L("V nejbližších hodinách odsud nic nejede, nebo o spojích nemáme data.")
                         )
                     }
                 } else {

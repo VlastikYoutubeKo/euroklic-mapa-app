@@ -18,7 +18,7 @@ struct ODLineBadge: View {
             .background(c.lineColor(for: cls), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
             .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(line.isEmpty ? "Bez linky" : "Linka \(line)")
+            .accessibilityLabel(line.isEmpty ? L("Bez linky") : "Linka \(line)")
     }
 }
 
@@ -205,7 +205,7 @@ extension ODDeparture {
     func whenText(now: Date) -> (big: String, small: String?) {
         let t = realTime
         let mins = ODTime.minutesUntil(t, now: now)
-        if mins <= 0 { return ("teď", nil) }
+        if mins <= 0 { return (L("teď"), nil) }
         if mins < 60 { return ("\(mins)", "min") }
         return (ODTime.hm(t), nil)
     }

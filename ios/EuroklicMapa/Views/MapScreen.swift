@@ -199,7 +199,7 @@ struct MapScreen: View {
         location.requestAndRefresh()
         Task {
             if location.authorizationDenied {
-                nearestMessage = "Poloha není známá. Povolte polohu v Nastavení a zkuste to znovu."
+                nearestMessage = L("Poloha není známá. Povolte polohu v Nastavení a zkuste to znovu.")
                 return
             }
             // Wait briefly for a fresh fix when we don't have one yet.
@@ -210,7 +210,7 @@ struct MapScreen: View {
             await places.refreshAll(near: location.nearParameter)
             refreshing = false
             guard let loc = location.lastLocation, let nearest = places.nearest(to: loc, category: category) else {
-                nearestMessage = "Zatím nejsou stažená žádná místa."
+                nearestMessage = L("Zatím nejsou stažená žádná místa.")
                 return
             }
             selected = nearest

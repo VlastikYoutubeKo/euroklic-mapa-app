@@ -10,8 +10,8 @@ struct ChangelogEntry: Identifiable, Hashable {
     var id: String { version }
 
     var title: String {
-        if let date, !date.isEmpty { return "Verze \(version) · \(date)" }
-        return "Verze \(version)"
+        if let date, !date.isEmpty { return L("Verze \(version) · \(date)") }
+        return L("Verze \(version)")
     }
 }
 
@@ -50,7 +50,10 @@ enum Changelog {
     }
 
     static func load() -> [ChangelogEntry] {
-        guard let url = Bundle.main.url(forResource: "CHANGELOG", withExtension: "md"),
+        // Czech phones get CHANGELOG.cs.md, everyone else the English CHANGELOG.md.
+        let url = (appIsCzech ? Bundle.main.url(forResource: "CHANGELOG.cs", withExtension: "md") : nil)
+            ?? Bundle.main.url(forResource: "CHANGELOG", withExtension: "md")
+        guard let url,
               let text = try? String(contentsOf: url, encoding: .utf8)
         else { return [] }
         return parse(text)

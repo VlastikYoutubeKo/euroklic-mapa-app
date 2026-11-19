@@ -13,12 +13,12 @@ enum ReportReason: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .notFound: return "Místo už neexistuje"
-        case .keyBroken: return "Euroklíč nefunguje"
-        case .wrongLocation: return "Špatná poloha"
-        case .wrongInfo: return "Špatné informace"
-        case .badPhoto: return "Nevhodná fotografie"
-        case .other: return "Jiné"
+        case .notFound: return L("Místo už neexistuje")
+        case .keyBroken: return L("Euroklíč nefunguje")
+        case .wrongLocation: return L("Špatná poloha")
+        case .wrongInfo: return L("Špatné informace")
+        case .badPhoto: return L("Nevhodná fotografie")
+        case .other: return L("Jiné")
         }
     }
 

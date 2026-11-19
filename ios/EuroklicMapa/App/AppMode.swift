@@ -11,8 +11,8 @@ enum AppMode: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .euroklic: return "Euroklíč"
-        case .odjezdy: return "Odjezdy"
+        case .euroklic: return L("Euroklíč")
+        case .odjezdy: return L("Odjezdy")
         }
     }
 }

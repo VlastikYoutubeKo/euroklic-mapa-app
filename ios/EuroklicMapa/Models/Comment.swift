@@ -8,7 +8,7 @@ struct WcComment: Decodable, Identifiable {
     let created_at: String?
 
     var id: String { (author ?? "") + "|" + text }
-    var authorName: String { (author?.isEmpty == false) ? author! : "Anonym" }
+    var authorName: String { (author?.isEmpty == false) ? author! : L("Anonym") }
 
     /// `"2026-08-28 04:31:45"` → `"28. 8. 2026"` — the same date-only display as the web.
     var dayLabel: String? {

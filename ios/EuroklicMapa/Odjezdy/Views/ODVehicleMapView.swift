@@ -323,8 +323,8 @@ struct ODVehicleMapView: UIViewRepresentable {
             view.alpha = (stale && !isSelected) ? 0.6 : 1
             view.displayPriority = isSelected ? .required : .defaultHigh
             view.accessibilityLabel = v.accessibilityText
-            view.accessibilityValue = isSelected ? "vybráno" : nil
-            view.accessibilityHint = "Zobrazí kartu vozidla"
+            view.accessibilityValue = isSelected ? L("vybráno") : nil
+            view.accessibilityHint = L("Zobrazí kartu vozidla")
             view.zPriority = isSelected ? MKAnnotationViewZPriority.max : MKAnnotationViewZPriority.defaultUnselected
         }
 
@@ -357,8 +357,8 @@ struct ODVehicleMapView: UIViewRepresentable {
             }
             view.image = image
             if let ann = view.annotation as? ODStopAnnotation {
-                view.accessibilityLabel = "Zastávka \(ann.stop.name)"
-                view.accessibilityHint = "Zobrazí odjezdy"
+                view.accessibilityLabel = L("Zastávka \(ann.stop.name)")
+                view.accessibilityHint = L("Zobrazí odjezdy")
             }
         }
 
@@ -474,8 +474,8 @@ struct ODVehicleMapView: UIViewRepresentable {
                 view.titleVisibility = .hidden
                 view.subtitleVisibility = .hidden
                 view.displayPriority = .defaultLow
-                view.accessibilityLabel = "\(cluster.memberAnnotations.count) zastávek"
-                view.accessibilityHint = "Přiblíží mapu"
+                view.accessibilityLabel = L("\(cluster.memberAnnotations.count) zastávek")
+                view.accessibilityHint = L("Přiblíží mapu")
                 return view
             }
 

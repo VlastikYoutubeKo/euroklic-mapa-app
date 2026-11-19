@@ -39,7 +39,7 @@ final class ODStopBoardViewModel: ObservableObject {
         } catch let error as ODAPIError {
             errorText = error.errorDescription
         } catch {
-            errorText = "Odjezdy se nepodařilo načíst."
+            errorText = L("Odjezdy se nepodařilo načíst.")
         }
         isLoading = false
     }

@@ -12,9 +12,9 @@ enum APIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .serverMessage(let msg): return msg
-        case .http(let code): return "Server vrátil chybu (\(code))."
-        case .decoding: return "Server odpověděl neočekávaně. Zkuste to znovu."
-        case .network: return "Nepodařilo se spojit se serverem. Zkontrolujte připojení."
+        case .http(let code): return L("Server vrátil chybu (\(code)).")
+        case .decoding: return L("Server odpověděl neočekávaně. Zkuste to znovu.")
+        case .network: return L("Nepodařilo se spojit se serverem. Zkontrolujte připojení.")
         }
     }
 }

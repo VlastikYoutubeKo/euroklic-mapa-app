@@ -62,7 +62,7 @@ func widgetBackground(for family: WidgetFamily) -> some View {
 func widgetDistance(_ meters: Double) -> String {
     let km = meters / 1000
     if meters < 1000 { return "\(Int(meters.rounded())) m" }
-    if km < 100 { return String(format: "%.1f km", km).replacingOccurrences(of: ".", with: ",") }
+    if km < 100 { return String(format: "%.1f km", km).replacingOccurrences(of: ".", with: appIsCzech ? "," : ".") }
     return "\(Int(km.rounded())) km"
 }
 
@@ -71,7 +71,7 @@ func widgetWalkingTime(_ meters: Double) -> String {
     let minutes = max(1, Int((meters / 1000 / 4.5 * 60).rounded()))
     if minutes < 90 { return "~\(minutes) min" }
     if minutes < 24 * 60 { return "~\(Int((Double(minutes) / 60).rounded())) h" }
-    return "přes 1 den"
+    return L("přes 1 den")
 }
 
 /// "HH:mm" v Europe/Prague bez ohledu na pásmo zařízení.

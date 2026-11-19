@@ -76,7 +76,7 @@ struct ODSearchTab: View {
                     stopRow(stop, distance: nil)
                 }
             } header: {
-                sectionHeader("Zastávky")
+                sectionHeader(L("Zastávky"))
             }
         }
         if !vm.vehicles.isEmpty {
@@ -85,14 +85,14 @@ struct ODSearchTab: View {
                     vehicleRow(v)
                 }
             } header: {
-                sectionHeader("Vozidla")
+                sectionHeader(L("Vozidla"))
             }
         }
         if vm.hasSearched && !vm.isSearching && vm.stops.isEmpty && vm.vehicles.isEmpty && vm.errorText == nil {
             ODEmptyState(
                 symbol: "magnifyingglass",
-                title: "Nic jsme nenašli",
-                message: "Zkuste jiný název zastávky, evidenční číslo nebo SPZ vozidla."
+                title: L("Nic jsme nenašli"),
+                message: L("Zkuste jiný název zastávky, evidenční číslo nebo SPZ vozidla.")
             )
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
@@ -107,13 +107,13 @@ struct ODSearchTab: View {
                     stopRow(n.stop, distance: n.distanceM)
                 }
             } header: {
-                sectionHeader("V okolí")
+                sectionHeader(L("V okolí"))
             }
         } else if location.isAuthorized {
             ODEmptyState(
                 symbol: "location.magnifyingglass",
-                title: "Hledejte zastávku",
-                message: "Začněte psát název zastávky, evidenční číslo nebo SPZ vozidla."
+                title: L("Hledejte zastávku"),
+                message: L("Začněte psát název zastávky, evidenční číslo nebo SPZ vozidla.")
             )
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
@@ -121,8 +121,8 @@ struct ODSearchTab: View {
             VStack(spacing: 12) {
                 ODEmptyState(
                     symbol: "magnifyingglass",
-                    title: "Hledejte zastávku",
-                    message: "Začněte psát název zastávky, evidenční číslo nebo SPZ vozidla. Zastávky v okolí ukážeme, když povolíte polohu."
+                    title: L("Hledejte zastávku"),
+                    message: L("Začněte psát název zastávky, evidenční číslo nebo SPZ vozidla. Zastávky v okolí ukážeme, když povolíte polohu.")
                 )
                 if !location.isDenied {
                     Button {
@@ -195,7 +195,7 @@ struct ODSearchTab: View {
     }
 
     private func stopLabel(_ stop: ODStop, distance: Int?) -> String {
-        var s = "Zastávka \(stop.name)"
+        var s = L("Zastávka \(stop.name)")
         if let distance { s += ", \(Self.formatDistance(distance))" }
         return s
     }
@@ -211,7 +211,7 @@ struct ODSearchTab: View {
                         .font(.body.weight(.semibold))
                         .foregroundStyle(c.text)
                         .multilineTextAlignment(.leading)
-                    let sub = [v.evc.map { "ev. č. \($0)" }, v.spz, Optional(ODProvider.label(v.provider))]
+                    let sub = [v.evc.map { L("ev. č. \($0)") }, v.spz, Optional(ODProvider.label(v.provider))]
                         .compactMap { $0 }
                         .filter { !$0.isEmpty }
                         .joined(separator: " · ")

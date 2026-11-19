@@ -55,7 +55,7 @@ struct DetailView: View {
         }
         .background(Color(.systemBackground))
         .safeAreaInset(edge: .bottom) { if !asSheet { bottomToolbar } }
-        .navigationTitle(asSheet ? "" : "Detail")
+        .navigationTitle(asSheet ? "" : L("Detail"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(asSheet ? .hidden : .visible, for: .navigationBar)
         .task {
@@ -104,7 +104,7 @@ struct DetailView: View {
 
     private func favoriteButton<Content: View>(@ViewBuilder label: () -> Content) -> some View {
         Button { favorites.toggle(place) } label: { label() }
-            .accessibilityLabel(favorites.isFavorite(place) ? "Odebrat z oblíbených" : "Přidat do oblíbených")
+            .accessibilityLabel(favorites.isFavorite(place) ? L("Odebrat z oblíbených") : L("Přidat do oblíbených"))
     }
 
     private func moreMenu<Content: View>(@ViewBuilder label: () -> Content) -> some View {
@@ -199,7 +199,7 @@ struct DetailView: View {
             if providers.count > 1 {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        providerChip("Vše", value: nil)
+                        providerChip(L("Vše"), value: nil)
                         ForEach(providers, id: \.self) { p in
                             providerChip(departures.first(where: { $0.provider == p })?.providerLabel ?? p, value: p)
                         }
@@ -391,7 +391,7 @@ struct DetailView: View {
     // MARK: - Data
 
     private var subtitle: String {
-        let kind = place.isPickup ? "Výdejní místo Euroklíče" : "Bezbariérové WC"
+        let kind = place.isPickup ? L("Výdejní místo Euroklíče") : L("Bezbariérové WC")
         return "\(kind) · \(place.sourceLabel)"
     }
 
@@ -406,23 +406,23 @@ struct DetailView: View {
 
     private var detailRows: [(String, String)] {
         var rows: [(String, String)] = []
-        if let hours = nonBlank(place.openingHours) { rows.append(("Otevírací doba", hours)) }
-        if place.access == "eurokey" { rows.append(("Otevírá se", "Euroklíčem")) }
+        if let hours = nonBlank(place.openingHours) { rows.append((L("Otevírací doba"), hours)) }
+        if place.access == "eurokey" { rows.append((L("Otevírá se"), L("Euroklíčem"))) }
         switch place.wheelchair {
-        case "yes": rows.append(("Budova bezbariérová", "Ano"))
-        case "no": rows.append(("Budova bezbariérová", "Ne"))
-        case "unknown": rows.append(("Budova bezbariérová", "Nevíme"))
+        case "yes": rows.append((L("Budova bezbariérová"), L("Ano")))
+        case "no": rows.append((L("Budova bezbariérová"), L("Ne")))
+        case "unknown": rows.append((L("Budova bezbariérová"), L("Nevíme")))
         default: break
         }
-        if let description = nonBlank(place.description) { rows.append(("Popis", prettifyDescription(description))) }
-        if let note = nonBlank(place.note) { rows.append(("Poznámka", note)) }
-        if let address = nonBlank(place.subtitle) { rows.append(("Oblast", address)) }
+        if let description = nonBlank(place.description) { rows.append((L("Popis"), prettifyDescription(description))) }
+        if let note = nonBlank(place.note) { rows.append((L("Poznámka"), note)) }
+        if let address = nonBlank(place.subtitle) { rows.append((L("Oblast"), address)) }
         if let userLocation = location.lastLocation {
             let d = userLocation.distance(from: CLLocation(latitude: place.latitude, longitude: place.longitude))
-            rows.append(("Vzdálenost", "\(formatDistance(d)) vzdušnou čarou"))
+            rows.append((L("Vzdálenost"), L("\(formatDistance(d)) vzdušnou čarou")))
         }
-        if !place.isPickup, let source = nonBlank(place.source) { rows.append(("Původní zdroj", originalSourceLabel(source))) }
-        if let verified = nonBlank(place.lastVerified) { rows.append(("Naposledy ověřeno", String(verified.prefix(10)))) }
+        if !place.isPickup, let source = nonBlank(place.source) { rows.append((L("Původní zdroj"), originalSourceLabel(source))) }
+        if let verified = nonBlank(place.lastVerified) { rows.append((L("Naposledy ověřeno"), String(verified.prefix(10)))) }
         return rows
     }
 
@@ -432,13 +432,13 @@ struct DetailView: View {
     }
 
     private var navigateLabel: String {
-        guard let d = walkingDistance else { return "Navigovat" }
+        guard let d = walkingDistance else { return L("Navigovat") }
         return "Navigovat · \(formatWalkingTime(d))"
     }
 
     private var navigateAccessibility: String {
-        guard let d = walkingDistance else { return "Navigovat k místu" }
-        return "Navigovat k místu, \(formatDistance(d)), \(formatWalkingTime(d)) pěšky"
+        guard let d = walkingDistance else { return L("Navigovat k místu") }
+        return L("Navigovat k místu, \(formatDistance(d)), \(formatWalkingTime(d)) pěšky")
     }
 
     private var webURL: URL? {
@@ -484,17 +484,17 @@ struct DetailView: View {
                 if response.success {
                     if let likes = response.likes { displayLikes = likes }
                     if let dislikes = response.dislikes { displayDislikes = dislikes }
-                    voteMessage = like ? "Díky, zaznamenáno jako funguje." : "Díky, zaznamenáno."
+                    voteMessage = like ? L("Díky, zaznamenáno jako funguje.") : L("Díky, zaznamenáno.")
                 } else if let message = [response.message, response.error].compactMap(\.self).first(where: { !$0.isEmpty }) {
                     // e.g. "Už jste takto hlasovali." — keep the highlight
                     voteMessage = message
                 } else {
                     myVote = previous
-                    voteMessage = "Hlas se teď nepodařilo odeslat. Zkuste to znovu."
+                    voteMessage = L("Hlas se teď nepodařilo odeslat. Zkuste to znovu.")
                 }
             } catch {
                 myVote = previous
-                voteMessage = (error as? LocalizedError)?.errorDescription ?? "Hlas se nepodařilo odeslat."
+                voteMessage = (error as? LocalizedError)?.errorDescription ?? L("Hlas se nepodařilo odeslat.")
             }
         }
     }
@@ -515,19 +515,19 @@ struct DetailView: View {
               let range = Range(match.range(at: 1), in: trimmed)
         else { return raw }
         switch trimmed[range].lowercased() {
-        case "yes": return "Bezbariérový přístup: ano"
-        case "limited": return "Bezbariérový přístup: částečně"
-        case "no": return "Bezbariérový přístup: ne"
+        case "yes": return L("Bezbariérový přístup: ano")
+        case "limited": return L("Bezbariérový přístup: částečně")
+        case "no": return L("Bezbariérový přístup: ne")
         default: return raw
         }
     }
 
     private func originalSourceLabel(_ source: String) -> String {
         switch source.lowercased() {
-        case "cd": return "ČD (České dráhy)"
+        case "cd": return L("ČD (České dráhy)")
         case "osm": return "OpenStreetMap"
         case "mapotic": return "WCkompas (Mapotic)"
-        case "user": return "Uživatelé webu"
+        case "user": return L("Uživatelé webu")
         default: return source
         }
     }

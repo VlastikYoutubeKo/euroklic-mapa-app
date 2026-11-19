@@ -13,7 +13,7 @@ struct ODVehicleCard: View {
         } else {
             parts.append(ODProvider.label(vehicle.provider))
         }
-        if let next = vehicle.nextStop, !next.isEmpty { parts.append("další: \(next)") }
+        if let next = vehicle.nextStop, !next.isEmpty { parts.append(L("další: \(next)")) }
         return parts.joined(separator: " · ")
     }
 
@@ -80,7 +80,7 @@ struct ODVehicleCard: View {
         if let d = vehicle.destination, !d.isEmpty {
             return vehicle.isInService ? "→ \(d)" : d
         }
-        return vehicle.isInService ? "Směr neuveden" : "Vozidlo mimo provoz"
+        return vehicle.isInService ? L("Směr neuveden") : L("Vozidlo mimo provoz")
     }
 }
 
@@ -103,7 +103,7 @@ struct ODVehicleDetailSheet: View {
                     .padding(16)
                 }
             } else {
-                ODEmptyState(symbol: "bus", title: "Vozidlo není vybráno", message: "Vyberte vozidlo na mapě.")
+                ODEmptyState(symbol: "bus", title: L("Vozidlo není vybráno"), message: L("Vyberte vozidlo na mapě."))
                 Spacer(minLength: 0)
             }
         }
@@ -114,7 +114,7 @@ struct ODVehicleDetailSheet: View {
         HStack(spacing: 12) {
             ODLineBadge(line: v.isInService ? v.line : v.badgeText, cls: v.lineClass)
             VStack(alignment: .leading, spacing: 2) {
-                Text(v.destination.map { $0.isEmpty ? "Směr neuveden" : "→ \($0)" } ?? "Směr neuveden")
+                Text(v.destination.map { $0.isEmpty ? L("Směr neuveden") : "→ \($0)" } ?? L("Směr neuveden"))
                     .font(.title3.weight(.bold))
                     .foregroundStyle(c.text)
                     .accessibilityAddTraits(.isHeader)
@@ -144,10 +144,10 @@ struct ODVehicleDetailSheet: View {
     @ViewBuilder
     private func delaySection(_ v: ODVehicle) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            sectionTitle("Zpoždění")
+            sectionTitle(L("Zpoždění"))
             if v.isInService, let m = v.delayMinutes {
                 HStack(spacing: 8) {
-                    Text(m > 0 ? "+\(m) min" : "včas")
+                    Text(m > 0 ? "+\(m) min" : L("včas"))
                         .font(.title2.weight(.bold))
                         .monospacedDigit()
                         .fontWidth(.condensed)
@@ -163,7 +163,7 @@ struct ODVehicleDetailSheet: View {
             }
             if let avg = vm.avgDelay, let a = avg.avgDelay, avg.tripCount > 0 {
                 let rounded = Int(a.rounded())
-                Text("Tento spoj měl za posledních 14 dní průměrné zpoždění \(rounded > 0 ? "+\(rounded) min" : "do minuty") (\(avg.tripCount) jízd).")
+                Text("Tento spoj měl za posledních 14 dní průměrné zpoždění \(rounded > 0 ? "+\(rounded) min" : L("do minuty")) (\(avg.tripCount) jízd).")
                     .font(.subheadline)
                     .foregroundStyle(c.muted)
             }
@@ -175,7 +175,7 @@ struct ODVehicleDetailSheet: View {
     @ViewBuilder
     private func infoSection(_ v: ODVehicle) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Vozidlo")
+            sectionTitle(L("Vozidlo"))
             let facts = factList(v)
             if facts.isEmpty && !(vm.info?.pending ?? false) {
                 Text("Údaje o vozidle nejsou k dispozici.")
@@ -210,20 +210,20 @@ struct ODVehicleDetailSheet: View {
 
     private func factList(_ v: ODVehicle) -> [(String, String)] {
         var out: [(String, String)] = []
-        out.append(("Systém", ODProvider.label(v.provider)))
+        out.append((L("Systém"), ODProvider.label(v.provider)))
         if let i = vm.info {
-            if let s = i.carrier, !s.isEmpty { out.append(("Dopravce", s)) }
+            if let s = i.carrier, !s.isEmpty { out.append((L("Dopravce"), s)) }
             let model = [i.manufacturer, i.model].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
             if !model.isEmpty { out.append(("Model", model)) }
-            if let s = i.year, !s.isEmpty { out.append(("Rok výroby", s)) }
-            if let s = i.depot, !s.isEmpty { out.append(("Vozovna", s)) }
-            if let s = i.fleetNo, !s.isEmpty { out.append(("Evidenční číslo", s)) }
+            if let s = i.year, !s.isEmpty { out.append((L("Rok výroby"), s)) }
+            if let s = i.depot, !s.isEmpty { out.append((L("Vozovna"), s)) }
+            if let s = i.fleetNo, !s.isEmpty { out.append((L("Evidenční číslo"), s)) }
             if let s = i.plate, !s.isEmpty { out.append(("SPZ", s)) }
-            if let s = i.equipment, !s.isEmpty { out.append(("Vybavení", s)) }
+            if let s = i.equipment, !s.isEmpty { out.append((L("Vybavení"), s)) }
         }
-        if vm.info?.fleetNo == nil, let e = v.evc, !e.isEmpty { out.append(("Evidenční číslo", e)) }
+        if vm.info?.fleetNo == nil, let e = v.evc, !e.isEmpty { out.append((L("Evidenční číslo"), e)) }
         if vm.info?.plate == nil, let s = v.spz, !s.isEmpty { out.append(("SPZ", s)) }
-        if v.wheelchair == true { out.append(("Bezbariérové", "ano")) }
+        if v.wheelchair == true { out.append((L("Bezbariérové"), L("ano"))) }
         // Duplicitní popisky vyřadit (id v ForEach).
         var seen = Set<String>()
         return out.filter { seen.insert($0.0).inserted }
@@ -234,11 +234,11 @@ struct ODVehicleDetailSheet: View {
     @ViewBuilder
     private func timelineSection(_ v: ODVehicle) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionTitle("Zastávky")
+            sectionTitle(L("Zastávky"))
                 .padding(.bottom, 8)
             if let route = vm.route {
                 if route.stops.isEmpty {
-                    Text(route.available ? "Pro tento spoj nejsou k dispozici zastávky." : "Trasa vozidla není k dispozici.")
+                    Text(route.available ? L("Pro tento spoj nejsou k dispozici zastávky.") : L("Trasa vozidla není k dispozici."))
                         .font(.subheadline)
                         .foregroundStyle(c.muted)
                 } else {
@@ -327,9 +327,9 @@ struct ODVehicleDetailSheet: View {
         var s = stop.name
         if let t = stop.time { s += ", \(ODTime.hm(t))" }
         if passed {
-            s += ", již projeto"
+            s += L(", již projeto")
         } else if delayMin > 0, let e = expected {
-            s += ", s předpokládaným zpožděním \(delayMin) minut v \(ODTime.hm(e))"
+            s += L(", s předpokládaným zpožděním \(delayMin) minut v \(ODTime.hm(e))")
         }
         return s
     }
