@@ -2,7 +2,7 @@ name: EuroklicMapa
 options:
   bundleIdPrefix: cz.euroklicmapa
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "17.0"
   createIntermediateGroups: true
 configFiles:
   Debug: Secrets.xcconfig

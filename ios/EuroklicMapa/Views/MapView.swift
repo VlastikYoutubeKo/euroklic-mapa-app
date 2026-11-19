@@ -68,7 +68,10 @@ struct MapView: UIViewRepresentable {
            context.coordinator.lastSelectedKey != selectedKey {
             context.coordinator.lastSelectedKey = selectedKey
             let region = MKCoordinateRegion(
-                center: annotation.coordinate,
+                center: CLLocationCoordinate2D(
+                    latitude: annotation.coordinate.latitude - 0.00135,
+                    longitude: annotation.coordinate.longitude,
+                ),
                 latitudinalMeters: 700,
                 longitudinalMeters: 500,
             )
@@ -101,6 +104,8 @@ struct MapView: UIViewRepresentable {
                 let view = (mapView.dequeueReusableAnnotationView(withIdentifier: "cluster") as? MKMarkerAnnotationView)
                     ?? MKMarkerAnnotationView(annotation: cluster, reuseIdentifier: "cluster")
                 view.glyphText = String(cluster.memberAnnotations.count)
+                view.titleVisibility = .hidden
+                view.subtitleVisibility = .hidden
                 view.markerTintColor = UIColor(Theme.brand)
                 view.displayPriority = .defaultHigh
                 return view

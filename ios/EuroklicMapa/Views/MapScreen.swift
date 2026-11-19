@@ -40,17 +40,9 @@ struct MapScreen: View {
                         .padding(.horizontal)
                         .padding(.bottom, 8)
                     }
-                    if let selected {
-                        SelectedPlaceCard(
-                            place: selected,
-                            userLocation: location.lastLocation,
-                            onClose: { self.selected = nil },
-                        )
-                        .padding(.horizontal)
-                        .padding(.bottom, 8)
-                    }
                 }
 
+                if selected == nil {
                 VStack {
                     Spacer()
                     HStack {
@@ -78,11 +70,20 @@ struct MapScreen: View {
                             .accessibilityLabel("Přidat místo")
                         }
                         .padding(.trailing, 16)
-                        .padding(.bottom, selected != nil ? 240 : (location.lastLocation != nil ? 190 : 8))
+                        .padding(.bottom, location.lastLocation != nil ? 190 : 8)
                     }
+                }
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .sheet(item: $selected) { place in
+                DetailView(place: place, asSheet: true)
+                    .id(place.favoriteKey)
+                    .presentationDetents([.fraction(0.42), .large])
+                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.42)))
+                    .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(28)
+            }
             .sheet(isPresented: $showAddPlace) {
                 AddPlaceView()
             }
