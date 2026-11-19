@@ -167,11 +167,7 @@ struct MapPickerRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> MKMapView {
         let map = MKMapView()
         map.delegate = context.coordinator
-        if !MapyTiles.urlTemplate.isEmpty {
-            let tiles = MKTileOverlay(urlTemplate: MapyTiles.urlTemplate)
-            tiles.canReplaceMapContent = true
-            map.addOverlay(tiles)
-        }
+        map.applyBasemap(MapProvider.stored)
         map.setRegion(MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 49.8, longitude: 15.5),
             span: MKCoordinateSpan(latitudeDelta: 4, longitudeDelta: 4),

@@ -8,6 +8,7 @@ struct MapView: UIViewRepresentable {
     let items: [PlaceItem]
     var selectedKey: String?
     var userLocation: CLLocation?
+    var provider: MapProvider = .mapy
     var onSelect: (PlaceItem?) -> Void
 
     func makeUIView(context: Context) -> MKMapView {
@@ -16,36 +17,18 @@ struct MapView: UIViewRepresentable {
         map.showsUserLocation = true
         map.preferredConfiguration = MKStandardMapConfiguration()
 
-        // Mapy.com raster tiles when the key was injected at build time
-        // (Secrets.xcconfig); otherwise fall back to Apple's basemap.
-        if !MapyTiles.urlTemplate.isEmpty {
-            let tiles = MKTileOverlay(urlTemplate: MapyTiles.urlTemplate)
-            tiles.tileSize = CGSize(width: 256, height: 256)
-            tiles.canReplaceMapContent = true // raster tiles replace Apple's basemap
-            map.addOverlay(tiles, level: .aboveLabels)
-
-            // Mandatory Mapy.com attribution (only when their tiles are shown).
-            let attribution = UILabel()
-            attribution.text = " © Seznam.cz a.s. a další"
-            attribution.font = .systemFont(ofSize: 10)
-            attribution.textColor = .darkGray
-            attribution.backgroundColor = .systemBackground.withAlphaComponent(0.7)
-            attribution.sizeToFit()
-            attribution.translatesAutoresizingMaskIntoConstraints = false
-            map.addSubview(attribution)
-            NSLayoutConstraint.activate([
-                attribution.leadingAnchor.constraint(equalTo: map.safeAreaLayoutGuide.leadingAnchor, constant: 6),
-                attribution.bottomAnchor.constraint(equalTo: map.safeAreaLayoutGuide.bottomAnchor, constant: -2),
-            ])
-        } else {
-            print("⚠️ MapyTiles: MAPY_APIKEY chybí — mapy padají na Apple basemap. Vytvoř ios/Secrets.xcconfig (viz README).")
-        }
+        map.applyBasemap(provider, attribution: true)
+        context.coordinator.appliedProvider = provider
 
         return map
     }
 
     func updateUIView(_ map: MKMapView, context: Context) {
         context.coordinator.parent = self
+        if context.coordinator.appliedProvider != provider {
+            map.applyBasemap(provider, attribution: true)
+            context.coordinator.appliedProvider = provider
+        }
 
         // Diff annotations (keep the tile overlay + user location).
         let desired = Dictionary(uniqueKeysWithValues: items.map { ($0.favoriteKey, $0) })
@@ -84,6 +67,7 @@ struct MapView: UIViewRepresentable {
     final class Coordinator: NSObject, MKMapViewDelegate {
         var parent: MapView
         var lastSelectedKey: String?
+        var appliedProvider: MapProvider?
 
         init(parent: MapView) { self.parent = parent }
 

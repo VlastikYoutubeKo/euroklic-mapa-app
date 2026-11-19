@@ -326,11 +326,7 @@ struct MiniMap: UIViewRepresentable {
         map.isRotateEnabled = false
         map.showsUserLocation = false
         map.delegate = context.coordinator
-        if !MapyTiles.urlTemplate.isEmpty {
-            let tiles = MKTileOverlay(urlTemplate: MapyTiles.urlTemplate)
-            tiles.canReplaceMapContent = true
-            map.addOverlay(tiles)
-        }
+        map.applyBasemap(MapProvider.stored)
         let pin = MKPointAnnotation()
         pin.coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
         map.addAnnotation(pin)

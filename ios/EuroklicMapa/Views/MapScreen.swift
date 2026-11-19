@@ -14,6 +14,7 @@ struct MapScreen: View {
     @State private var refreshing = false
     @State private var showAddPlace = false
     @State private var nearestMessage: String?
+    @AppStorage(MapProvider.storageKey) private var mapProvider: MapProvider = .mapy
 
     var body: some View {
         NavigationStack {
@@ -22,6 +23,7 @@ struct MapScreen: View {
                     items: places.flattened(category: category, userLocation: location.lastLocation),
                     selectedKey: selected?.favoriteKey,
                     userLocation: location.lastLocation,
+                    provider: mapProvider,
                     onSelect: { selected = $0 },
                 )
                 .ignoresSafeArea(edges: .bottom)

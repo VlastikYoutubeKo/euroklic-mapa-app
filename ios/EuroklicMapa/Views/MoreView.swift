@@ -4,6 +4,7 @@ import SwiftUI
 struct MoreView: View {
     @EnvironmentObject private var auth: AuthSession
     @EnvironmentObject private var places: PlacesStore
+    @AppStorage(MapProvider.storageKey) private var mapProvider: MapProvider = .mapy
 
     var body: some View {
         NavigationStack {
@@ -24,6 +25,16 @@ struct MoreView: View {
                     if let worst = s.topDisliked {
                         LabeledContent("Nejvíce problémové", value: "\(worst.name) (\(worst.dislikes)👎)")
                     }
+                }
+
+                Section {
+                    Picker("Podkladová mapa", selection: $mapProvider) {
+                        ForEach(MapProvider.allCases) { Text($0.label).tag($0) }
+                    }
+                } header: {
+                    Text("Mapa")
+                } footer: {
+                    Text("Mapy.com jsou podrobnější pro ČR a SR. Apple Maps fungují i bez klíče a při slabém připojení.")
                 }
 
                 Section("Přispět") {
