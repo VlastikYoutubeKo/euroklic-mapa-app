@@ -41,6 +41,10 @@ targets:
           mapy na vás. Nikam mimo aplikaci ji neposíláme.
         NSPhotoLibraryAddUsageDescription: >-
           Fotku vašeho zařízení připojíme k novému místu, které odešlete ke schválení.
+        NSCameraUsageDescription: >-
+          Fotoaparát použijeme k vyfocení místa, které navrhujete k doplnění.
+        NSPhotoLibraryUsageDescription: >-
+          Vybraná fotka se odešle k místu jako návrh pro moderátora.
         ITSAppUsesNonExemptEncryption: false
         MapyApiKey: $(MAPY_APIKEY)
         CFBundleShortVersionString: $(MARKETING_VERSION)
