@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,6 +38,8 @@ import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Directions
+import androidx.compose.material.icons.rounded.DirectionsBus
+import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.ThumbDown
 import androidx.compose.material.icons.rounded.ThumbDownOffAlt
@@ -59,6 +63,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -494,7 +499,7 @@ private fun WcBody(
     }
     Column(
         modifier = Modifier.fillMaxWidth().padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(wc.name, style = MaterialTheme.typography.headlineMedium, color = EuroklicTheme.extended.textStrong)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -525,13 +530,13 @@ private fun WcBody(
         }
 
         AccessCard(requiresKey = wc.access == "eurokey", wheelchair = wc.wheelchair)
-        AddPhotoRow(hasPhoto = hasPhoto, uploading = photoUploading, onClick = onAddPhoto)
         DistanceCard(GeoPoint(wc.latitude, wc.longitude), userLocation)
         MiniMap(
             lat = wc.latitude,
             lon = wc.longitude,
             modifier = Modifier.fillMaxWidth().height(140.dp).clip(EuroklicTheme.shapes.card),
         )
+        TransitStopsCard(wc.latitude, wc.longitude, wc.name)
         OpeningHoursSection(hall = wc.openingHours, wc = wc.wcOpeningHours)
         wc.description?.takeIf { it.isNotBlank() }?.let {
             Section("Popis", prettifyDescription(it))
@@ -539,6 +544,9 @@ private fun WcBody(
         wc.note?.takeIf { it.isNotBlank() }?.let { Section("Poznámka", it) }
         wc.accessibilityNote?.takeIf { it.isNotBlank() }?.let { ExpandableSection("Přístupnost stanice", it) }
         wc.floorPlanUrl?.takeIf { it.isNotBlank() }?.let { FloorPlanSection(wc.id, it) }
+        AddPhotoRow(hasPhoto = hasPhoto, uploading = photoUploading, onClick = onAddPhoto)
+        // Provenance metadata is visually separated from the practical info above it.
+        androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Section("Původní zdroj", originalSourceLabel(wc.source))
         wc.lastVerified?.let {
             Section("Naposledy ověřeno", it.substringBefore(" "))
@@ -568,6 +576,76 @@ private fun WcBody(
             onRequestLogin = onRequestLogin,
         )
         ReportLink(wc.webUrl)
+    }
+}
+
+/**
+ * "Zastávky a odjezdy poblíž" — up to 3 nearest stops (public odjezdy.online JSON), tap opens the
+ * odjezdy.online /blizko page. While loading or on any error/empty result the card is hidden
+ * (offline-safe); the rest of the detail never depends on it.
+ */
+@Composable
+private fun TransitStopsCard(lat: Double, lon: Double, name: String?) {
+    val context = LocalContext.current
+    val url = String.format(java.util.Locale.US, "https://app.odjezdy.online/blizko?lat=%.6f&lng=%.6f", lat, lon)
+    val stops by produceState<List<cz.euroklicmapa.data.remote.NearbyStop>>(emptyList(), lat, lon) {
+        value = cz.euroklicmapa.data.remote.NearbyStopsRepository().nearby(lat, lon)
+    }
+    if (stops.isEmpty()) return
+    Surface(
+        border = contrastBorder(),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = EuroklicTheme.shapes.tile,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(Icons.Rounded.DirectionsBus, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Zastávky a odjezdy poblíž", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+            }
+            stops.forEach { stop ->
+                val stopUrl = "https://app.odjezdy.online/zastavka/" + android.net.Uri.encode(stop.id)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .clickable(role = Role.Button, onClickLabel = "Zobrazit odjezdy") { openUrl(context, stopUrl) }
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = "${stop.name}, ${stop.distanceM} metrů. Zobrazit odjezdy v prohlížeči."
+                        }
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        stop.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        formatDistance(stop.distanceM.toDouble()),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Rounded.OpenInNew, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .clickable(role = Role.Button, onClickLabel = "Otevřít mapu zastávek") { openUrl(context, url) }
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Všechny zastávky v okolí", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            }
+        }
     }
 }
 
