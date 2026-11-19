@@ -38,6 +38,8 @@ targets:
           Fotku vašeho zařízení připojíme k novému místu, které odešlete ke schválení.
         ITSAppUsesNonExemptEncryption: false
         MapyApiKey: $(MAPY_APIKEY)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
   EuroklicMapaTests:
     type: bundle.unit-test
     platform: iOS
