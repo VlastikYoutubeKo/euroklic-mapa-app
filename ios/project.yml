@@ -45,6 +45,29 @@ targets:
         MapyApiKey: $(MAPY_APIKEY)
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+    dependencies:
+      - target: EuroklicWidgets
+  EuroklicWidgets:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cz.euroklicmapa.EuroklicMapa.Widgets
+    sources:
+      - EuroklicWidgets
+    info:
+      path: EuroklicWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Euroklíč widgety
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        NSWidgetWantsLocation: true
+        NSLocationWhenInUseUsageDescription: >-
+          Widget použije vaši polohu k zobrazení nejbližší toalety a zastávky a jejích odjezdů.
+          Poloha se nikam neukládá, jen se pošle službě pro vyhledání míst v okolí.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
   EuroklicMapaTests:
     type: bundle.unit-test
     platform: iOS
