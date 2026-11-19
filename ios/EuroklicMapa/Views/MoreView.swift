@@ -54,6 +54,18 @@ struct MoreView: View {
                     }
                 }
 
+                Section {
+                    NavigationLink {
+                        ChangelogView(entries: Changelog.load())
+                            .navigationTitle("Co je nového")
+                            .navigationBarTitleDisplayMode(.inline)
+                    } label: {
+                        Label("Co je nového", systemImage: "sparkles")
+                    }
+                } footer: {
+                    Text("Verze \(Changelog.currentVersion)")
+                }
+
                 Section("O projektu") {
                     Text("Nezávislý projekt. Data agregujeme z veřejných zdrojů. Nejsme oficiální aplikace systému Euroklíč ani NRZP ČR.")
                         .font(.footnote)

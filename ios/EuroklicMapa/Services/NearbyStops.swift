@@ -15,6 +15,18 @@ struct Departure: Identifiable, Hashable {
     let destination: String
     let time: Date
     let delayMinutes: Int
+    /// Raw odjezdy.online provider id (ČD, DUK, JDF, PID, ...).
+    let provider: String
+
+    /// Czech label for the provider chip.
+    var providerLabel: String {
+        switch provider.uppercased() {
+        case "DUK": return "DÚK"
+        case "JDF": return "Linkové autobusy"
+        case "": return "Ostatní"
+        default: return provider
+        }
+    }
 }
 
 /// Nearest stops and their next departures from the public app.odjezdy.online JSON
@@ -58,8 +70,9 @@ enum NearbyStopsService {
         let destination: String?
         let plannedTime: String?
         let delayMinutes: Int?
+        let provider: String?
 
-        enum CodingKeys: String, CodingKey { case id, line, destination, plannedTime, delayMinutes }
+        enum CodingKeys: String, CodingKey { case id, line, destination, plannedTime, delayMinutes, provider }
 
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -68,6 +81,7 @@ enum NearbyStopsService {
             destination = try? c.decode(String.self, forKey: .destination)
             plannedTime = try? c.decode(String.self, forKey: .plannedTime)
             delayMinutes = try? c.decode(Int.self, forKey: .delayMinutes)
+            provider = try? c.decode(String.self, forKey: .provider)
         }
     }
 
@@ -116,7 +130,7 @@ enum NearbyStopsService {
     }
 
     /// Next departures (soonest first) from one stop.
-    static func departures(stopId: String, limit: Int = 4) async -> [Departure] {
+    static func departures(stopId: String, limit: Int = 40) async -> [Departure] {
         guard let url = URL(string: "https://app.odjezdy.online/api/board/\(stopId)") else { return [] }
         do {
             let data = try await fetch(url)
@@ -133,6 +147,7 @@ enum NearbyStopsService {
                     destination: item.destination ?? "",
                     time: planned,
                     delayMinutes: delay,
+                    provider: item.provider ?? "",
                 )
             }
             return Array(items.sorted { $0.time < $1.time }.prefix(limit))
@@ -142,7 +157,12 @@ enum NearbyStopsService {
         }
     }
 
-    private static func parseISO(_ s: String) -> Date? {
+    /// Accepts "2026-11-19T06:20:00.000Z" and the DÚK form "2026-11-19 07:32:00+01:00" (space, no T).
+    private static func parseISO(_ raw: String) -> Date? {
+        var s = raw.trimmingCharacters(in: .whitespaces)
+        if s.count > 10, s[s.index(s.startIndex, offsetBy: 10)] == " " {
+            s.replaceSubrange(s.index(s.startIndex, offsetBy: 10)...s.index(s.startIndex, offsetBy: 10), with: "T")
+        }
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         if let d = f.date(from: s) { return d }

@@ -18,6 +18,8 @@ targets:
     platform: iOS
     sources:
       - EuroklicMapa
+      - path: ../CHANGELOG.md
+        buildPhase: resources
     info:
       path: EuroklicMapa/Info.plist
       properties:

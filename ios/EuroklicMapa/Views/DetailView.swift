@@ -25,6 +25,8 @@ struct DetailView: View {
     @State private var selectedStopId: String?
     @State private var departures: [Departure] = []
     @State private var loadingDepartures = false
+    @State private var showPhoto = false
+    @State private var selectedProvider: String?
 
     init(place: PlaceItem, asSheet: Bool = false) {
         self.place = place
@@ -66,6 +68,7 @@ struct DetailView: View {
         }
         .task(id: selectedStopId) {
             guard let id = selectedStopId else { departures = []; return }
+            selectedProvider = nil
             loadingDepartures = true
             departures = await NearbyStopsService.departures(stopId: id)
             loadingDepartures = false
@@ -192,18 +195,29 @@ struct DetailView: View {
                 }
             }
 
+            if providers.count > 1 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        providerChip("Vše", value: nil)
+                        ForEach(providers, id: \.self) { p in
+                            providerChip(departures.first(where: { $0.provider == p })?.providerLabel ?? p, value: p)
+                        }
+                    }
+                }
+            }
+
             VStack(spacing: 0) {
                 if loadingDepartures && departures.isEmpty {
                     ProgressView().frame(maxWidth: .infinity, minHeight: 64)
-                } else if departures.isEmpty {
+                } else if visibleDepartures.isEmpty {
                     Text("Žádné nejbližší odjezdy.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, minHeight: 64)
                 } else {
-                    ForEach(Array(departures.enumerated()), id: \.element.id) { index, d in
+                    ForEach(Array(visibleDepartures.enumerated()), id: \.element.id) { index, d in
                         departureRow(d)
-                        if index < departures.count - 1 { Divider().padding(.leading, 14) }
+                        if index < visibleDepartures.count - 1 { Divider().padding(.leading, 14) }
                     }
                 }
             }
@@ -219,6 +233,30 @@ struct DetailView: View {
                     .accessibilityLabel("Odjezdy poskytuje odjezdy.online. Otevřít zastávku \(stop.name).")
             }
         }
+    }
+
+    private var providers: [String] {
+        var seen = Set<String>()
+        return departures.map(\.provider).filter { seen.insert($0).inserted }
+    }
+
+    private var visibleDepartures: [Departure] {
+        let list = selectedProvider.map { p in departures.filter { $0.provider == p } } ?? departures
+        return Array(list.prefix(5))
+    }
+
+    private func providerChip(_ title: String, value: String?) -> some View {
+        let on = selectedProvider == value
+        return Button { selectedProvider = value } label: {
+            Text(title)
+                .font(.footnote)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 32)
+                .foregroundStyle(on ? Color.white : Color.primary)
+                .background(Capsule().fill(on ? Theme.brand : Color(.secondarySystemFill)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private func departureRow(_ d: Departure) -> some View {
@@ -249,20 +287,26 @@ struct DetailView: View {
     @ViewBuilder
     private var photoBlock: some View {
         if let raw = nonBlank(place.photoUrl), let url = URL(string: raw) {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image.resizable().scaledToFill()
-                case .failure:
-                    Color(.secondarySystemBackground)
-                default:
-                    Color(.secondarySystemBackground).overlay(ProgressView())
+            Button { showPhoto = true } label: {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill()
+                    case .failure:
+                        Color(.secondarySystemBackground)
+                    default:
+                        Color(.secondarySystemBackground).overlay(ProgressView())
+                    }
                 }
+                .frame(height: 190)
+                .frame(maxWidth: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .contentShape(RoundedRectangle(cornerRadius: 20))
             }
-            .frame(height: 190)
-            .frame(maxWidth: .infinity)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .buttonStyle(.plain)
             .accessibilityLabel("Fotografie místa")
+            .accessibilityHint("Klepnutím zvětšíte")
+            .fullScreenCover(isPresented: $showPhoto) { PhotoViewer(url: url) }
         }
     }
 
