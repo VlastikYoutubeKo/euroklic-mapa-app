@@ -83,6 +83,9 @@ final class AuthSession: NSObject, ObservableObject, ASWebAuthenticationPresenta
         var components = URLComponents(url: EuroklicAPI.baseURL.appendingPathComponent("app-login.php"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "client", value: "app"),
+            // iOS cannot catch the https App Link in ASWebAuthenticationSession: the backend must
+            // finish with the custom scheme euroklicmapa://auth-callback for this platform.
+            URLQueryItem(name: "platform", value: "ios"),
             URLQueryItem(name: "state", value: state),
             URLQueryItem(name: "code_challenge", value: challenge),
             URLQueryItem(name: "code_challenge_method", value: "S256"),
