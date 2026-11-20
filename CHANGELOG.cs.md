@@ -6,6 +6,9 @@ Při vydání verze (git tag `v*`) se text příslušné sekce (anglicky i česk
 a stejný soubor je zabalený i v aplikaci (Více → Co je nového; po aktualizaci se ukáže sám).
 Nadpis sekce musí mít tvar `## <verze> — <datum>`, položky jsou odrážky `- `.
 
+## 1.2.1 — 2026-11-20
+- Android: aplikace je teď ke stažení jako podepsané APK na GitHub Releases (EuroklicMapa.apk). Není na Google Play ani v App Store, instaluje se ze souboru.
+
 ## 1.2.0 — 2026-11-19
 - Aplikace je teď česky i anglicky. Řídí se jazykem telefonu: v češtině česky, ve všech ostatních jazycích anglicky (včetně tohoto seznamu změn, widgetů a žádostí o oprávnění).
 - Vzdálenosti se v angličtině píšou s tečkou, v češtině s čárkou.

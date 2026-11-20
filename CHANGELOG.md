@@ -8,6 +8,9 @@ shows by itself after an update). The app shows the one matching the phone's lan
 A section heading must look like `## <version> — <date>`, items are `- ` bullets. Keep both
 files in sync.
 
+## 1.2.1 — 2026-11-20
+- Android: the app is now available as a signed APK on GitHub Releases (EuroklicMapa.apk). It is not on Google Play or the App Store, so install it from the file.
+
 ## 1.2.0 — 2026-11-19
 - The app is now in English and Czech. It follows the phone's language: Czech phones get Czech, everything else gets English (including this changelog, widgets and permission prompts).
 - Distances use a decimal point in English and a comma in Czech.
