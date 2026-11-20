@@ -17,11 +17,43 @@ import org.osmdroid.util.GeoPoint
 
 class AddPlaceViewModel(
     private val addPlaceRepository: AddPlaceRepository,
-    locationRepository: LocationRepository,
+    private val locationRepository: LocationRepository,
 ) : ViewModel() {
 
     /** Roughly the geographic centre of Czechia — the fallback when we have no location fix. */
     val initialCenter: GeoPoint = locationRepository.lastKnown.value ?: GeoPoint(49.75, 15.5)
+
+    /** Where the picker map should jump to (the user's position); [recenterKey] bumps on every request. */
+    var recenterTo by mutableStateOf<GeoPoint?>(null)
+        private set
+    var recenterKey by mutableStateOf(0)
+        private set
+    var locating by mutableStateOf(false)
+        private set
+    private var autoLocated = false
+
+    fun hasLocationPermission(): Boolean = locationRepository.hasPermission()
+
+    /** Centres the picker on the current position (needs the location permission). */
+    fun locateMe() {
+        if (locating) return
+        locating = true
+        locationRepository.refresh { point ->
+            locating = false
+            if (point != null) {
+                location = point
+                recenterTo = point
+                recenterKey++
+            }
+        }
+    }
+
+    /** Once per screen: jump to the user's position when we already may and had no fix at start. */
+    fun autoLocateOnce() {
+        if (autoLocated) return
+        autoLocated = true
+        if (hasLocationPermission()) locateMe()
+    }
 
     var name by mutableStateOf("")
     var description by mutableStateOf("")

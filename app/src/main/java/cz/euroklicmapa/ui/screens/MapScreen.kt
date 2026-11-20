@@ -148,6 +148,10 @@ fun MapScreen(
     var selectedMarker by remember { mutableStateOf<MapMarker?>(null) }
     var showRationale by remember { mutableStateOf(false) }
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
+    // Offline mode: without a network the map reads only the on-disk tile cache (no failing
+    // downloads, no blank-tile flicker); it flips back automatically when the network returns.
+    val online by cz.euroklicmapa.util.rememberIsOnline()
+    LaunchedEffect(mapViewRef, online) { mapViewRef?.setUseDataConnection(online) }
     var downloadState by remember { mutableStateOf<OfflineDownloadResult?>(null) }
     val downloading = downloadState is OfflineDownloadResult.Started || downloadState is OfflineDownloadResult.Progress
     var secondaryActionsExpanded by remember { mutableStateOf(false) }
@@ -297,17 +301,25 @@ fun MapScreen(
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SearchField(
-                    value = query,
-                    onValueChange = viewModel::onSearchQueryChange,
-                    onSearch = {
-                        keyboard?.hide()
-                        viewModel.submitSearch()
-                    },
-                    onClear = { viewModel.onSearchQueryChange("") },
-                    loading = isSearching,
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                )
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SearchField(
+                        value = query,
+                        onValueChange = viewModel::onSearchQueryChange,
+                        onSearch = {
+                            keyboard?.hide()
+                            viewModel.submitSearch()
+                        },
+                        onClear = { viewModel.onSearchQueryChange("") },
+                        loading = isSearching,
+                        modifier = Modifier.weight(1f),
+                    )
+                    // One tap to the public-transport half of the app (used to live only in Více).
+                    cz.euroklicmapa.ui.components.ModeSwitchPill(cz.euroklicmapa.data.prefs.AppMode.ODJEZDY)
+                }
                 CategoryChipRow(category = category, onSelect = viewModel::setCategory)
                 searchError?.let { PillNotice(it) }
                 DataFreshnessBanner(dataSync)
@@ -339,6 +351,14 @@ fun MapScreen(
                                 val mv = mapViewRef
                                 if (mv == null || downloading) return@SmallFloatingActionButton
                                 secondaryActionsExpanded = false
+                                if (!online) {
+                                    Toast.makeText(
+                                        context,
+                                        t("Jste offline. Mapu jde stáhnout jen s připojením."),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    return@SmallFloatingActionButton
+                                }
                                 startOfflineDownload(mv, context) { result ->
                                     downloadState = result
                                     when (result) {

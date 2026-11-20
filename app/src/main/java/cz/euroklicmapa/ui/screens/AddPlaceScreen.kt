@@ -3,7 +3,14 @@ package cz.euroklicmapa.ui.screens
 import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.contrastBorder
 import cz.euroklicmapa.ui.theme.EuroklicTheme
+import android.Manifest
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.rounded.MyLocation
+import androidx.compose.material.icons.rounded.PhotoLibrary
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -73,6 +80,13 @@ fun AddPlaceScreen(
     // dialog gets the same "catch a mistake before it's queued" value without the restructure.
     var showReview by remember { mutableStateOf(false) }
 
+    val locationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants ->
+        if (grants.values.any { it }) viewModel.locateMe()
+    }
+    LaunchedEffect(Unit) { viewModel.autoLocateOnce() }
+
     LaunchedEffect(Unit) {
         viewModel.submitted.collect {
             android.widget.Toast
@@ -138,7 +152,34 @@ fun AddPlaceScreen(
                     initial = viewModel.initialCenter,
                     onCenterChange = viewModel::onCenterChange,
                     modifier = Modifier.fillMaxSize(),
+                    recenterTo = viewModel.recenterTo,
+                    recenterKey = viewModel.recenterKey,
                 )
+            }
+            OutlinedButton(
+                shape = EuroklicTheme.shapes.pill,
+                enabled = !viewModel.locating,
+                onClick = {
+                    if (viewModel.hasLocationPermission()) {
+                        viewModel.locateMe()
+                    } else {
+                        locationPermission.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                            ),
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) {
+                if (viewModel.locating) {
+                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                } else {
+                    Icon(Icons.Rounded.MyLocation, contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+                Spacer(Modifier.size(8.dp))
+                Text(t("Použít moji polohu"))
             }
             Text(
                 t("Posuňte mapu tak, aby značka byla na místě. ") +
@@ -150,7 +191,7 @@ fun AddPlaceScreen(
             Text(t("Fotka (nepovinné)"), style = MaterialTheme.typography.titleSmall)
             PhotoField(
                 uri = viewModel.photoUri,
-                onPick = { imagePicker.request() },
+                onAdd = { imagePicker.request() },
                 onClear = { viewModel.photoUri = null },
             )
 
@@ -241,32 +282,17 @@ private fun ReviewDialog(
 }
 
 @Composable
-private fun PhotoField(uri: Uri?, onPick: () -> Unit, onClear: () -> Unit) {
+private fun PhotoField(uri: Uri?, onAdd: () -> Unit, onClear: () -> Unit) {
     if (uri == null) {
-        Surface(
-            border = contrastBorder(),
-            onClick = onPick,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shape = EuroklicTheme.shapes.card,
-            modifier = Modifier.fillMaxWidth().height(120.dp),
+        // One entry point; the dialog offers camera / gallery / files.
+        OutlinedButton(
+            shape = EuroklicTheme.shapes.pill,
+            onClick = onAdd,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Icon(
-                    Icons.Rounded.AddAPhoto,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.size(6.dp))
-                Text(
-                    t("Přidat fotku"),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Icon(Icons.Rounded.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.size(8.dp))
+            Text(t("Přidat fotku"))
         }
     } else {
         Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(EuroklicTheme.shapes.card)) {

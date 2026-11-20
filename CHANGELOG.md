@@ -9,6 +9,13 @@ A section heading must look like `## <version> — <date>`, items are `- ` bulle
 with `[Android]` or `[iOS]` is shown only in that app (the tag is hidden); untagged bullets are shown
 in both. Keep both files in sync.
 
+## 1.3.0 — 2026-11-20
+- Offline mode: without a connection the app runs from the downloaded places and the saved map, and says so at the top of the map. The map of an area can be downloaded in advance (the download button on the map). On iPhone this works with the Mapy.com map only.
+- One-tap switch between Euroklíč and Odjezdy right on the map (no more digging through More). On Android there is also a home-screen shortcut: long-press the app icon → Departures.
+- Adding a photo now offers three sources: take a photo, choose from the gallery, or choose from files.
+- [Android] When adding a place, the map opens on your location, and the "Use my location" button moves the pin there.
+- [iOS] The "Add a place" form is redesigned: the map opens on your location with a "My location" button, clearer photo and submit buttons.
+
 ## 1.2.2 — 2026-11-20
 - [Android] The app is now in English and Czech. It follows the phone's language: Czech phones get Czech, everything else gets English.
 - [Android] "What's new" is shown once after an update; the full history is in More → What's new.

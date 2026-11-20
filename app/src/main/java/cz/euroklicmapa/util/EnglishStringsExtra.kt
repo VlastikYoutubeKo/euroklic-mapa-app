@@ -5,6 +5,13 @@ package cz.euroklicmapa.util
  * text used in `t("...")`). [EnglishStrings.kt] is generated and should not be edited by hand.
  */
 internal val ENGLISH_EXTRA: Map<String, String> = mapOf(
+    "Použít moji polohu" to "Use my location",
+    "Odjezdy" to "Departures",
+    "Vybrat z galerie" to "Choose from gallery",
+    "Vybrat ze souborů" to "Choose from files",
+    "Přepnout na režim Odjezdy" to "Switch to Departures mode",
+    "Offline režim · místa a mapa ze stažených dat" to "Offline mode · places and map from downloaded data",
+    "Jste offline. Mapu jde stáhnout jen s připojením." to "You're offline. The map can only be downloaded while connected.",
     // Odjezdy mode
     "Režim Odjezdy" to "Public transport mode",
     "Živá mapa vozidel a odjezdy" to "Live vehicle map and departures",

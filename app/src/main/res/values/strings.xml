@@ -3,5 +3,7 @@
     <!-- Launcher shortcut "Nearest toilet" (res/xml/shortcuts.xml). Czech: values-cs. -->
     <string name="shortcut_nearest_short">Nearest toilet</string>
     <string name="shortcut_nearest_long">Find the nearest toilet</string>
+    <string name="shortcut_odjezdy_short">Departures</string>
+    <string name="shortcut_odjezdy_long">Public transport departures</string>
     <string name="widget_nearest_description">Shows the nearest accessible toilet based on your last known location.</string>
 </resources>

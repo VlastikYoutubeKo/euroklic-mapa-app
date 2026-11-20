@@ -11,6 +11,8 @@ struct MapView: UIViewRepresentable {
     var provider: MapProvider = .mapy
     /// Set by the address search: the map flies there once per distinct target.
     var recenterTarget: CLLocationCoordinate2D?
+    /// Receives the visible area (for "Stáhnout mapu"); optional.
+    var viewport: MapViewport?
     var onSelect: (PlaceItem?) -> Void
 
     func makeUIView(context: Context) -> MKMapView {
@@ -102,6 +104,10 @@ struct MapView: UIViewRepresentable {
         var lastRecenterKey: String?
 
         init(parent: MapView) { self.parent = parent }
+
+        func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+            parent.viewport?.rect = mapView.visibleMapRect
+        }
 
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let tiles = overlay as? MKTileOverlay {

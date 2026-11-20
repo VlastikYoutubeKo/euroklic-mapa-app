@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,6 +22,7 @@ import cz.euroklicmapa.ui.theme.EuroklicTheme
 
 /** Static app-shortcut action — must match the intent in res/xml/shortcuts.xml. */
 private const val ACTION_NEAREST_WC = "cz.euroklicmapa.action.NEAREST_WC"
+private const val ACTION_ODJEZDY = "cz.euroklicmapa.action.ODJEZDY"
 
 /** Notification tap routing — keys must match [cz.euroklicmapa.notifications.QueuePollWorker]. */
 private const val EXTRA_NAV = "nav"
@@ -91,7 +94,12 @@ class MainActivity : ComponentActivity() {
      */
     private fun handleShortcutIntent(intent: Intent?) {
         if (intent?.action == ACTION_NEAREST_WC) {
+            // The nearest-toilet flow lives on the Euroklíč map — leave Odjezdy mode first.
+            lifecycleScope.launch { AppModePrefs(applicationContext).set(AppMode.EUROKLIC) }
             (application as EuroklicApplication).requestNearestShortcut()
+        }
+        if (intent?.action == ACTION_ODJEZDY) {
+            lifecycleScope.launch { AppModePrefs(applicationContext).set(AppMode.ODJEZDY) }
         }
     }
 

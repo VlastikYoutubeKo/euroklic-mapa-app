@@ -184,7 +184,13 @@ private fun ODMapTab(vm: ODViewModel, center: GeoPoint?) {
         )
 
         Column(Modifier.align(Alignment.TopCenter).padding(top = 12.dp)) {
-            LazyRow(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyRow(
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // First thing on the map: one tap back to the toilet map.
+                item { cz.euroklicmapa.ui.components.ModeSwitchPill(AppMode.EUROKLIC) }
                 items(ODVehicleType.entries) { type ->
                     FilterChip(
                         selected = type in state.filter,

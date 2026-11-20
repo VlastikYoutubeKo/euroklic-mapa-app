@@ -12,6 +12,7 @@ import androidx.compose.material.icons.rounded.Place
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -42,6 +43,8 @@ fun LocationPickerMap(
     initial: GeoPoint,
     onCenterChange: (GeoPoint) -> Unit,
     modifier: Modifier = Modifier,
+    recenterTo: GeoPoint? = null,
+    recenterKey: Int = 0,
 ) {
     val context = LocalContext.current
     val onCenterChangeState = rememberUpdatedState(onCenterChange)
@@ -94,6 +97,13 @@ fun LocationPickerMap(
                 }
                 false
             }
+        }
+    }
+
+    LaunchedEffect(recenterKey) {
+        if (recenterTo != null) {
+            mapView.controller.setZoom(17.0)
+            mapView.controller.animateTo(recenterTo)
         }
     }
 

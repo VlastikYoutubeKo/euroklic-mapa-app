@@ -14,4 +14,16 @@
             android:targetPackage="cz.euroklicmapa"
             android:targetClass="cz.euroklicmapa.MainActivity" />
     </shortcut>
+    <!-- Switches the app into the Odjezdy (public transport) mode. -->
+    <shortcut
+        android:shortcutId="odjezdy"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_bus"
+        android:shortcutShortLabel="@string/shortcut_odjezdy_short"
+        android:shortcutLongLabel="@string/shortcut_odjezdy_long">
+        <intent
+            android:action="cz.euroklicmapa.action.ODJEZDY"
+            android:targetPackage="cz.euroklicmapa"
+            android:targetClass="cz.euroklicmapa.MainActivity" />
+    </shortcut>
 </shortcuts>

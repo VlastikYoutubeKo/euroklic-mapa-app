@@ -50,6 +50,11 @@ struct ODMapTab: View {
             .ignoresSafeArea(edges: .top)
 
             VStack(spacing: 8) {
+                HStack {
+                    ModeSwitchPill(target: .euroklic) // one tap back to the toilet map
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 12)
                 filterRow
                 notices
                 Spacer(minLength: 0)

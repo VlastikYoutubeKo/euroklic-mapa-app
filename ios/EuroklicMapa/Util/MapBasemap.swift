@@ -35,7 +35,7 @@ extension MKMapView {
         viewWithTag(attributionTag)?.removeFromSuperview()
 
         guard provider == .mapy, !MapyTiles.urlTemplate.isEmpty else { return }
-        let tiles = MKTileOverlay(urlTemplate: MapyTiles.urlTemplate)
+        let tiles = CachedTileOverlay(urlTemplate: MapyTiles.urlTemplate)
         tiles.tileSize = CGSize(width: 256, height: 256)
         tiles.canReplaceMapContent = true // raster tiles replace Apple's basemap
         addOverlay(tiles, level: .aboveLabels)

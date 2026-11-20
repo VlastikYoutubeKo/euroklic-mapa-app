@@ -7,6 +7,13 @@ a stejný soubor je zabalený i v aplikaci (Více → Co je nového; po aktualiz
 Nadpis sekce musí mít tvar `## <verze> — <datum>`, položky jsou odrážky `- `. Odrážka začínající
 `[Android]` nebo `[iOS]` se ukáže jen v dané aplikaci (značka se skryje), odrážky bez značky v obou.
 
+## 1.3.0 — 2026-11-20
+- Offline režim: bez připojení aplikace funguje ze stažených míst a uložené mapy a nahoře na mapě to napíše. Mapu oblasti jde stáhnout předem (tlačítko stažení na mapě). Na iPhonu to funguje jen s mapou Mapy.com.
+- Rychlé přepnutí mezi Euroklíčem a Odjezdy přímo na mapě (už ne přes Více). Na Androidu je i zástupce na ploše: dlouhé podržení ikony → Odjezdy.
+- U přidání fotky jsou teď tři zdroje: vyfotit, vybrat z galerie nebo vybrat ze souborů.
+- [Android] Při přidávání místa se mapa otevře na vaší poloze a tlačítko „Použít moji polohu“ tam přesune značku.
+- [iOS] Formulář „Přidat místo“ je přepracovaný: mapa se otevře na vaší poloze s tlačítkem „Moje poloha“, přehlednější tlačítka fotky a odeslání.
+
 ## 1.2.2 — 2026-11-20
 - [Android] Aplikace je teď česky i anglicky. Řídí se jazykem telefonu: v češtině česky, ve všech ostatních jazycích anglicky.
 - [Android] „Co je nového“ se po aktualizaci ukáže samo, celá historie je v Více → Co je nového.

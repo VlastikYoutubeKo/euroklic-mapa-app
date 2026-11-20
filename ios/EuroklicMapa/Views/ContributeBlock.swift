@@ -12,6 +12,7 @@ struct ContributeBlock: View {
     @State private var showPhotoSource = false
     @State private var showLibrary = false
     @State private var showCamera = false
+    @State private var showFiles = false
     @State private var libraryItem: PhotosPickerItem?
     @State private var showComposer = false
     @State private var showReport = false
@@ -44,13 +45,18 @@ struct ContributeBlock: View {
                 .foregroundStyle(.secondary)
         }
         .confirmationDialog("Přidat fotku", isPresented: $showPhotoSource, titleVisibility: .visible) {
-            Button("Vybrat z fotek") { showLibrary = true }
             if CameraPicker.isAvailable {
                 Button("Vyfotit") { showCamera = true }
             }
+            Button("Vybrat z fotek") { showLibrary = true }
+            Button("Vybrat ze souborů") { showFiles = true }
             Button("Zrušit", role: .cancel) {}
         }
         .photosPicker(isPresented: $showLibrary, selection: $libraryItem, matching: .images)
+        .fileImporter(isPresented: $showFiles, allowedContentTypes: [.image]) { result in
+            guard case .success(let url) = result else { return }
+            Task { await sendFile(url) }
+        }
         .fullScreenCover(isPresented: $showCamera) {
             CameraPicker(isPresented: $showCamera) { image in
                 Task { await sendCamera(image) }
@@ -107,6 +113,20 @@ struct ContributeBlock: View {
     private func sendLibrary(_ item: PhotosPickerItem) async {
         defer { libraryItem = nil }
         guard let data = try? await item.loadTransferable(type: Data.self) else {
+            show(L("Fotku se nepodařilo načíst."), ok: false)
+            return
+        }
+        let jpeg = await Task.detached(priority: .userInitiated) {
+            ImageUtils.downscaleToJPEG(data: data)
+        }.value
+        await upload(jpeg)
+    }
+
+    /// Photo picked in the Files app (security-scoped URL).
+    private func sendFile(_ url: URL) async {
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        guard let data = try? Data(contentsOf: url) else {
             show(L("Fotku se nepodařilo načíst."), ok: false)
             return
         }

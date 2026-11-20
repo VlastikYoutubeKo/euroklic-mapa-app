@@ -8,23 +8,36 @@ import SwiftUI
 /// Server sets `source='user'`, `approved=0` → moderation queue.
 struct AddPlaceView: View {
     @EnvironmentObject private var auth: AuthSession
+    @EnvironmentObject private var location: LocationService
     @Environment(\.dismiss) private var dismiss
 
     @State private var name = ""
     @State private var desc = ""
     @State private var coordinate: CLLocationCoordinate2D?
     @State private var photoItem: PhotosPickerItem?
+    @State private var showLibrary = false
+    @State private var showCamera = false
+    @State private var showPhotoSource = false
+    @State private var showFiles = false
     @State private var photoJPEG: Data?
     @State private var submitting = false
     @State private var resultMessage: String?
 
+    private var canSubmit: Bool {
+        !name.trimmingCharacters(in: .whitespaces).isEmpty && coordinate != nil && auth.isLoggedIn && !submitting
+    }
+
     var body: some View {
         NavigationStack {
             Form {
-                Section("Nové místo") {
+                Section {
                     TextField("Název místa *", text: $name)
                     TextField("Podrobný popis (kde přesně dveře jsou…)", text: $desc, axis: .vertical)
                         .lineLimit(3...6)
+                } header: {
+                    Text("Nové místo")
+                } footer: {
+                    Text("Než se místo objeví v mapě, schválí ho moderátor.")
                 }
 
                 Section("Poloha *") {
@@ -32,33 +45,43 @@ struct AddPlaceView: View {
                         MapPickerView(coordinate: $coordinate)
                     } label: {
                         if let coordinate {
-                            LabeledContent("Vybráno", value: String(format: "%.5f, %.5f", coordinate.latitude, coordinate.longitude))
+                            Label {
+                                LabeledContent("Vybráno", value: String(format: "%.5f, %.5f", coordinate.latitude, coordinate.longitude))
+                            } icon: {
+                                Image(systemName: "mappin.circle.fill").foregroundStyle(Theme.brand)
+                            }
                         } else {
-                            Text("Vybrat na mapě")
+                            Label("Vybrat na mapě", systemImage: "mappin.and.ellipse")
                         }
                     }
                 }
 
                 Section("Fotka (nepovinné)") {
-                    PhotosPicker(selection: $photoItem, matching: .images) {
-                        Label(photoJPEG == nil ? L("Vybrat fotku") : L("Fotka vybrána ✓"), systemImage: "camera")
-                    }
-                    if photoJPEG != nil {
+                    if let data = photoJPEG, let image = UIImage(data: data) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 180)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+                            .accessibilityLabel("Vybraná fotka")
                         Button("Odebrat fotku", role: .destructive) {
                             photoJPEG = nil
                             photoItem = nil
                         }
-                        .font(.footnote)
+                    } else {
+                        // One entry point; the menu offers camera / photo library / Files.
+                        Button { showPhotoSource = true } label: {
+                            Label("Přidat fotku", systemImage: "camera")
+                        }
                     }
                 }
 
                 if !auth.isLoggedIn {
                     Section {
-                        HStack(spacing: 10) {
-                            Image(systemName: "lock")
-                            Text("Nejdřív se přihlaste (Více → Přihlásit se). Fotka i jméno vidí moderátoři.")
-                                .font(.footnote)
-                        }
+                        Label("Nejdřív se přihlaste. Fotku i jméno vidí moderátoři.", systemImage: "lock")
+                            .font(.footnote)
                         Button("Přihlásit se") { auth.login() }
                     }
                 }
@@ -75,14 +98,51 @@ struct AddPlaceView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Zrušit") { dismiss() }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if submitting {
-                        ProgressView()
-                    } else {
-                        Button("Odeslat ke schválení") { submit() }
-                            .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || coordinate == nil || !auth.isLoggedIn)
+            }
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    submit()
+                } label: {
+                    Group {
+                        if submitting {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text("Odeslat ke schválení")
+                        }
                     }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 28)
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(Theme.brand)
+                .disabled(!canSubmit)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(.bar)
+            }
+            .confirmationDialog("Přidat fotku", isPresented: $showPhotoSource, titleVisibility: .visible) {
+                if CameraPicker.isAvailable {
+                    Button("Vyfotit") { showCamera = true }
+                }
+                Button("Vybrat z fotek") { showLibrary = true }
+                Button("Vybrat ze souborů") { showFiles = true }
+                Button("Zrušit", role: .cancel) {}
+            }
+            .fileImporter(isPresented: $showFiles, allowedContentTypes: [.image]) { result in
+                guard case .success(let url) = result else { return }
+                let scoped = url.startAccessingSecurityScopedResource()
+                defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                if let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
+                    photoJPEG = Self.downscaleToJPEG(image, longestEdge: 1800, quality: 0.82)
+                }
+            }
+            .photosPicker(isPresented: $showLibrary, selection: $photoItem, matching: .images)
+            .fullScreenCover(isPresented: $showCamera) {
+                CameraPicker(isPresented: $showCamera) { image in
+                    photoJPEG = Self.downscaleToJPEG(image, longestEdge: 1800, quality: 0.82)
+                }
+                .ignoresSafeArea()
             }
             .onChange(of: photoItem) { newItem in
                 guard let item = newItem else { return }
@@ -93,6 +153,7 @@ struct AddPlaceView: View {
                     }
                 }
             }
+            .task { location.requestAndRefresh() }
         }
     }
 
@@ -136,42 +197,84 @@ struct AddPlaceView: View {
     }
 }
 
-/// Tap-to-place pin picker — "Klikni kamkoliv na mapu pro umístění bodu!"
+/// Tap-to-place pin picker; opens on the user's position (when known) with a "my location" button.
 struct MapPickerView: View {
     @Binding var coordinate: CLLocationCoordinate2D?
+    @EnvironmentObject private var location: LocationService
     @Environment(\.dismiss) private var dismiss
+    @State private var recenter: CLLocationCoordinate2D?
+    @State private var recenterToken = 0
 
     var body: some View {
-        MapPickerRepresentable(coordinate: $coordinate)
-            .ignoresSafeArea()
-            .navigationTitle("Vyberte polohu")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Hotovo") { dismiss() }
-                        .disabled(coordinate == nil)
+        MapPickerRepresentable(
+            coordinate: $coordinate,
+            start: coordinate ?? location.lastLocation?.coordinate,
+            recenter: recenter,
+            recenterToken: recenterToken,
+        )
+        .ignoresSafeArea(edges: .bottom)
+        .navigationTitle("Vyberte polohu")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Hotovo") { dismiss() }
+                    .disabled(coordinate == nil)
+            }
+        }
+        .safeAreaInset(edge: .top) {
+            Text("Klepněte na mapu, kam patří značka.")
+                .font(.footnote)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Capsule().fill(.regularMaterial))
+        }
+        .overlay(alignment: .bottomTrailing) {
+            Button {
+                if let c = location.lastLocation?.coordinate {
+                    coordinate = c
+                    recenter = c
+                    recenterToken += 1
+                } else {
+                    location.requestAndRefresh()
                 }
+            } label: {
+                Image(systemName: "location.fill")
+                    .font(.title3)
+                    .frame(width: 52, height: 52)
+                    .background(Circle().fill(.regularMaterial))
             }
-            .safeAreaInset(edge: .top) {
-                Text("Klikni kamkoliv na mapu pro umístění bodu!")
-                    .font(.footnote)
-                    .padding(8)
-                    .background(Capsule().fill(.regularMaterial))
+            .padding(16)
+            .accessibilityLabel("Moje poloha")
+        }
+        .onChange(of: location.lastLocation) { newValue in
+            // The fix can arrive after the picker opened; centre once if nothing is chosen yet.
+            if coordinate == nil, let c = newValue?.coordinate {
+                recenter = c
+                recenterToken += 1
             }
+        }
     }
 }
 
 struct MapPickerRepresentable: UIViewRepresentable {
     @Binding var coordinate: CLLocationCoordinate2D?
+    var start: CLLocationCoordinate2D?
+    var recenter: CLLocationCoordinate2D?
+    var recenterToken: Int
 
     func makeUIView(context: Context) -> MKMapView {
         let map = MKMapView()
         map.delegate = context.coordinator
         map.applyBasemap(MapProvider.stored)
-        map.setRegion(MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 49.8, longitude: 15.5),
-            span: MKCoordinateSpan(latitudeDelta: 4, longitudeDelta: 4),
-        ), animated: false)
+        if let start {
+            map.setRegion(MKCoordinateRegion(center: start, latitudinalMeters: 400, longitudinalMeters: 400), animated: false)
+        } else {
+            map.setRegion(MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 49.8, longitude: 15.5),
+                span: MKCoordinateSpan(latitudeDelta: 4, longitudeDelta: 4),
+            ), animated: false)
+        }
+        if let c = coordinate { context.coordinator.place(c, on: map) }
         map.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tap(_:))))
         context.coordinator.map = map
         return map
@@ -179,6 +282,19 @@ struct MapPickerRepresentable: UIViewRepresentable {
 
     func updateUIView(_ map: MKMapView, context: Context) {
         context.coordinator.parent = self
+        if context.coordinator.lastToken != recenterToken {
+            context.coordinator.lastToken = recenterToken
+            if let c = recenter {
+                map.setRegion(MKCoordinateRegion(center: c, latitudinalMeters: 300, longitudinalMeters: 300), animated: true)
+            }
+        }
+        // Keep the pin in sync with the binding (set by the "my location" button or a tap).
+        if let c = coordinate {
+            let shown = map.annotations.first?.coordinate
+            if shown == nil || abs(shown!.latitude - c.latitude) > 1e-7 || abs(shown!.longitude - c.longitude) > 1e-7 {
+                context.coordinator.place(c, on: map)
+            }
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
@@ -186,17 +302,22 @@ struct MapPickerRepresentable: UIViewRepresentable {
     final class Coordinator: NSObject, MKMapViewDelegate, UIGestureRecognizerDelegate {
         var parent: MapPickerRepresentable
         weak var map: MKMapView?
+        var lastToken = 0
 
         init(parent: MapPickerRepresentable) { self.parent = parent }
 
-        @objc func tap(_ recognizer: UITapGestureRecognizer) {
-            guard let map else { return }
-            let point = recognizer.location(in: map)
-            parent.coordinate = map.convert(point, toCoordinateFrom: map)
+        func place(_ c: CLLocationCoordinate2D, on map: MKMapView) {
             map.removeAnnotations(map.annotations)
             let pin = MKPointAnnotation()
-            pin.coordinate = parent.coordinate!
+            pin.coordinate = c
             map.addAnnotation(pin)
+        }
+
+        @objc func tap(_ recognizer: UITapGestureRecognizer) {
+            guard let map else { return }
+            let c = map.convert(recognizer.location(in: map), toCoordinateFrom: map)
+            parent.coordinate = c
+            place(c, on: map)
         }
 
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {

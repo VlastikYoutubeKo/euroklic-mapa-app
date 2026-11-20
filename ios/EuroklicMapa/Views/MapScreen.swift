@@ -20,6 +20,11 @@ struct MapScreen: View {
     @State private var recenterTarget: CLLocationCoordinate2D?
     @FocusState private var searchFocused: Bool
     @AppStorage(MapProvider.storageKey) private var mapProvider: MapProvider = .mapy
+    @ObservedObject private var network = NetworkMonitor.shared
+    @StateObject private var viewport = MapViewport()
+    @State private var downloading = false
+    @State private var downloadProgress = 0.0
+    @State private var toast: String?
 
     var body: some View {
         NavigationStack {
@@ -30,6 +35,7 @@ struct MapScreen: View {
                     userLocation: location.lastLocation,
                     provider: mapProvider,
                     recenterTarget: recenterTarget,
+                    viewport: viewport,
                     onSelect: { selected = $0 },
                 )
                 .ignoresSafeArea()
@@ -65,6 +71,20 @@ struct MapScreen: View {
                             }
                             .accessibilityLabel("Najít nejbližší WC")
 
+                            Button(action: downloadMap) {
+                                Group {
+                                    if downloading {
+                                        ProgressView(value: downloadProgress).progressViewStyle(.circular)
+                                    } else {
+                                        Image(systemName: "arrow.down.circle").font(.title3).foregroundStyle(Theme.tint)
+                                    }
+                                }
+                                .frame(width: 44, height: 44)
+                                .background(Circle().fill(.thinMaterial))
+                                .shadow(radius: 3, y: 1)
+                            }
+                            .accessibilityLabel("Stáhnout mapu pro offline použití")
+
                             Button(action: { showAddPlace = true }) {
                                 Image(systemName: "plus")
                                     .font(.title3)
@@ -93,6 +113,14 @@ struct MapScreen: View {
             .sheet(isPresented: $showAddPlace) {
                 AddPlaceView()
             }
+            .alert("Offline mapa", isPresented: .init(
+                get: { toast != nil },
+                set: { if !$0 { toast = nil } },
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(toast ?? "")
+            }
             .alert("Nejbližší WC", isPresented: .init(
                 get: { nearestMessage != nil },
                 set: { if !$0 { nearestMessage = nil } },
@@ -110,6 +138,7 @@ struct MapScreen: View {
     /// Address search (Nominatim, CZ/SK) above the category chips; picking a hit flies the map there.
     private var topControls: some View {
         VStack(spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
             VStack(spacing: 0) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
@@ -152,9 +181,41 @@ struct MapScreen: View {
                 }
             }
             .background(RoundedRectangle(cornerRadius: 22).fill(.regularMaterial))
+            ModeSwitchPill(target: .odjezdy)
+            }
             .padding(.horizontal)
 
             categoryChips
+            if !network.isOnline {
+                Label("Offline režim · místa a mapa ze stažených dat", systemImage: "wifi.slash")
+                    .font(.footnote.weight(.medium))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Capsule().fill(.regularMaterial))
+            }
+        }
+    }
+
+    /// Pre-fills the on-disk tile cache for the visible area (Mapy.com only).
+    private func downloadMap() {
+        guard !downloading else { return }
+        guard network.isOnline else {
+            toast = L("Jste offline. Mapu jde stáhnout jen s připojením.")
+            return
+        }
+        let rect = viewport.rect
+        guard !rect.isNull else { return }
+        downloading = true
+        downloadProgress = 0
+        Task {
+            let outcome = await OfflineTiles.prefetch(visible: rect) { downloadProgress = $0 }
+            downloading = false
+            switch outcome {
+            case .done: toast = L("Mapa téhle oblasti je stažená pro offline použití.")
+            case .tooLarge: toast = L("Vybraná oblast je na stažení moc velká. Přibližte mapu na menší oblast a zkuste to znovu.")
+            case .failed: toast = L("Stahování mapy se nezdařilo. Zkuste to znovu s lepším připojením.")
+            case .unavailable: toast = L("Offline mapa funguje s mapou Mapy.com (Více → Mapa).")
+            }
         }
     }
 

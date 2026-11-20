@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -41,7 +42,14 @@ fun dataAgeText(lastSyncMillis: Long?, now: Long = System.currentTimeMillis()): 
 /** Non-hidden staleness notice. Renders nothing when the cache is current. */
 @Composable
 fun DataFreshnessBanner(lastSyncMillis: Long?, modifier: Modifier = Modifier) {
-    val text = dataAgeText(lastSyncMillis) ?: return
+    val online by cz.euroklicmapa.util.rememberIsOnline()
+    // Offline mode: always say so (even with fresh data) so it's clear the app runs from the
+    // downloaded places and the cached map area.
+    val text = if (!online) {
+        t("Offline režim · místa a mapa ze stažených dat")
+    } else {
+        dataAgeText(lastSyncMillis) ?: return
+    }
     Surface(
         shape = EuroklicTheme.shapes.pill,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
