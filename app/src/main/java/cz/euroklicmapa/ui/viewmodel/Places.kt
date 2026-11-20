@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.viewmodel
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.data.local.PickupPointEntity
 import cz.euroklicmapa.data.local.WcLocationEntity
 import cz.euroklicmapa.util.PlaceStatus
@@ -41,7 +42,7 @@ fun flattenPlaces(
         PlaceListItem(
             id = it.id,
             isPickup = false,
-            title = it.name.ifBlank { "Bezbariérové WC" },
+            title = it.name.ifBlank { t("Bezbariérové WC") },
             subtitle = null,
             position = pos,
             source = it.source,
@@ -57,7 +58,7 @@ fun flattenPlaces(
         PlaceListItem(
             id = it.id,
             isPickup = true,
-            title = it.orgName.ifBlank { "Výdejní místo Euroklíče" },
+            title = it.orgName.ifBlank { t("Výdejní místo Euroklíče") },
             subtitle = it.address ?: listOfNotNull(it.district, it.kraj).joinToString(", ").ifBlank { null },
             position = pos,
             source = null,

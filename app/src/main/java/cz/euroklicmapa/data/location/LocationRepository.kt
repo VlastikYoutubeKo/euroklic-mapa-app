@@ -10,6 +10,13 @@ import com.google.android.gms.location.Priority
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import cz.euroklicmapa.data.prefs.LastLocationPrefs
+import cz.euroklicmapa.widget.NearestToiletWidget
+import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 
 /**
@@ -26,6 +33,18 @@ class LocationRepository(private val appContext: Context) {
     val lastKnown: StateFlow<GeoPoint?> = _lastKnown.asStateFlow()
 
     fun hasPermission(): Boolean = hasFine() || hasCoarse()
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Stores the fix for the widgets (they can't read the location in the background) and redraws them. */
+    private fun persistForWidgets(point: GeoPoint) {
+        scope.launch {
+            runCatching {
+                LastLocationPrefs(appContext).save(point.latitude, point.longitude)
+                NearestToiletWidget().updateAll(appContext)
+            }
+        }
+    }
 
     private fun hasFine(): Boolean =
         ContextCompat.checkSelfPermission(
@@ -66,7 +85,10 @@ class LocationRepository(private val appContext: Context) {
 
         client.getCurrentLocation(request, null).addOnSuccessListener { loc ->
             val point = loc?.let { GeoPoint(it.latitude, it.longitude) } ?: _lastKnown.value
-            if (point != null) _lastKnown.value = point
+            if (point != null) {
+                _lastKnown.value = point
+                persistForWidgets(point)
+            }
             onResult(point)
         }.addOnFailureListener {
             onResult(_lastKnown.value)

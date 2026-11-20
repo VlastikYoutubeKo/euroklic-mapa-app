@@ -78,9 +78,9 @@ fun voteBadge(likes: Int, dislikes: Int, isCd: Boolean): VoteBadge = when {
 }
 
 fun VoteBadge.label(likes: Int, dislikes: Int): String = when (this) {
-    VoteBadge.REPORTED -> "Nahlášeno nefunguje ($dislikes👎)"
-    VoteBadge.VERIFIED -> "Ověřeno · $likes👍"
-    VoteBadge.CD_NO_VOTES -> "Zatím bez hlasů"
+    VoteBadge.REPORTED -> t("Nahlášeno nefunguje (%s👎)", dislikes)
+    VoteBadge.VERIFIED -> t("Ověřeno · %s👍", likes)
+    VoteBadge.CD_NO_VOTES -> t("Zatím bez hlasů")
     VoteBadge.NONE -> ""
 }
 

@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.theme
 
+import cz.euroklicmapa.util.t
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -87,13 +88,13 @@ fun sourceColor(source: String?): Color =
 
 /** Group label — the main label on markers, chips and cards. */
 fun sourceLabel(source: String?): String =
-    if (isOfficialSource(source)) "Oficiální zdroj" else "Komunitní zdroj"
+    if (isOfficialSource(source)) t("Oficiální zdroj") else t("Komunitní zdroj")
 
 /** The specific origin, shown only as a detail on the place screen. */
 fun originalSourceLabel(source: String?): String = when (source?.lowercase()) {
-    "cd" -> "České dráhy"
+    "cd" -> t("České dráhy")
     "osm" -> "OpenStreetMap"
     "mapotic" -> "WCkompas (Mapotic)"
-    "user" -> "Přidáno uživatelem"
-    else -> source ?: "Neznámý zdroj"
+    "user" -> t("Přidáno uživatelem")
+    else -> source ?: t("Neznámý zdroj")
 }

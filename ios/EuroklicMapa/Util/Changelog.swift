@@ -42,7 +42,14 @@ enum Changelog {
                 }
                 date = rest.isEmpty ? nil : rest
             } else if version != nil, line.hasPrefix("- ") || line.hasPrefix("* ") {
-                items.append(String(line.dropFirst(2)).trimmingCharacters(in: .whitespaces))
+                let item = String(line.dropFirst(2)).trimmingCharacters(in: .whitespaces)
+                // Shared changelog: `[Android]` bullets are hidden here, `[iOS]` keeps its text without the tag.
+                if item.hasPrefix("[Android]") { continue }
+                if item.hasPrefix("[iOS]") {
+                    items.append(String(item.dropFirst("[iOS]".count)).trimmingCharacters(in: .whitespaces))
+                } else {
+                    items.append(item)
+                }
             }
         }
         flush()

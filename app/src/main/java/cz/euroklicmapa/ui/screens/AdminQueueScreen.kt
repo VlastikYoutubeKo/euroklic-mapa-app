@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.contrastBorder
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -83,14 +84,14 @@ fun AdminQueueScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ke schválení") },
+                title = { Text(t("Ke schválení")) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Zpět")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = t("Zpět"))
                     }
                 },
                 actions = {
-                    TextButton(shape = EuroklicTheme.shapes.pill, onClick = viewModel::load) { Text("Obnovit") }
+                    TextButton(shape = EuroklicTheme.shapes.pill, onClick = viewModel::load) { Text(t("Obnovit")) }
                 },
             )
         },
@@ -108,15 +109,15 @@ fun AdminQueueScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(s.message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(shape = EuroklicTheme.shapes.pill, onClick = viewModel::load) { Text("Zkusit znovu") }
+                    Button(shape = EuroklicTheme.shapes.pill, onClick = viewModel::load) { Text(t("Zkusit znovu")) }
                 }
             }
 
             is AdminListState.Loaded -> if (s.pending.isEmpty() && s.photos.isEmpty() && s.comments.isEmpty() && s.reports.isEmpty()) {
                 EmptyState(
                     icon = Icons.Rounded.Inbox,
-                    title = "Fronta je prázdná",
-                    subtitle = "Žádné nové návrhy ani nahlášené problémy.",
+                    title = t("Fronta je prázdná"),
+                    subtitle = t("Žádné nové návrhy ani nahlášené problémy."),
                 )
             } else {
                 val showHeaders = listOf(
@@ -134,7 +135,7 @@ fun AdminQueueScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    if (s.pending.isNotEmpty() && showHeaders) item("h_places") { SectionHeader("Nová místa") }
+                    if (s.pending.isNotEmpty() && showHeaders) item("h_places") { SectionHeader(t("Nová místa")) }
                     items(s.pending, key = { "p_${it.id}" }) { place ->
                         PendingCard(
                             place = place,
@@ -144,7 +145,7 @@ fun AdminQueueScreen(
                             onReject = { viewModel.review(place.id, approve = false) },
                         )
                     }
-                    if (s.photos.isNotEmpty() && showHeaders) item("h_photos") { SectionHeader("Návrhy fotek") }
+                    if (s.photos.isNotEmpty() && showHeaders) item("h_photos") { SectionHeader(t("Návrhy fotek")) }
                     items(s.photos, key = { "f_${it.id}" }) { photo ->
                         PhotoSuggestionCard(
                             photo = photo,
@@ -154,7 +155,7 @@ fun AdminQueueScreen(
                             onReject = { viewModel.reviewPhoto(photo.id, approve = false) },
                         )
                     }
-                    if (s.comments.isNotEmpty() && showHeaders) item("h_comments") { SectionHeader("Návrhy komentářů") }
+                    if (s.comments.isNotEmpty() && showHeaders) item("h_comments") { SectionHeader(t("Návrhy komentářů")) }
                     items(s.comments, key = { "c_${it.id}" }) { c ->
                         CommentSuggestionCard(
                             comment = c,
@@ -164,7 +165,7 @@ fun AdminQueueScreen(
                             onReject = { viewModel.reviewComment(c.id, approve = false) },
                         )
                     }
-                    if (s.reports.isNotEmpty() && showHeaders) item("h_reports") { SectionHeader("Nahlášené problémy") }
+                    if (s.reports.isNotEmpty() && showHeaders) item("h_reports") { SectionHeader(t("Nahlášené problémy")) }
                     items(s.reports, key = { "r_${it.id}" }) { report ->
                         LocationReportCard(
                             report = report,
@@ -198,7 +199,7 @@ private fun LocationReportCard(
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val placeLabel = report.location_name?.takeIf { it.isNotBlank() }
-                ?: "Místo #${report.location_id}"
+                ?: t("Místo #%s", report.location_id)
             Text(
                 placeLabel,
                 style = MaterialTheme.typography.titleMedium,
@@ -214,7 +215,7 @@ private fun LocationReportCard(
             }
             Text(
                 listOfNotNull(
-                    report.author_name?.takeIf { it.isNotBlank() } ?: "Neznámý autor",
+                    report.author_name?.takeIf { it.isNotBlank() } ?: t("Neznámý autor"),
                     report.created_at?.substringBefore(" ")?.takeIf { it.isNotBlank() },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.labelSmall,
@@ -224,8 +225,8 @@ private fun LocationReportCard(
                 shape = EuroklicTheme.shapes.pill,
                 onClick = onOpenPlace,
                 modifier = Modifier.heightIn(min = 48.dp)
-                    .semantics { contentDescription = "Otevřít místo $placeLabel" },
-            ) { Text("Otevřít místo") }
+                    .semantics { contentDescription = t("Otevřít místo %s", placeLabel) },
+            ) { Text(t("Otevřít místo")) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedButton(
                     shape = EuroklicTheme.shapes.pill,
@@ -235,17 +236,17 @@ private fun LocationReportCard(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 ) {
                     Icon(Icons.Rounded.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Zamítnout")
+                    Text(t("Zamítnout"))
                 }
                 Button(shape = EuroklicTheme.shapes.pill, onClick = onResolve, enabled = enabled, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
                     if (busy) {
                         CircularProgressIndicator(
                             strokeWidth = 2.dp,
-                            modifier = Modifier.size(18.dp).semantics { contentDescription = "Vyřizuji nahlášení" },
+                            modifier = Modifier.size(18.dp).semantics { contentDescription = t("Vyřizuji nahlášení") },
                         )
                     } else {
                         Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text("Vyřešeno")
+                        Text(t("Vyřešeno"))
                     }
                 }
             }
@@ -281,12 +282,12 @@ private fun PhotoSuggestionCard(
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val placeLabel = photo.location_name?.takeIf { it.isNotBlank() }
-                ?: "Místo #${photo.location_id}"
+                ?: t("Místo #%s", photo.location_id)
             if (!photo.photo_url.isNullOrBlank()) {
                 AsyncImage(
                     model = photo.photo_url,
                     // Photo under review is content, not decoration.
-                    contentDescription = "Navrhovaná fotka pro $placeLabel",
+                    contentDescription = t("Navrhovaná fotka pro %s", placeLabel),
                     modifier = Modifier.fillMaxWidth().height(200.dp).clip(EuroklicTheme.shapes.small),
                 )
             }
@@ -312,7 +313,7 @@ private fun PhotoSuggestionCard(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 ) {
                     Icon(Icons.Rounded.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Zamítnout")
+                    Text(t("Zamítnout"))
                 }
                 Button(shape = EuroklicTheme.shapes.pill, onClick = onApprove, enabled = enabled, modifier = Modifier.weight(1f)) {
                     if (busy) {
@@ -320,11 +321,11 @@ private fun PhotoSuggestionCard(
                             strokeWidth = 2.dp,
                             modifier = Modifier
                                 .size(18.dp)
-                                .semantics { contentDescription = "Schvaluji" },
+                                .semantics { contentDescription = t("Schvaluji") },
                         )
                     } else {
                         Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text("Schválit")
+                        Text(t("Schválit"))
                     }
                 }
             }
@@ -357,7 +358,7 @@ private fun CommentSuggestionCard(
             Text(
                 listOfNotNull(
                     comment.displayAuthor,
-                    comment.location_name?.takeIf { it.isNotBlank() } ?: "Místo #${comment.location_id}",
+                    comment.location_name?.takeIf { it.isNotBlank() } ?: t("Místo #%s", comment.location_id),
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -371,7 +372,7 @@ private fun CommentSuggestionCard(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 ) {
                     Icon(Icons.Rounded.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Zamítnout")
+                    Text(t("Zamítnout"))
                 }
                 Button(shape = EuroklicTheme.shapes.pill, onClick = onApprove, enabled = enabled, modifier = Modifier.weight(1f)) {
                     if (busy) {
@@ -379,11 +380,11 @@ private fun CommentSuggestionCard(
                             strokeWidth = 2.dp,
                             modifier = Modifier
                                 .size(18.dp)
-                                .semantics { contentDescription = "Schvaluji" },
+                                .semantics { contentDescription = t("Schvaluji") },
                         )
                     } else {
                         Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text("Schválit")
+                        Text(t("Schválit"))
                     }
                 }
             }
@@ -411,13 +412,13 @@ private fun PendingCard(
                     model = place.photo_url,
                     // Photo attached to a place under review is content, not decoration.
                     contentDescription = place.name.trim().takeIf { it.isNotEmpty() }
-                        ?.let { "Fotka navrženého místa $it" }
-                        ?: "Fotka navrženého místa",
+                        ?.let { t("Fotka navrženého místa %s", it) }
+                        ?: t("Fotka navrženého místa"),
                     modifier = Modifier.fillMaxWidth().height(160.dp).clip(EuroklicTheme.shapes.small),
                 )
             }
             Text(
-                place.name.ifBlank { "Bez názvu" },
+                place.name.ifBlank { t("Bez názvu") },
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -448,7 +449,7 @@ private fun PendingCard(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 ) {
                     Icon(Icons.Rounded.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Zamítnout")
+                    Text(t("Zamítnout"))
                 }
                 Button(
                     shape = EuroklicTheme.shapes.pill,
@@ -461,11 +462,11 @@ private fun PendingCard(
                             strokeWidth = 2.dp,
                             modifier = Modifier
                                 .size(18.dp)
-                                .semantics { contentDescription = "Schvaluji" },
+                                .semantics { contentDescription = t("Schvaluji") },
                         )
                     } else {
                         Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text("Schválit")
+                        Text(t("Schválit"))
                     }
                 }
             }

@@ -10,12 +10,12 @@ fun isForeignCountry(iso: String?): Boolean =
     !iso.isNullOrBlank() && iso != "CZ" && iso != "SK"
 
 private val NAMES = mapOf(
-    "DE" to "Německo", "AT" to "Rakousko", "PL" to "Polsko", "CH" to "Švýcarsko",
-    "SK" to "Slovensko", "CZ" to "Česko", "HU" to "Maďarsko", "FR" to "Francie",
-    "IT" to "Itálie", "NL" to "Nizozemsko", "BE" to "Belgie", "SI" to "Slovinsko",
-    "NO" to "Norsko", "SE" to "Švédsko", "DK" to "Dánsko", "GB" to "Spojené království",
-    "ES" to "Španělsko", "LU" to "Lucembursko",
+    "DE" to t("Německo"), "AT" to t("Rakousko"), "PL" to t("Polsko"), "CH" to t("Švýcarsko"),
+    "SK" to t("Slovensko"), "CZ" to t("Česko"), "HU" to t("Maďarsko"), "FR" to t("Francie"),
+    "IT" to t("Itálie"), "NL" to t("Nizozemsko"), "BE" to t("Belgie"), "SI" to t("Slovinsko"),
+    "NO" to t("Norsko"), "SE" to t("Švédsko"), "DK" to t("Dánsko"), "GB" to t("Spojené království"),
+    "ES" to t("Španělsko"), "LU" to t("Lucembursko"),
 )
 
 fun countryName(iso: String?): String =
-    iso?.let { NAMES[it.uppercase()] ?: it.uppercase() } ?: "Zahraničí"
+    iso?.let { NAMES[it.uppercase()] ?: it.uppercase() } ?: t("Zahraničí")

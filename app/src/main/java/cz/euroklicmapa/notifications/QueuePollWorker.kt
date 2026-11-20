@@ -1,5 +1,6 @@
 package cz.euroklicmapa.notifications
 
+import cz.euroklicmapa.util.t
 import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
@@ -68,7 +69,7 @@ class QueuePollWorker(
         notify(
             id = NOTIF_MODERATION,
             channel = NotificationChannels.MODERATION,
-            title = "Čeká na schválení",
+            title = t("Čeká na schválení"),
             text = "${QueuePollLogic.places(placeCount)} · ${QueuePollLogic.photos(photoCount)}",
             contentIntent = activityIntent(navExtra = NAV_ADMIN_QUEUE, requestCode = NOTIF_MODERATION),
         )
@@ -104,7 +105,7 @@ class QueuePollWorker(
             notify(
                 id = NOTIF_NEARBY,
                 channel = NotificationChannels.NEARBY,
-                title = "Nové v okolí",
+                title = t("Nové v okolí"),
                 text = QueuePollLogic.newPlacesNearby(nearbyNew.size),
                 contentIntent = activityIntent(navExtra = null, requestCode = NOTIF_NEARBY),
             )

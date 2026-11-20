@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.components
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -24,17 +25,17 @@ import java.util.concurrent.TimeUnit
 private val FRESH_WINDOW_MS = TimeUnit.HOURS.toMillis(2)
 
 fun dataAgeText(lastSyncMillis: Long?, now: Long = System.currentTimeMillis()): String? {
-    if (lastSyncMillis == null) return "Zatím se nepodařilo stáhnout aktuální data"
+    if (lastSyncMillis == null) return t("Zatím se nepodařilo stáhnout aktuální data")
     val age = now - lastSyncMillis
     if (age < FRESH_WINDOW_MS) return null
     val hours = TimeUnit.MILLISECONDS.toHours(age)
     val days = TimeUnit.MILLISECONDS.toDays(age)
     val ago = when {
-        days >= 1L -> "před $days dny"
-        hours >= 1L -> "před $hours h"
-        else -> "před chvílí"
+        days >= 1L -> t("před %s dny", days)
+        hours >= 1L -> t("před %s h", hours)
+        else -> t("před chvílí")
     }
-    return "Offline data · aktualizováno $ago"
+    return t("Offline data · aktualizováno %s", ago)
 }
 
 /** Non-hidden staleness notice. Renders nothing when the cache is current. */

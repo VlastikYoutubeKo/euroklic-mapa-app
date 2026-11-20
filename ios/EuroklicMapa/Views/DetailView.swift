@@ -137,7 +137,7 @@ struct DetailView: View {
             if let badge = currentBadge {
                 Text(badge)
                     .font(.subheadline)
-                    .foregroundStyle(currentStatus == .reported ? Theme.accent : Theme.success)
+                    .foregroundStyle(voteBadge(likes: displayLikes, dislikes: displayDislikes, isCd: place.isOfficialSource).color)
                     .multilineTextAlignment(.center)
             }
             if let phone = place.phonePrimary, let url = URL(string: "tel:\(phone.replacingOccurrences(of: " ", with: ""))") {
@@ -222,12 +222,12 @@ struct DetailView: View {
 
             if let stop = stops.first(where: { $0.id == selectedStopId }),
                let url = URL(string: "https://app.odjezdy.online/zastavka/\(stop.id)") {
-                (Text("Odjezdy poskytuje ") + Text("odjezdy.online").foregroundColor(Theme.tint))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .onTapGesture { UIApplication.shared.open(url) }
-                    .accessibilityAddTraits(.isLink)
-                    .accessibilityLabel("Odjezdy poskytuje odjezdy.online. Otevřít zastávku \(stop.name).")
+                Link(destination: url) {
+                    (Text("Odjezdy poskytuje ") + Text("odjezdy.online").foregroundStyle(Theme.tint))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityLabel("Odjezdy poskytuje odjezdy.online. Otevřít zastávku \(stop.name).")
             }
         }
     }
@@ -272,7 +272,7 @@ struct DetailView: View {
             VStack(alignment: .trailing, spacing: 0) {
                 Text(Self.timeFormatter.string(from: d.time)).font(.body.monospacedDigit())
                 if d.delayMinutes > 0 {
-                    Text("+\(d.delayMinutes) min").font(.caption).foregroundStyle(Theme.accent)
+                    Text("+\(d.delayMinutes) min").font(.caption).foregroundStyle(Theme.warningText)
                 }
             }
         }
@@ -555,23 +555,37 @@ struct VoteRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Button { onVote(true) } label: {
-                Label("\(likes)", systemImage: myVote == true ? "hand.thumbsup.fill" : "hand.thumbsup")
-                    .frame(maxWidth: .infinity)
-            }
-            .tint(myVote == true ? Theme.success : .secondary)
-            .accessibilityLabel("Hlasovat: funguje. Zatím \(likes).")
-
-            Button { onVote(false) } label: {
-                Label("\(dislikes)", systemImage: myVote == false ? "hand.thumbsdown.fill" : "hand.thumbsdown")
-                    .frame(maxWidth: .infinity)
-            }
-            .tint(myVote == false ? Theme.accent : .secondary)
-            .accessibilityLabel("Hlasovat: nefunguje. Zatím \(dislikes).")
+            voteButton(like: true)
+            voteButton(like: false)
         }
-        .buttonStyle(.bordered)
         .buttonBorderShape(.capsule)
         .controlSize(.large)
         .disabled(voting)
+    }
+
+    /// Text + icon (not just an icon and a grey count); the chosen vote is filled, the other stays an outline.
+    @ViewBuilder
+    private func voteButton(like: Bool) -> some View {
+        let selected = myVote == like
+        let count = like ? likes : dislikes
+        let button = Button { onVote(like) } label: {
+            Label {
+                Text(like ? "Funguje · \(count)" : "Nefunguje · \(count)")
+                    .foregroundStyle(selected ? Color.white : Color.primary)
+            } icon: {
+                Image(systemName: like ? (selected ? "hand.thumbsup.fill" : "hand.thumbsup")
+                    : (selected ? "hand.thumbsdown.fill" : "hand.thumbsdown"))
+                    .foregroundStyle(selected ? Color.white : (like ? Theme.success : Theme.warningText))
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .tint(like ? Theme.success : Theme.accent)
+        .accessibilityLabel(like ? "Hlasovat: funguje. Zatím \(count)." : "Hlasovat: nefunguje. Zatím \(count).")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        if selected {
+            button.buttonStyle(.borderedProminent)
+        } else {
+            button.buttonStyle(.bordered)
+        }
     }
 }

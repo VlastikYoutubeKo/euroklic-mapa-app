@@ -17,10 +17,10 @@ struct MoreView: View {
 
                 Section("Statistiky") {
                     let s = places.stats
-                    LabeledContent("Bezbariérových WC", value: placesCount(s.totalWc))
-                    LabeledContent("Ověřeno hlasováním", value: "\(s.verifiedWc)")
-                    LabeledContent("Nahlášeno nefunkční", value: "\(s.reportedWc)")
-                    LabeledContent("Výdejních míst klíče", value: "\(s.totalPickup)")
+                    LabeledContent("Bezbariérových WC", value: s.totalWc.formatted())
+                    LabeledContent("Ověřeno hlasováním", value: s.verifiedWc.formatted())
+                    LabeledContent("Nahlášeno nefunkční", value: s.reportedWc.formatted())
+                    LabeledContent("Výdejních míst klíče", value: s.totalPickup.formatted())
                     if let top = s.topLiked {
                         LabeledContent("Nejlépe hodnocené", value: "\(top.name) (+\(top.likes)👍)")
                     }
@@ -83,7 +83,7 @@ struct MoreView: View {
                         .font(.footnote)
                     Text("Pozor: NRZP ČR od července 2026 dočasně pozastavila výdej nových klíčů kvůli chybějícímu financování. Aktuální stav ověřujte na webu.")
                         .font(.footnote)
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(Theme.warningText)
                     LabeledContent("Verze", value: appVersion)
                 }
             }

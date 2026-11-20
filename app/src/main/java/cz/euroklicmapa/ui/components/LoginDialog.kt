@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.components
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -19,18 +20,18 @@ fun LoginDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Přihlásit se") },
+        title = { Text(t("Přihlásit se")) },
         text = {
             Text(
-                "Přihlášení proběhne v prohlížeči — tam si vyberete Discord nebo Google. " +
-                    "Používáme ho jen k přidávání a moderaci míst; na procházení mapy není potřeba.",
+                t("Přihlášení proběhne v prohlížeči — tam si vyberete Discord nebo Google. ") +
+                    t("Používáme ho jen k přidávání a moderaci míst; na procházení mapy není potřeba."),
             )
         },
         confirmButton = {
-            Button(shape = EuroklicTheme.shapes.pill, onClick = { onDismiss(); onContinue() }) { Text("Pokračovat") }
+            Button(shape = EuroklicTheme.shapes.pill, onClick = { onDismiss(); onContinue() }) { Text(t("Pokračovat")) }
         },
         dismissButton = {
-            TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDismiss) { Text("Zrušit") }
+            TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDismiss) { Text(t("Zrušit")) }
         },
     )
 }

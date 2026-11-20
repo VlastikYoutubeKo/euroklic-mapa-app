@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import SwiftUI
 
 /// Unified row over both feeds (WC + pickup), the Swift mirror of Android's
 /// `PlaceListItem`. All trust fields are recomputed per render — never cached.
@@ -126,7 +127,22 @@ extension VoteBadge {
     }
 }
 
+extension VoteBadge {
+    /// "Zatím bez hlasů" is neutral on purpose (green would read as a positive verdict, like the Android app).
+    var color: Color {
+        switch self {
+        case .reported: return Theme.warningText
+        case .verified: return Theme.success
+        case .cdNoVotes, .none: return .secondary
+        }
+    }
+}
+
 extension PlaceItem {
+    var badgeColor: Color {
+        voteBadge(likes: likes, dislikes: dislikes, isCd: isOfficialSource).color
+    }
+
     var badgeLabel: String? {
         let badge = voteBadge(likes: likes, dislikes: dislikes, isCd: isOfficialSource)
         return badge == .none ? nil : badge.label(likes: likes, dislikes: dislikes)

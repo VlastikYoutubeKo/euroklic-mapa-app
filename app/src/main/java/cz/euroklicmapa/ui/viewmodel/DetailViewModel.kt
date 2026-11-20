@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.viewmodel
 
+import cz.euroklicmapa.util.t
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -171,7 +172,7 @@ class DetailViewModel(
             try {
                 when (val r = repository.postComment(id, text)) {
                     PostCommentResult.Success -> {
-                        _message.value = "Komentář odeslán ke schválení."
+                        _message.value = t("Komentář odeslán ke schválení.")
                         loadComments()
                     }
                     is PostCommentResult.Error -> _message.value = r.message
@@ -190,7 +191,7 @@ class DetailViewModel(
             val result = repository.reportProblem(id, reason, note)
             _reportSending.value = false
             _message.value = when (result) {
-                ReportResult.Success -> "Děkujeme, hlášení jsme přijali."
+                ReportResult.Success -> t("Děkujeme, hlášení jsme přijali.")
                 is ReportResult.Error -> result.message
             }
             onDone(result is ReportResult.Success)
@@ -203,7 +204,7 @@ class DetailViewModel(
         viewModelScope.launch {
             _photoUploading.value = true
             _message.value = when (val r = addPlaceRepository.submitPhoto(id, uri)) {
-                AddPhotoResult.Success -> "Fotka odeslána ke schválení."
+                AddPhotoResult.Success -> t("Fotka odeslána ke schválení.")
                 is AddPhotoResult.Error -> r.message
             }
             _photoUploading.value = false
@@ -219,7 +220,7 @@ class DetailViewModel(
             when (val outcome = repository.vote(id, like)) {
                 is VoteOutcome.Success -> {
                     votePrefs.setVote(id, like)
-                    _message.value = if (like) "Díky, zaznamenáno jako funguje." else "Díky, zaznamenáno."
+                    _message.value = if (like) t("Díky, zaznamenáno jako funguje.") else t("Díky, zaznamenáno.")
                 }
                 is VoteOutcome.Rejected -> {
                     // Server already had a vote from this IP — persist locally too, so a fresh
@@ -229,7 +230,7 @@ class DetailViewModel(
                 }
                 VoteOutcome.Failed -> {
                     _myVote.value = previous
-                    _message.value = "Hlas se teď nepodařilo odeslat. Zkuste to znovu."
+                    _message.value = t("Hlas se teď nepodařilo odeslat. Zkuste to znovu.")
                 }
             }
             _voting.value = false

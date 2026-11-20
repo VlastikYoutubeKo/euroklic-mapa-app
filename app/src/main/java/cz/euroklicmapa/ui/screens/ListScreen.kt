@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.contrastBorder
 import android.Manifest
 import androidx.compose.foundation.layout.Arrangement
@@ -94,13 +95,13 @@ fun ListScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
-                text = "Nejbližší místa",
+                text = t("Nejbližší místa"),
                 style = MaterialTheme.typography.displaySmall,
                 color = EuroklicTheme.extended.textStrong,
             )
             Text(
-                text = placesCount(items.size) + if (hasLocation) " · seřazeno podle vzdálenosti"
-                else " · řazeno abecedně",
+                text = placesCount(items.size) + if (hasLocation) t(" · seřazeno podle vzdálenosti")
+                else t(" · řazeno abecedně"),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -120,14 +121,14 @@ fun ListScreen(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    CategoryChip("Vše", category == PlaceCategory.ALL) { viewModel.setCategory(PlaceCategory.ALL) }
-                    CategoryChip("Toalety", category == PlaceCategory.TOILET) { viewModel.setCategory(PlaceCategory.TOILET) }
-                    CategoryChip("Výdejní místa", category == PlaceCategory.PICKUP) { viewModel.setCategory(PlaceCategory.PICKUP) }
+                    CategoryChip(t("Vše"), category == PlaceCategory.ALL) { viewModel.setCategory(PlaceCategory.ALL) }
+                    CategoryChip(t("Toalety"), category == PlaceCategory.TOILET) { viewModel.setCategory(PlaceCategory.TOILET) }
+                    CategoryChip(t("Výdejní místa"), category == PlaceCategory.PICKUP) { viewModel.setCategory(PlaceCategory.PICKUP) }
                 }
                 FilterChip(
                     selected = filters.activeCount > 0,
                     onClick = { showFilterDialog = true },
-                    label = { Text(if (filters.activeCount > 0) "Filtry · ${filters.activeCount}" else "Filtry") },
+                    label = { Text(if (filters.activeCount > 0) "Filtry · ${filters.activeCount}" else t("Filtry")) },
                     leadingIcon = {
                         Icon(
                             Icons.Rounded.FilterList,
@@ -164,24 +165,24 @@ fun ListScreen(
             items.isEmpty() && dataSync == null && loadTimedOut ->
                 EmptyState(
                     icon = Icons.Rounded.CloudOff,
-                    title = "Nepodařilo se načíst data",
-                    subtitle = "Zkontrolujte připojení k internetu.",
-                    action = { Button(shape = EuroklicTheme.shapes.pill, onClick = viewModel::retry) { Text("Zkusit znovu") } },
+                    title = t("Nepodařilo se načíst data"),
+                    subtitle = t("Zkontrolujte připojení k internetu."),
+                    action = { Button(shape = EuroklicTheme.shapes.pill, onClick = viewModel::retry) { Text(t("Zkusit znovu")) } },
                 )
 
             items.isEmpty() && category != PlaceCategory.ALL ->
                 EmptyState(
                     icon = Icons.Rounded.WrongLocation,
-                    title = "V této kategorii nic není",
-                    subtitle = "Zkuste přepnout filtr zpět na Vše.",
+                    title = t("V této kategorii nic není"),
+                    subtitle = t("Zkuste přepnout filtr zpět na Vše."),
                 )
 
             items.isEmpty() ->
                 EmptyState(
                     icon = Icons.Rounded.WrongLocation,
-                    title = "Zatím tu nic není",
-                    subtitle = "Zkuste to znovu, až budete online.",
-                    action = { Button(shape = EuroklicTheme.shapes.pill, onClick = viewModel::retry) { Text("Zkusit znovu") } },
+                    title = t("Zatím tu nic není"),
+                    subtitle = t("Zkuste to znovu, až budete online."),
+                    action = { Button(shape = EuroklicTheme.shapes.pill, onClick = viewModel::retry) { Text(t("Zkusit znovu")) } },
                 )
 
             else -> LazyColumn(
@@ -233,7 +234,7 @@ private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: 
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Filtry") },
+        title = { Text(t("Filtry")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
@@ -243,13 +244,13 @@ private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: 
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     val colors = brandChipColors()
-                    FilterChip(StatusFilter.VERIFIED in statuses, { toggle(StatusFilter.VERIFIED) }, label = { Text("Ověřená místa") }, colors = colors)
-                    FilterChip(StatusFilter.UNVERIFIED in statuses, { toggle(StatusFilter.UNVERIFIED) }, label = { Text("Bez ověření") }, colors = colors)
-                    FilterChip(StatusFilter.REPORTED in statuses, { toggle(StatusFilter.REPORTED) }, label = { Text("Nahlášený problém") }, colors = colors)
+                    FilterChip(StatusFilter.VERIFIED in statuses, { toggle(StatusFilter.VERIFIED) }, label = { Text(t("Ověřená místa")) }, colors = colors)
+                    FilterChip(StatusFilter.UNVERIFIED in statuses, { toggle(StatusFilter.UNVERIFIED) }, label = { Text(t("Bez ověření")) }, colors = colors)
+                    FilterChip(StatusFilter.REPORTED in statuses, { toggle(StatusFilter.REPORTED) }, label = { Text(t("Nahlášený problém")) }, colors = colors)
                 }
 
                 Text(
-                    "VZDÁLENOST",
+                    t("VZDÁLENOST"),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp),
@@ -259,15 +260,15 @@ private fun FilterDialog(initial: PlaceFilters, onDismiss: () -> Unit, onApply: 
                     FilterChip(distance == 500.0, { distance = 500.0 }, label = { Text("500 m") }, colors = colors)
                     FilterChip(distance == 1000.0, { distance = 1000.0 }, label = { Text("1 km") }, colors = colors)
                     FilterChip(distance == 5000.0, { distance = 5000.0 }, label = { Text("5 km") }, colors = colors)
-                    FilterChip(distance == null, { distance = null }, label = { Text("Bez omezení") }, colors = colors)
+                    FilterChip(distance == null, { distance = null }, label = { Text(t("Bez omezení")) }, colors = colors)
                 }
             }
         },
         confirmButton = {
-            TextButton(shape = EuroklicTheme.shapes.pill, onClick = { onApply(PlaceFilters(statuses, distance)) }) { Text("Použít") }
+            TextButton(shape = EuroklicTheme.shapes.pill, onClick = { onApply(PlaceFilters(statuses, distance)) }) { Text(t("Použít")) }
         },
         dismissButton = {
-            TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDismiss) { Text("Zrušit") }
+            TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDismiss) { Text(t("Zrušit")) }
         },
     )
 }
@@ -293,12 +294,12 @@ private fun LocationHint(onEnable: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                "Zapněte polohu",
+                t("Zapněte polohu"),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Text(
-                "Uvidíte, které WC je opravdu nejblíž.",
+                t("Uvidíte, které WC je opravdu nejblíž."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
@@ -306,7 +307,7 @@ private fun LocationHint(onEnable: () -> Unit) {
                 shape = EuroklicTheme.shapes.pill,
                 onClick = onEnable,
                 contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
-            ) { Text("Povolit polohu") }
+            ) { Text(t("Povolit polohu")) }
         }
     }
 }

@@ -1,5 +1,11 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.data.prefs.WhatsNewPrefs
+import cz.euroklicmapa.ui.components.ChangelogDialog
+import cz.euroklicmapa.util.Changelog
+import cz.euroklicmapa.util.ChangelogEntry
+import cz.euroklicmapa.util.appVersionName
+import cz.euroklicmapa.util.t
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.Bookmark
@@ -14,6 +20,9 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -55,11 +64,24 @@ fun MainScreen() {
         if (backStack.lastOrNull() != target) backStack.add(target)
     }
 
+    // "What's new" once after an update: nothing on a fresh install, the new version's notes after an upgrade.
+    var whatsNew by remember { mutableStateOf<ChangelogEntry?>(null) }
+    LaunchedEffect(Unit) {
+        val prefs = WhatsNewPrefs(context)
+        val current = appVersionName(context)
+        val last = prefs.lastSeenVersion()
+        if (last != current) {
+            prefs.setLastSeenVersion(current)
+            if (last.isNotEmpty()) whatsNew = Changelog.entryFor(current, Changelog.load(context))
+        }
+    }
+    whatsNew?.let { entry -> ChangelogDialog(entries = listOf(entry), onDismiss = { whatsNew = null }) }
+
     LaunchedEffect(Unit) {
         app.authRepository.events.collect { ev ->
             val msg = when (ev) {
                 is AuthEvent.SignedIn ->
-                    if (ev.username.isBlank()) "Přihlášeno" else "Přihlášen jako ${ev.username}"
+                    if (ev.username.isBlank()) t("Přihlášeno") else t("Přihlášen jako %s", ev.username)
                 is AuthEvent.Error -> ev.message
                 is AuthEvent.Info -> ev.message
             }
@@ -93,28 +115,28 @@ fun MainScreen() {
                 selected = backStack.lastOrNull() is Destinations.Map,
                 onClick = { go(Destinations.Map) },
                 icon = { Icon(Icons.Rounded.Map, contentDescription = null) },
-                label = { Text("Mapa") },
+                label = { Text(t("Mapa")) },
                 colors = itemColors,
             )
             item(
                 selected = backStack.lastOrNull() is Destinations.List,
                 onClick = { go(Destinations.List) },
                 icon = { Icon(Icons.AutoMirrored.Rounded.List, contentDescription = null) },
-                label = { Text("Seznam") },
+                label = { Text(t("Seznam")) },
                 colors = itemColors,
             )
             item(
                 selected = backStack.lastOrNull() is Destinations.Favorites,
                 onClick = { go(Destinations.Favorites) },
                 icon = { Icon(Icons.Rounded.Bookmark, contentDescription = null) },
-                label = { Text("Oblíbené") },
+                label = { Text(t("Oblíbené")) },
                 colors = itemColors,
             )
             item(
                 selected = backStack.lastOrNull() is Destinations.More,
                 onClick = { go(Destinations.More) },
                 icon = { Icon(Icons.Rounded.MoreHoriz, contentDescription = null) },
-                label = { Text("Více") },
+                label = { Text(t("Více")) },
                 colors = itemColors,
             )
         },
@@ -194,7 +216,7 @@ fun MainScreen() {
                     )
                 }
 
-                else -> NavEntry(key) { Text("Neznámý cíl") }
+                else -> NavEntry(key) { Text(t("Neznámý cíl")) }
             }
         }
     }

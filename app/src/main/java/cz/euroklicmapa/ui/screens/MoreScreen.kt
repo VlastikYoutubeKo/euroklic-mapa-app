@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.contrastBorder
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -64,7 +65,12 @@ import cz.euroklicmapa.data.auth.AuthState
 import cz.euroklicmapa.data.prefs.ThemeMode
 import cz.euroklicmapa.data.prefs.DesignVariant
 import cz.euroklicmapa.ui.theme.designPalette
+import cz.euroklicmapa.ui.components.ChangelogDialog
 import cz.euroklicmapa.ui.components.LoginDialog
+import cz.euroklicmapa.data.prefs.AppMode
+import cz.euroklicmapa.data.prefs.AppModePrefs
+import cz.euroklicmapa.util.Changelog
+import cz.euroklicmapa.widget.requestNearestWidget
 import cz.euroklicmapa.ui.components.brandChipColors
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import cz.euroklicmapa.util.appVersionName
@@ -94,6 +100,7 @@ fun MoreScreen(
 
     val authState by app.authRepository.state.collectAsStateWithLifecycle()
     var showLoginDialog by remember { mutableStateOf(false) }
+    var showChangelog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     val loggedIn = authState is AuthState.LoggedIn
@@ -125,7 +132,7 @@ fun MoreScreen(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
-                "Více",
+                t("Více"),
                 style = MaterialTheme.typography.displaySmall,
                 color = EuroklicTheme.extended.textStrong,
             )
@@ -142,7 +149,7 @@ fun MoreScreen(
                 onDeleteAccount = { showDeleteDialog = true },
             )
 
-            SectionLabel("Vzhled")
+            SectionLabel(t("Vzhled"))
             Row(
                 modifier = Modifier.selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -154,9 +161,9 @@ fun MoreScreen(
                         label = {
                             Text(
                                 when (mode) {
-                                    ThemeMode.SYSTEM -> "Podle systému"
-                                    ThemeMode.LIGHT -> "Světlý"
-                                    ThemeMode.DARK -> "Tmavý"
+                                    ThemeMode.SYSTEM -> t("Podle systému")
+                                    ThemeMode.LIGHT -> t("Světlý")
+                                    ThemeMode.DARK -> t("Tmavý")
                                 },
                             )
                         },
@@ -165,7 +172,7 @@ fun MoreScreen(
                 }
             }
 
-            SectionLabel("Vzhled aplikace")
+            SectionLabel(t("Vzhled aplikace"))
             Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 DesignVariant.entries.forEach { variant ->
                     val preview = designPalette(variant, false)
@@ -197,16 +204,16 @@ fun MoreScreen(
                         }
                         Column(Modifier.weight(1f)) {
                             Text(when (variant) {
-                                DesignVariant.SOUCASNY -> "Současný"
-                                DesignVariant.KONTRAST -> "Kontrast"
-                                DesignVariant.SVEZI -> "Svěží"
-                                DesignVariant.ZNACENI -> "Značení"
+                                DesignVariant.SOUCASNY -> t("Současný")
+                                DesignVariant.KONTRAST -> t("Kontrast")
+                                DesignVariant.SVEZI -> t("Svěží")
+                                DesignVariant.ZNACENI -> t("Značení")
                             }, style = MaterialTheme.typography.titleMedium, color = selectedText)
                             Text(when (variant) {
-                                DesignVariant.SOUCASNY -> "Původní modrý vzhled aplikace."
-                                DesignVariant.KONTRAST -> "Větší písmo, výrazné obrysy a žlutý výběr."
-                                DesignVariant.SVEZI -> "Zelené tóny a měkké zaoblené tvary."
-                                DesignVariant.ZNACENI -> "Tmavě modré značení a hranatější tvary."
+                                DesignVariant.SOUCASNY -> t("Původní modrý vzhled aplikace.")
+                                DesignVariant.KONTRAST -> t("Větší písmo, výrazné obrysy a žlutý výběr.")
+                                DesignVariant.SVEZI -> t("Zelené tóny a měkké zaoblené tvary.")
+                                DesignVariant.ZNACENI -> t("Tmavě modré značení a hranatější tvary.")
                             }, style = MaterialTheme.typography.bodySmall,
                                 color = if (selected) selectedText else MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -214,10 +221,10 @@ fun MoreScreen(
                 }
             }
 
-            SectionLabel("Notifikace")
+            SectionLabel(t("Notifikace"))
             SwitchRow(
-                title = "Nové místo v okolí",
-                subtitle = "Občas (max 1×/den) upozornění na nově přidané bezbariérové WC blízko tebe",
+                title = t("Nové místo v okolí"),
+                subtitle = t("Občas (max 1×/den) upozornění na nově přidané bezbariérové WC blízko tebe"),
                 checked = nearbyNotif,
                 onCheckedChange = { on ->
                     scope.launch { app.notificationPrefs.setNearbyEnabled(on) }
@@ -226,8 +233,8 @@ fun MoreScreen(
             )
             if (isAdmin) {
                 SwitchRow(
-                    title = "Fronta ke schválení",
-                    subtitle = "Když čeká nové místo nebo návrh fotky (kontrola každých 15 min)",
+                    title = t("Fronta ke schválení"),
+                    subtitle = t("Když čeká nové místo nebo návrh fotky (kontrola každých 15 min)"),
                     checked = adminNotif,
                     onCheckedChange = { on ->
                         scope.launch { app.notificationPrefs.setAdminQueueEnabled(on) }
@@ -249,26 +256,34 @@ fun MoreScreen(
             )
 
             if (isAdmin) {
-                SectionLabel("Moderace")
-                LinkRow("Ke schválení", "Fronta nových míst od uživatelů") { onOpenAdmin() }
+                SectionLabel(t("Moderace"))
+                LinkRow(t("Ke schválení"), t("Fronta nových míst od uživatelů")) { onOpenAdmin() }
             }
 
-            SectionLabel("Přispět")
+            SectionLabel(t("Přispět"))
             LinkRow(
-                "Přidat místo",
-                if (loggedIn) "Bezbariérové WC s Euroklíčem" else "Nejdřív se přihlaste v kartě nahoře",
+                t("Přidat místo"),
+                if (loggedIn) t("Bezbariérové WC s Euroklíčem") else t("Nejdřív se přihlaste v kartě nahoře"),
             ) {
                 if (loggedIn) onAddPlace() else showLoginDialog = true
             }
 
-            SectionLabel("Odkazy")
-            LinkRow("Články a návody", "Jak získat Euroklíč · Kde platí Euroklíč") { onOpenArticles() }
-            LinkRow("euroklic.odjezdy.online", "Web, zdroje dat, nahlášení problému") { openUrl(context, URL_SITE) }
-            LinkRow("O projektu", "Nezávislý projekt, FAQ, podpora · verze $version") { onOpenAbout() }
-            LinkRow("Zásady ochrany osobních údajů", "Jak nakládáme s daty") { openUrl(context, URL_PRIVACY) }
+            SectionLabel(t("Odkazy"))
+            LinkRow(t("Články a návody"), t("Jak získat Euroklíč · Kde platí Euroklíč")) { onOpenArticles() }
+            LinkRow("euroklic.odjezdy.online", t("Web, zdroje dat, nahlášení problému")) { openUrl(context, URL_SITE) }
+            LinkRow(t("O projektu"), t("Nezávislý projekt, FAQ, podpora · verze %s", version)) { onOpenAbout() }
+            LinkRow(t("Režim Odjezdy"), t("Živá mapa vozidel a odjezdy")) { scope.launch { AppModePrefs(context).set(AppMode.ODJEZDY) } }
+            LinkRow(t("Widget na plochu"), t("Nejbližší WC jedním klepnutím")) { requestNearestWidget(context) }
+            LinkRow(t("Co je nového"), t("Změny v jednotlivých verzích")) { showChangelog = true }
+            LinkRow(t("Zásady ochrany osobních údajů"), t("Jak nakládáme s daty")) { openUrl(context, URL_PRIVACY) }
 
             Spacer(Modifier.padding(bottom = 24.dp))
         }
+    }
+
+    if (showChangelog) {
+        val entries = remember(context) { Changelog.load(context) }
+        ChangelogDialog(entries = entries, onDismiss = { showChangelog = false })
     }
 
     if (showLoginDialog) {
@@ -281,12 +296,12 @@ fun MoreScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { if (!deleting) showDeleteDialog = false },
-            title = { Text("Smazat účet a data?") },
+            title = { Text(t("Smazat účet a data?")) },
             text = {
                 Text(
-                    "Odhlásíme tě a server smaže tvůj účet. Tvé jméno se odpojí od míst, komentářů, " +
-                        "fotek a nahlášení, které jsi přidal — samotné příspěvky na mapě zůstanou. " +
-                        "Tuto akci nelze vzít zpět.",
+                    t("Odhlásíme tě a server smaže tvůj účet. Tvé jméno se odpojí od míst, komentářů, ") +
+                        t("fotek a nahlášení, které jsi přidal — samotné příspěvky na mapě zůstanou. ") +
+                        t("Tuto akci nelze vzít zpět."),
                 )
             },
             confirmButton = {
@@ -307,15 +322,15 @@ fun MoreScreen(
                             strokeWidth = 2.dp,
                             modifier = Modifier
                                 .size(18.dp)
-                                .semantics { contentDescription = "Mažu účet" },
+                                .semantics { contentDescription = t("Mažu účet") },
                         )
                     } else {
-                        Text("Smazat účet", color = MaterialTheme.colorScheme.error)
+                        Text(t("Smazat účet"), color = MaterialTheme.colorScheme.error)
                     }
                 }
             },
             dismissButton = {
-                TextButton(shape = EuroklicTheme.shapes.pill, enabled = !deleting, onClick = { showDeleteDialog = false }) { Text("Zrušit") }
+                TextButton(shape = EuroklicTheme.shapes.pill, enabled = !deleting, onClick = { showDeleteDialog = false }) { Text(t("Zrušit")) }
             },
         )
     }
@@ -348,7 +363,7 @@ private fun AuthCard(
                         modifier = Modifier.size(40.dp),
                     )
                     Text(
-                        "Načítám…",
+                        t("Načítám…"),
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -364,17 +379,17 @@ private fun AuthCard(
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Nepřihlášen",
+                            t("Nepřihlášen"),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            "Přihlaste se pro přidávání míst.",
+                            t("Přihlaste se pro přidávání míst."),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    Button(shape = EuroklicTheme.shapes.pill, onClick = onRequestLogin) { Text("Přihlásit se") }
+                    Button(shape = EuroklicTheme.shapes.pill, onClick = onRequestLogin) { Text(t("Přihlásit se")) }
                 }
 
                 is AuthState.LoggedIn -> {
@@ -396,17 +411,17 @@ private fun AuthCard(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            me.username?.takeIf { it.isNotBlank() } ?: "Přihlášen",
+                            me.username?.takeIf { it.isNotBlank() } ?: t("Přihlášen"),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            if (me.is_admin) "Přihlášen · administrátor" else "Přihlášen",
+                            if (me.is_admin) t("Přihlášen · administrátor") else t("Přihlášen"),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    TextButton(shape = EuroklicTheme.shapes.pill, onClick = onLogout) { Text("Odhlásit") }
+                    TextButton(shape = EuroklicTheme.shapes.pill, onClick = onLogout) { Text(t("Odhlásit")) }
                 }
             }
         }
@@ -414,7 +429,7 @@ private fun AuthCard(
         if (state is AuthState.LoggedIn) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDeleteAccount) {
-                    Text("Smazat účet a data", color = MaterialTheme.colorScheme.error)
+                    Text(t("Smazat účet a data"), color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -482,13 +497,13 @@ private fun BatteryNote(onOpenSettings: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                "Notifikace nechodí?",
+                t("Notifikace nechodí?"),
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                "Některé telefony (Honor, Xiaomi, Samsung) zastavují aplikace na pozadí. " +
-                    "Klepnutím otevřeš nastavení aplikace — vypni tam pro Euroklíč Mapa optimalizaci baterie.",
+                t("Některé telefony (Honor, Xiaomi, Samsung) zastavují aplikace na pozadí. ") +
+                    t("Klepnutím otevřeš nastavení aplikace — vypni tam pro Euroklíč Mapa optimalizaci baterie."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

@@ -1,5 +1,6 @@
 package cz.euroklicmapa.data.model
 
+import cz.euroklicmapa.util.t
 import kotlinx.serialization.Serializable
 
 /**
@@ -11,7 +12,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class WcComment(
     val text: String = "",
-    val author: String = "Anonym",
+    val author: String = t("Anonym"),
     val created_at: String? = null,
 )
 

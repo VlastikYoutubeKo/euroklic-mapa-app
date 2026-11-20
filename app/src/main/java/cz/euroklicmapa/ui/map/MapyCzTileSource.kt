@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.map
 
+import cz.euroklicmapa.util.t
 import android.util.Log
 import cz.euroklicmapa.BuildConfig
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
@@ -9,7 +10,7 @@ class MapyCzTileSource : OnlineTileSourceBase(
     "Mapy.cz",
     0, 19, 256, ".png",
     arrayOf("https://api.mapy.com/v1/maptiles/basic/256/"),
-    "© Seznam.cz a.s. a další"
+    t("© Seznam.cz a.s. a další")
 ) {
     // Injected at build time from local.properties (MAPY_APIKEY=…) or the
     // MAPY_APIKEY env var — never committed to VCS.
@@ -17,7 +18,7 @@ class MapyCzTileSource : OnlineTileSourceBase(
 
     init {
         if (apiKey.isBlank()) {
-            Log.w("MapyTiles", "MAPY_APIKEY chybí — doplň jej do local.properties. Dlaždice se nebudou stahovat.")
+            Log.w("MapyTiles", t("MAPY_APIKEY chybí — doplň jej do local.properties. Dlaždice se nebudou stahovat."))
         }
     }
 

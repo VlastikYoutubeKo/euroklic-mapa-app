@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.util.t
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -48,12 +49,12 @@ fun FavoritesScreen(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
-                "Oblíbené",
+                t("Oblíbené"),
                 style = MaterialTheme.typography.displaySmall,
                 color = EuroklicTheme.extended.textStrong,
             )
             Text(
-                if (items.isEmpty()) "Uložená místa" else "Uloženo: ${placesCount(items.size)}",
+                if (items.isEmpty()) t("Uložená místa") else t("Uloženo: %s", placesCount(items.size)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -62,8 +63,8 @@ fun FavoritesScreen(
         if (items.isEmpty()) {
             EmptyState(
                 icon = Icons.Rounded.BookmarkBorder,
-                title = "Zatím nic uloženého",
-                subtitle = "V detailu místa klepněte na záložku a uloží se sem — funguje i offline.",
+                title = t("Zatím nic uloženého"),
+                subtitle = t("V detailu místa klepněte na záložku a uloží se sem — funguje i offline."),
             )
         } else {
             LazyColumn(

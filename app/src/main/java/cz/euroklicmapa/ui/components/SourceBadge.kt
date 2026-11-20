@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.components
 
+import cz.euroklicmapa.util.t
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -72,7 +73,7 @@ fun SourceBadge(
     isPickup: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val label = if (isPickup) "Výdejní místo klíče" else sourceLabel(source)
+    val label = if (isPickup) t("Výdejní místo klíče") else sourceLabel(source)
     Row(
         modifier = modifier
             .clip(EuroklicTheme.shapes.pill)
@@ -119,9 +120,9 @@ fun StatusBadge(
     }
     val fullLabel = badge.label(likes, dislikes)
     val text = if (compact) when (badge) {
-        VoteBadge.REPORTED -> "Nahlášeno"
-        VoteBadge.VERIFIED -> "Ověřeno"
-        VoteBadge.CD_NO_VOTES, VoteBadge.NONE -> "Bez hlasů"
+        VoteBadge.REPORTED -> t("Nahlášeno")
+        VoteBadge.VERIFIED -> t("Ověřeno")
+        VoteBadge.CD_NO_VOTES, VoteBadge.NONE -> t("Bez hlasů")
     } else fullLabel
 
     Row(

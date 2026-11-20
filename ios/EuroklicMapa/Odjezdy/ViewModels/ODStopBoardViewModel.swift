@@ -21,7 +21,7 @@ final class ODStopBoardViewModel: ObservableObject {
     func run() async {
         while !Task.isCancelled {
             await load()
-            try? await Task.sleep(nanoseconds: 20_000_000_000)
+            try? await Task.sleep(for: .seconds(20))
         }
     }
 

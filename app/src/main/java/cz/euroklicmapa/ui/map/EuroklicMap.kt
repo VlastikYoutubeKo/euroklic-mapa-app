@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.map
 
+import cz.euroklicmapa.util.t
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -318,7 +319,7 @@ private fun renderMarkers(mv: MapView, s: RenderState) {
             Marker(mv).apply {
                 position = loc
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                title = "Vaše poloha"
+                title = t("Vaše poloha")
                 icon = UserLocationIcon.build(mv.context, s.userDotArgb, s.userHaloArgb, s.userRingArgb)
                 setInfoWindow(null)
             },

@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.contrastBorder
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,65 +48,65 @@ object Articles {
         Article(
             slug = "jak-vybavit-euroklic",
             emoji = "📖",
-            title = "Jak získat Euroklíč",
-            intro = "Euroklíč je univerzální klíč, který umožňuje osobám se sníženou schopností pohybu " +
-                "a orientace přístup k bezbariérovým veřejným toaletám, výtahům a plošinám osazeným " +
-                "jednotným Eurozámkem po celé Evropě. Výhradním distributorem v ČR je Národní rada " +
-                "osob se zdravotním postižením ČR (NRZP ČR).",
-            warning = "Aktuální stav (od července 2026): NRZP ČR dočasně pozastavila výdej nových " +
-                "Euroklíčů – distribuční místa nemají klíče skladem a Ministerstvo pro místní rozvoj " +
-                "zatím nevypsalo dotační program na jejich nákup. Do té doby zkuste kontaktovat přímo " +
-                "NRZP (nrzpcr@nrzp.cz, 230 234 954), nebo se zeptat na obecním úřadě či u neziskových " +
-                "organizací pro osoby se zdravotním postižením ve vašem kraji. Postup níže popisuje, " +
-                "jak výdej funguje běžně — jen počítejte s tím, že teď může váznout.",
+            title = t("Jak získat Euroklíč"),
+            intro = t("Euroklíč je univerzální klíč, který umožňuje osobám se sníženou schopností pohybu ") +
+                t("a orientace přístup k bezbariérovým veřejným toaletám, výtahům a plošinám osazeným ") +
+                t("jednotným Eurozámkem po celé Evropě. Výhradním distributorem v ČR je Národní rada ") +
+                t("osob se zdravotním postižením ČR (NRZP ČR)."),
+            warning = t("Aktuální stav (od července 2026): NRZP ČR dočasně pozastavila výdej nových ") +
+                t("Euroklíčů – distribuční místa nemají klíče skladem a Ministerstvo pro místní rozvoj ") +
+                t("zatím nevypsalo dotační program na jejich nákup. Do té doby zkuste kontaktovat přímo ") +
+                t("NRZP (nrzpcr@nrzp.cz, 230 234 954), nebo se zeptat na obecním úřadě či u neziskových ") +
+                t("organizací pro osoby se zdravotním postižením ve vašem kraji. Postup níže popisuje, ") +
+                t("jak výdej funguje běžně — jen počítejte s tím, že teď může váznout."),
             sections = listOf(
-                "1. Kdo má nárok na Euroklíč zdarma?" to
-                    "Euroklíč lze ve většině krajů ČR získat zcela zdarma. Nárok mají: držitelé " +
-                    "průkazu TP, ZTP nebo ZTP/P; diabetici, stomici, onkologičtí pacienti, osoby s " +
-                    "roztroušenou sklerózou, Parkinsonovou chorobou, cystickou fibrózou, Crohnovou " +
-                    "chorobou, ulcerózní kolitidou a močovými dysfunkcemi; osoby s autismem. Rodiče " +
-                    "dětí do 3 let věku si mohou Euroklíč zapůjčit přes organizaci Síť pro rodinu — " +
-                    "po dosažení 3 let věku dítěte je nutné klíč vrátit.",
-                "2. Jaké dokumenty potřebuji?" to
-                    "Občanský průkaz (k prokázání totožnosti) a průkaz OZP (TP/ZTP/ZTP-P) nebo WC " +
-                    "kartu. Pokud tyto průkazy nemáte, postačí k nahlédnutí lékařská zpráva dokládající " +
-                    "diagnózu — kvůli GDPR se přesná diagnóza do systému nezapisuje, pouze podepíšete " +
-                    "čestné prohlášení.",
-                "3. Kde si mohu klíč vyzvednout?" to
-                    "Klíče se vydávají na krajských distribučních místech. Seznam všech aktuálních míst " +
-                    "najdete na oficiálním webu euroklic.cz v sekci „Kraje“. Před osobní návštěvou vždy " +
-                    "předem zavolejte nebo napište e-mail, ať zbytečně nejezdíte, pokud by pracoviště " +
-                    "mělo klíče zrovna vyprodané.",
-                "4. Co dělat při ztrátě klíče?" to
-                    "Euroklíč je přísně nepřenosný. Pokud klíč ztratíte, nebo pokud nesplňujete " +
-                    "podmínky pro vydání zdarma (např. senior bez ZTP), můžete si ho zakoupit — cena " +
-                    "se pohybuje obvykle kolem 400 Kč přímo přes NRZP ČR.",
+                t("1. Kdo má nárok na Euroklíč zdarma?") to
+                    t("Euroklíč lze ve většině krajů ČR získat zcela zdarma. Nárok mají: držitelé ") +
+                    t("průkazu TP, ZTP nebo ZTP/P; diabetici, stomici, onkologičtí pacienti, osoby s ") +
+                    t("roztroušenou sklerózou, Parkinsonovou chorobou, cystickou fibrózou, Crohnovou ") +
+                    t("chorobou, ulcerózní kolitidou a močovými dysfunkcemi; osoby s autismem. Rodiče ") +
+                    t("dětí do 3 let věku si mohou Euroklíč zapůjčit přes organizaci Síť pro rodinu — ") +
+                    t("po dosažení 3 let věku dítěte je nutné klíč vrátit."),
+                t("2. Jaké dokumenty potřebuji?") to
+                    t("Občanský průkaz (k prokázání totožnosti) a průkaz OZP (TP/ZTP/ZTP-P) nebo WC ") +
+                    t("kartu. Pokud tyto průkazy nemáte, postačí k nahlédnutí lékařská zpráva dokládající ") +
+                    t("diagnózu — kvůli GDPR se přesná diagnóza do systému nezapisuje, pouze podepíšete ") +
+                    t("čestné prohlášení."),
+                t("3. Kde si mohu klíč vyzvednout?") to
+                    t("Klíče se vydávají na krajských distribučních místech. Seznam všech aktuálních míst ") +
+                    t("najdete na oficiálním webu euroklic.cz v sekci „Kraje“. Před osobní návštěvou vždy ") +
+                    t("předem zavolejte nebo napište e-mail, ať zbytečně nejezdíte, pokud by pracoviště ") +
+                    t("mělo klíče zrovna vyprodané."),
+                t("4. Co dělat při ztrátě klíče?") to
+                    t("Euroklíč je přísně nepřenosný. Pokud klíč ztratíte, nebo pokud nesplňujete ") +
+                    t("podmínky pro vydání zdarma (např. senior bez ZTP), můžete si ho zakoupit — cena ") +
+                    t("se pohybuje obvykle kolem 400 Kč přímo přes NRZP ČR."),
             ),
         ),
         Article(
             slug = "kde-plati-euroklic",
             emoji = "🌍",
-            title = "Kde všude platí Euroklíč",
-            intro = "Euroklíč je skvělý pomocník, který vám otevírá dveře (doslova) k bezbariérovým " +
-                "zařízením. Kde všude s ním ale pochodíte?",
+            title = t("Kde všude platí Euroklíč"),
+            intro = t("Euroklíč je skvělý pomocník, který vám otevírá dveře (doslova) k bezbariérovým ") +
+                t("zařízením. Kde všude s ním ale pochodíte?"),
             sections = listOf(
-                "V České republice" to
-                    "V ČR je systém Euroklíče velmi dobře zavedený — klíčem odemknete přes tisíc míst. " +
-                    "Nejčastěji na dálničních odpočívadlech a benzínových pumpách (MOL, Benzina/Orlen, " +
-                    "Shell), na vlakových a autobusových nádražích (téměř všechna zrekonstruovaná " +
-                    "nádraží ČD), ve veřejných budovách (úřady, knihovny, magistráty), v obchodních " +
-                    "centrech a v nemocnicích a poliklinikách (často i speciální výtahy).",
-                "Na Slovensku" to
-                    "Slovensko se k projektu také připojilo a počet míst neustále roste. Nejčastěji ho " +
-                    "využijete na novějších dálničních odpočívadlech (např. Slovnaft) a ve větších " +
-                    "obchodních centrech ve městech jako Bratislava, Košice nebo Žilina. Přesná místa " +
-                    "najdete vždy na Euroklíč Mapě.",
-                "Ve zbytku Evropy" to
-                    "Euroklíč (původním názvem Euroschlüssel) vznikl v Německu v roce 1986, a je proto " +
-                    "nejlépe pokrytou zemí. Německo má téměř 100% pokrytí na dálnicích (sanitární " +
-                    "zařízení Sanifair). Rakousko a Švýcarsko mají špičkové pokrytí na odpočívadlech " +
-                    "(např. ASFINAG) a turistických atrakcích. Klíč dál funguje ve Francii, Itálii, " +
-                    "Nizozemsku, Velké Británii a dalších zemích západní Evropy.",
+                t("V České republice") to
+                    t("V ČR je systém Euroklíče velmi dobře zavedený — klíčem odemknete přes tisíc míst. ") +
+                    t("Nejčastěji na dálničních odpočívadlech a benzínových pumpách (MOL, Benzina/Orlen, ") +
+                    t("Shell), na vlakových a autobusových nádražích (téměř všechna zrekonstruovaná ") +
+                    t("nádraží ČD), ve veřejných budovách (úřady, knihovny, magistráty), v obchodních ") +
+                    t("centrech a v nemocnicích a poliklinikách (často i speciální výtahy)."),
+                t("Na Slovensku") to
+                    t("Slovensko se k projektu také připojilo a počet míst neustále roste. Nejčastěji ho ") +
+                    t("využijete na novějších dálničních odpočívadlech (např. Slovnaft) a ve větších ") +
+                    t("obchodních centrech ve městech jako Bratislava, Košice nebo Žilina. Přesná místa ") +
+                    t("najdete vždy na Euroklíč Mapě."),
+                t("Ve zbytku Evropy") to
+                    t("Euroklíč (původním názvem Euroschlüssel) vznikl v Německu v roce 1986, a je proto ") +
+                    t("nejlépe pokrytou zemí. Německo má téměř 100% pokrytí na dálnicích (sanitární ") +
+                    t("zařízení Sanifair). Rakousko a Švýcarsko mají špičkové pokrytí na odpočívadlech ") +
+                    t("(např. ASFINAG) a turistických atrakcích. Klíč dál funguje ve Francii, Itálii, ") +
+                    t("Nizozemsku, Velké Británii a dalších zemích západní Evropy."),
             ),
         ),
     )
@@ -119,10 +120,10 @@ fun ArticlesScreen(onOpenArticle: (String) -> Unit, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Články a návody") },
+                title = { Text(t("Články a návody")) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Zpět")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = t("Zpět"))
                     }
                 },
             )
@@ -182,10 +183,10 @@ fun ArticleDetailScreen(slug: String, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(article?.title ?: "Článek") },
+                title = { Text(article?.title ?: t("Článek")) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Zpět")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = t("Zpět"))
                     }
                 },
             )

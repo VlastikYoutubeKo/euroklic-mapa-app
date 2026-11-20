@@ -204,7 +204,7 @@ struct MapScreen: View {
             }
             // Wait briefly for a fresh fix when we don't have one yet.
             if location.lastLocation == nil {
-                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                try? await Task.sleep(for: .seconds(1.5))
             }
             refreshing = true
             await places.refreshAll(near: location.nearParameter)
@@ -255,8 +255,8 @@ struct SelectedPlaceCard: View {
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Capsule().fill(place.status == .reported ? Theme.accent.opacity(0.15) : Theme.success.opacity(0.15)))
-                        .foregroundStyle(place.status == .reported ? Theme.accent : Theme.success)
+                        .background(Capsule().fill(place.badgeColor.opacity(0.15)))
+                        .foregroundStyle(place.badgeColor)
                 }
             }
 

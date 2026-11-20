@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.contrastBorder
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import android.net.Uri
@@ -75,7 +76,7 @@ fun AddPlaceScreen(
     LaunchedEffect(Unit) {
         viewModel.submitted.collect {
             android.widget.Toast
-                .makeText(context, "Místo odesláno ke schválení.", android.widget.Toast.LENGTH_LONG)
+                .makeText(context, t("Místo odesláno ke schválení."), android.widget.Toast.LENGTH_LONG)
                 .show()
             onDone()
         }
@@ -84,10 +85,10 @@ fun AddPlaceScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Přidat místo") },
+                title = { Text(t("Přidat místo")) },
                 navigationIcon = {
                     IconButton(onClick = onDone) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Zpět")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = t("Zpět"))
                     }
                 },
             )
@@ -104,8 +105,8 @@ fun AddPlaceScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                "Přidáváte bezbariérovou toaletu s Euroklíčem. Než se objeví v mapě, projde " +
-                    "schválením moderátora.",
+                t("Přidáváte bezbariérovou toaletu s Euroklíčem. Než se objeví v mapě, projde ") +
+                    t("schválením moderátora."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -113,7 +114,7 @@ fun AddPlaceScreen(
             OutlinedTextField(
                 value = viewModel.name,
                 onValueChange = { viewModel.name = it },
-                label = { Text("Název místa") },
+                label = { Text(t("Název místa")) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -121,12 +122,12 @@ fun AddPlaceScreen(
             OutlinedTextField(
                 value = viewModel.description,
                 onValueChange = { viewModel.description = it },
-                label = { Text("Popis (nepovinné)") },
+                label = { Text(t("Popis (nepovinné)")) },
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Text("Poloha", style = MaterialTheme.typography.titleSmall)
+            Text(t("Poloha"), style = MaterialTheme.typography.titleSmall)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -140,13 +141,13 @@ fun AddPlaceScreen(
                 )
             }
             Text(
-                "Posuňte mapu tak, aby značka byla na místě. " +
+                t("Posuňte mapu tak, aby značka byla na místě. ") +
                     String.format(Locale.US, "%.5f, %.5f", viewModel.location.latitude, viewModel.location.longitude),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Text("Fotka (nepovinné)", style = MaterialTheme.typography.titleSmall)
+            Text(t("Fotka (nepovinné)"), style = MaterialTheme.typography.titleSmall)
             PhotoField(
                 uri = viewModel.photoUri,
                 onPick = { imagePicker.request() },
@@ -166,7 +167,7 @@ fun AddPlaceScreen(
                 if (viewModel.submitting) {
                     CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
                 } else {
-                    Text("Zkontrolovat a odeslat")
+                    Text(t("Zkontrolovat a odeslat"))
                 }
             }
             Spacer(Modifier.size(12.dp))
@@ -203,13 +204,13 @@ private fun ReviewDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Zkontrolujte místo") },
+        title = { Text(t("Zkontrolujte místo")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (photoUri != null) {
                     AsyncImage(
                         model = photoUri,
-                        contentDescription = "Vybraná fotka",
+                        contentDescription = t("Vybraná fotka"),
                         modifier = Modifier.fillMaxWidth().height(140.dp).clip(EuroklicTheme.shapes.small),
                     )
                 }
@@ -228,14 +229,14 @@ private fun ReviewDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    "Po odeslání projde místo schválením moderátora, než se objeví v mapě.",
+                    t("Po odeslání projde místo schválením moderátora, než se objeví v mapě."),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
-        confirmButton = { TextButton(shape = EuroklicTheme.shapes.pill, onClick = onConfirm) { Text("Odeslat") } },
-        dismissButton = { TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDismiss) { Text("Zpět a upravit") } },
+        confirmButton = { TextButton(shape = EuroklicTheme.shapes.pill, onClick = onConfirm) { Text(t("Odeslat")) } },
+        dismissButton = { TextButton(shape = EuroklicTheme.shapes.pill, onClick = onDismiss) { Text(t("Zpět a upravit")) } },
     )
 }
 
@@ -261,7 +262,7 @@ private fun PhotoField(uri: Uri?, onPick: () -> Unit, onClear: () -> Unit) {
                 )
                 Spacer(Modifier.size(6.dp))
                 Text(
-                    "Přidat fotku",
+                    t("Přidat fotku"),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -271,7 +272,7 @@ private fun PhotoField(uri: Uri?, onPick: () -> Unit, onClear: () -> Unit) {
         Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(EuroklicTheme.shapes.card)) {
             AsyncImage(
                 model = uri,
-                contentDescription = "Vybraná fotka",
+                contentDescription = t("Vybraná fotka"),
                 modifier = Modifier.fillMaxSize(),
             )
             Surface(
@@ -283,7 +284,7 @@ private fun PhotoField(uri: Uri?, onPick: () -> Unit, onClear: () -> Unit) {
             ) {
                 Icon(
                     Icons.Rounded.Close,
-                    contentDescription = "Odebrat fotku",
+                    contentDescription = t("Odebrat fotku"),
                     modifier = Modifier.padding(8.dp),
                 )
             }

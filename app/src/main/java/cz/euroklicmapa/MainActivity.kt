@@ -11,6 +11,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import cz.euroklicmapa.data.prefs.ThemeMode
 import cz.euroklicmapa.data.prefs.DesignVariant
+import androidx.compose.runtime.remember
+import cz.euroklicmapa.data.prefs.AppMode
+import cz.euroklicmapa.data.prefs.AppModePrefs
+import cz.euroklicmapa.odjezdy.OdjezdyRoot
 import cz.euroklicmapa.ui.screens.MainScreen
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 
@@ -39,8 +43,9 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
             }
+            val appMode by remember { AppModePrefs(applicationContext).mode }.collectAsState(initial = AppMode.EUROKLIC)
             EuroklicTheme(darkTheme = dark, variant = variant) {
-                MainScreen()
+                if (appMode == AppMode.ODJEZDY) OdjezdyRoot() else MainScreen()
             }
         }
     }

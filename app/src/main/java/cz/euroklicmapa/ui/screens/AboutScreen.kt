@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.contrastBorder
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,10 +62,10 @@ fun AboutScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("O projektu") },
+                title = { Text(t("O projektu")) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Zpět")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = t("Zpět"))
                     }
                 },
             )
@@ -81,24 +82,24 @@ fun AboutScreen(
             Disclaimer()
             stats?.let { StatsCard(it) }
             InfoCard(
-                "Euroklíč je univerzální klíč k bezbariérovým toaletám, výtahům a schodišťovým " +
-                    "plošinám po celé ČR. Mají na něj nárok lidé s průkazem TP/ZTP/ZTP-P, " +
-                    "se stomií, diabetem, Crohnovou chorobou a další. Vydává ho NRZP ČR.",
+                t("Euroklíč je univerzální klíč k bezbariérovým toaletám, výtahům a schodišťovým ") +
+                    t("plošinám po celé ČR. Mají na něj nárok lidé s průkazem TP/ZTP/ZTP-P, ") +
+                    t("se stomií, diabetem, Crohnovou chorobou a další. Vydává ho NRZP ČR."),
             )
             InfoCard(
-                "Pozor: NRZP ČR od července 2026 dočasně pozastavila výdej nových klíčů kvůli " +
-                    "chybějícímu financování. Aktuální stav ověřujte na webu.",
+                t("Pozor: NRZP ČR od července 2026 dočasně pozastavila výdej nových klíčů kvůli ") +
+                    t("chybějícímu financování. Aktuální stav ověřujte na webu."),
                 warning = true,
             )
             LinkRow(
-                title = "Sdílet mapu",
-                subtitle = "Web má mapu k vložení na jiné stránky — otevřít v prohlížeči",
+                title = t("Sdílet mapu"),
+                subtitle = t("Web má mapu k vložení na jiné stránky — otevřít v prohlížeči"),
                 onClick = { openUrl(context, "https://euroklic.odjezdy.online/") },
             )
             FaqSection()
             SupportSection(context)
             Text(
-                "Euroklíč Mapa $version",
+                t("Euroklíč Mapa %s", version),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp, start = 4.dp),
@@ -121,19 +122,19 @@ private fun StatsCard(stats: AppStats) {
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                "Statistiky",
+                t("Statistiky"),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 buildString {
-                    append("Bezbariérových WC: ")
+                    append(t("Bezbariérových WC: "))
                     append(placesCount(stats.totalWc))
                     if (stats.verifiedWc > 0 || stats.reportedWc > 0) {
                         append(" (")
-                        if (stats.verifiedWc > 0) append("${stats.verifiedWc} ověřeno")
+                        if (stats.verifiedWc > 0) append(t("%s ověřeno", stats.verifiedWc))
                         if (stats.verifiedWc > 0 && stats.reportedWc > 0) append(", ")
-                        if (stats.reportedWc > 0) append("${stats.reportedWc} nahlášeno")
+                        if (stats.reportedWc > 0) append(t("%s nahlášeno", stats.reportedWc))
                         append(")")
                     }
                 },
@@ -141,20 +142,20 @@ private fun StatsCard(stats: AppStats) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                "Výdejních míst klíče: ${stats.totalPickup}",
+                t("Výdejních míst klíče: %s", stats.totalPickup),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             stats.topLiked?.let {
                 Text(
-                    "Nejlépe hodnocené: ${it.title} (+${it.likes} 👍)",
+                    t("Nejlépe hodnocené: %s (+%s 👍)", it.title, it.likes),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             stats.topDisliked?.let {
                 Text(
-                    "Nejvíce problémové: ${it.title} (${it.dislikes} 👎)",
+                    t("Nejvíce problémové: %s (%s 👎)", it.title, it.dislikes),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -173,13 +174,13 @@ private fun Disclaimer() {
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                "Nezávislý projekt",
+                t("Nezávislý projekt"),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                "Data agregujeme z veřejných zdrojů. Nejsme oficiální aplikace systému Euroklíč " +
-                    "ani NRZP ČR.",
+                t("Data agregujeme z veřejných zdrojů. Nejsme oficiální aplikace systému Euroklíč ") +
+                    t("ani NRZP ČR."),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -227,7 +228,7 @@ private fun LinkRow(title: String, subtitle: String, onClick: () -> Unit) {
 private fun FaqSection() {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
-            "Často kladené dotazy",
+            t("Často kladené dotazy"),
             style = MaterialTheme.typography.titleSmall,
             color = EuroklicTheme.extended.textStrong,
         )
@@ -256,21 +257,21 @@ private fun FaqSection() {
 }
 
 private val FAQ_ITEMS = listOf(
-    "Co je to Euroklíč a kdo na něj má nárok?" to
-        "Euroklíč je speciální univerzální klíč, kterým lze odemknout bezbariérová WC, plošiny a " +
-        "výtahy nejen v ČR, ale i po celé Evropě. Je určen lidem s průkazem TP, ZTP a ZTP/P, " +
-        "diabetikům, stomikům, onkologickým pacientům, lidem s roztroušenou sklerózou a rodičům " +
-        "dětí do tří let.",
-    "Odkud berete data?" to
-        "Data o lokacích získáváme primárně jako kompilaci otevřených dat a od našich uživatelů. " +
-        "Databáze je otevřená komunitě — každý uživatel může přes interaktivní mapu nahlásit " +
-        "nefunkční WC, nebo naopak přidat nové místo.",
-    "Můžu si mapu stáhnout do mobilu?" to
-        "Ano — a tahle appka je přesně to. Funguje i offline nad staženými daty.",
-    "Jak mohu pomoci?" to
-        "Nejvíce pomůžete tím, že budete databázi udržovat aktuální. Pokud narazíte na Eurozámek, " +
-        "který na mapě chybí, přidejte ho. Pokud dorazíte k toaletě, která je trvale zamčená nebo " +
-        "nefunkční, přidejte komentář a upozorněte ostatní.",
+    t("Co je to Euroklíč a kdo na něj má nárok?") to
+        t("Euroklíč je speciální univerzální klíč, kterým lze odemknout bezbariérová WC, plošiny a ") +
+        t("výtahy nejen v ČR, ale i po celé Evropě. Je určen lidem s průkazem TP, ZTP a ZTP/P, ") +
+        t("diabetikům, stomikům, onkologickým pacientům, lidem s roztroušenou sklerózou a rodičům ") +
+        t("dětí do tří let."),
+    t("Odkud berete data?") to
+        t("Data o lokacích získáváme primárně jako kompilaci otevřených dat a od našich uživatelů. ") +
+        t("Databáze je otevřená komunitě — každý uživatel může přes interaktivní mapu nahlásit ") +
+        t("nefunkční WC, nebo naopak přidat nové místo."),
+    t("Můžu si mapu stáhnout do mobilu?") to
+        t("Ano — a tahle appka je přesně to. Funguje i offline nad staženými daty."),
+    t("Jak mohu pomoci?") to
+        t("Nejvíce pomůžete tím, že budete databázi udržovat aktuální. Pokud narazíte na Eurozámek, ") +
+        t("který na mapě chybí, přidejte ho. Pokud dorazíte k toaletě, která je trvale zamčená nebo ") +
+        t("nefunkční, přidejte komentář a upozorněte ostatní."),
 )
 
 /** Mirrors the web's donation block ("Chcete projekt podpořit i finančně?") on `/o-projektu.php`. */
@@ -278,18 +279,18 @@ private val FAQ_ITEMS = listOf(
 private fun SupportSection(context: android.content.Context) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            "Podpořit projekt",
+            t("Podpořit projekt"),
             style = MaterialTheme.typography.titleSmall,
             color = EuroklicTheme.extended.textStrong,
         )
         Text(
-            "Projekt běží ve volném čase a z vlastní kapsy. Pokud vám pomohl, budu rád za podporu.",
+            t("Projekt běží ve volném čase a z vlastní kapsy. Pokud vám pomohl, budu rád za podporu."),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         LinkRow(
             title = "Donatr.ee",
-            subtitle = "Vše na jednom místě",
+            subtitle = t("Vše na jednom místě"),
             onClick = { openUrl(context, "https://donatr.ee/mxnticek") },
         )
         LinkRow(

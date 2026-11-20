@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Euroklíč Mapa</string>
+    <!-- Zkratka na ploše "Nejbližší WC" (res/xml/shortcuts.xml). -->
+    <string name="shortcut_nearest_short">Nejbližší WC</string>
+    <string name="shortcut_nearest_long">Najít nejbližší WC</string>
+    <string name="widget_nearest_description">Ukáže nejbližší bezbariérové WC podle poslední známé polohy.</string>
+</resources>

@@ -1,5 +1,6 @@
 package cz.euroklicmapa.notifications
 
+import cz.euroklicmapa.util.t
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -26,18 +27,18 @@ object NotificationChannels {
         val mgr = context.getSystemService(NotificationManager::class.java) ?: return
 
         mgr.createNotificationChannel(
-            NotificationChannel(MODERATION, "Moderace", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Upozornění na frontu ke schválení (jen administrátoři)."
+            NotificationChannel(MODERATION, t("Moderace"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = t("Upozornění na frontu ke schválení (jen administrátoři).")
             },
         )
         mgr.createNotificationChannel(
-            NotificationChannel(NEARBY, "Nové v okolí", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "Nová bezbariérová místa přidaná blízko tvé polohy."
+            NotificationChannel(NEARBY, t("Nové v okolí"), NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = t("Nová bezbariérová místa přidaná blízko tvé polohy.")
             },
         )
         mgr.createNotificationChannel(
-            NotificationChannel(FAVORITES, "Stav oblíbených", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Změny u míst, která máš v oblíbených."
+            NotificationChannel(FAVORITES, t("Stav oblíbených"), NotificationManager.IMPORTANCE_LOW).apply {
+                description = t("Změny u míst, která máš v oblíbených.")
             },
         )
     }

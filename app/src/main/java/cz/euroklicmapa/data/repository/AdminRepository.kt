@@ -1,5 +1,6 @@
 package cz.euroklicmapa.data.repository
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.data.model.AdminPlace
 import cz.euroklicmapa.data.model.ApiResult
 import cz.euroklicmapa.data.model.CommentSuggestion
@@ -33,9 +34,9 @@ class AdminRepository(private val api: EuroklicApi) {
         val r = api.adminList()
         AdminListState.Loaded(r.locations, r.photo_suggestions, r.comment_suggestions, r.location_reports)
     } catch (e: HttpException) {
-        AdminListState.Error(if (e.code() == 403) "Nemáte oprávnění." else "Chyba serveru (${e.code()}).")
+        AdminListState.Error(if (e.code() == 403) t("Nemáte oprávnění.") else "Chyba serveru (${e.code()}).")
     } catch (e: Exception) {
-        AdminListState.Error("Bez připojení.")
+        AdminListState.Error(t("Bez připojení."))
     }
 
     suspend fun review(id: Int, approve: Boolean): AdminActionResult = act(approve) {
@@ -55,7 +56,7 @@ class AdminRepository(private val api: EuroklicApi) {
     /** Reports only change their own status; a 404 means another moderator already handled it. */
     suspend fun reviewReport(reportId: Int, resolve: Boolean): AdminActionResult = act(
         approve = resolve,
-        successMessage = if (resolve) "Nahlášení označeno jako vyřešené." else "Nahlášení zamítnuto.",
+        successMessage = if (resolve) t("Nahlášení označeno jako vyřešené.") else t("Nahlášení zamítnuto."),
         removeOnNotFound = true,
     ) {
         api.adminReview(action = if (resolve) "resolve_report" else "dismiss_report", reportId = reportId)
@@ -63,7 +64,7 @@ class AdminRepository(private val api: EuroklicApi) {
 
     private suspend fun act(
         approve: Boolean,
-        successMessage: String = if (approve) "Schváleno." else "Zamítnuto.",
+        successMessage: String = if (approve) t("Schváleno.") else t("Zamítnuto."),
         removeOnNotFound: Boolean = false,
         call: suspend () -> ApiResult,
     ): AdminActionResult = try {
@@ -71,7 +72,7 @@ class AdminRepository(private val api: EuroklicApi) {
         if (resp.success) {
             AdminActionResult.Ok(resp.message ?: successMessage)
         } else {
-            AdminActionResult.Failed(resp.error ?: resp.message ?: "Akce se nezdařila.")
+            AdminActionResult.Failed(resp.error ?: resp.message ?: t("Akce se nezdařila."))
         }
     } catch (e: HttpException) {
         val serverMessage = runCatching {
@@ -81,11 +82,11 @@ class AdminRepository(private val api: EuroklicApi) {
         }.getOrNull()
         if (e.code() == 404 && removeOnNotFound) {
             // Return a completed action so the ViewModel drops the stale queue row.
-            AdminActionResult.Ok(serverMessage ?: "Nahlášení nenalezeno.")
+            AdminActionResult.Ok(serverMessage ?: t("Nahlášení nenalezeno."))
         } else {
-            AdminActionResult.Failed(serverMessage ?: if (e.code() == 403) "Nemáte oprávnění." else "Chyba serveru (${e.code()}).")
+            AdminActionResult.Failed(serverMessage ?: if (e.code() == 403) t("Nemáte oprávnění.") else "Chyba serveru (${e.code()}).")
         }
     } catch (e: Exception) {
-        AdminActionResult.Failed("Bez připojení.")
+        AdminActionResult.Failed(t("Bez připojení."))
     }
 }

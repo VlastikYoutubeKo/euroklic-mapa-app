@@ -397,3 +397,5 @@
 "Vozidlo mimo provoz" = "Vozidlo mimo provoz";
 "Verze %@ · %@" = "Verze %@ · %@";
 "Verze %@" = "Verze %@";
+"Funguje · %lld" = "Funguje · %lld";
+"Nefunguje · %lld" = "Nefunguje · %lld";

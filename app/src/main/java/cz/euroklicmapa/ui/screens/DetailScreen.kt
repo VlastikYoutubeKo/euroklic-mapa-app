@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.VariantStatusBar
 import cz.euroklicmapa.ui.theme.PhotoCaptionScrim
 import cz.euroklicmapa.ui.theme.PhotoCaptionText
@@ -131,9 +132,9 @@ private fun prettifyDescription(raw: String): String {
     val m = Regex("""^\[?\s*wheelchair\s*[:=]\s*(\w+)\s*]?$""", RegexOption.IGNORE_CASE)
         .find(raw.trim()) ?: return raw
     return when (m.groupValues[1].lowercase()) {
-        "yes" -> "Bezbariérový přístup: ano"
-        "limited" -> "Bezbariérový přístup: částečně"
-        "no" -> "Bezbariérový přístup: ne"
+        "yes" -> t("Bezbariérový přístup: ano")
+        "limited" -> t("Bezbariérový přístup: částečně")
+        "no" -> t("Bezbariérový přístup: ne")
         else -> raw
     }
 }
@@ -204,7 +205,7 @@ fun DetailScreen(
                 is DetailState.Error -> {
                     Hero(photoUrl = null, isPickup = type != "WC", name = null)
                     Text(
-                        "Toto místo se nepodařilo načíst.",
+                        t("Toto místo se nepodařilo načíst."),
                         modifier = Modifier.padding(24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -250,7 +251,7 @@ fun DetailScreen(
                 .size(48.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Zpět")
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = t("Zpět"))
             }
         }
 
@@ -280,7 +281,7 @@ fun DetailScreen(
                                 .putExtra(Intent.EXTRA_TEXT, shareText)
                             context.startActivity(Intent.createChooser(send, null))
                         } catch (_: Exception) {
-                            Toast.makeText(context, "Nelze sdílet.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, t("Nelze sdílet."), Toast.LENGTH_SHORT).show()
                         }
                     },
                     shape = EuroklicTheme.shapes.round,
@@ -292,7 +293,7 @@ fun DetailScreen(
                     modifier = Modifier.size(48.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Rounded.Share, contentDescription = "Sdílet místo")
+                        Icon(Icons.Rounded.Share, contentDescription = t("Sdílet místo"))
                     }
                 }
                 Surface(
@@ -308,7 +309,7 @@ fun DetailScreen(
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             if (isFavorite) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
-                            contentDescription = if (isFavorite) "Odebrat z oblíbených" else "Přidat do oblíbených",
+                            contentDescription = if (isFavorite) t("Odebrat z oblíbených") else t("Přidat do oblíbených"),
                         )
                     }
                 }
@@ -347,7 +348,7 @@ private fun Hero(photoUrl: String?, isPickup: Boolean, name: String?, onPhotoCli
                         if (onPhotoClick == null) {
                             m
                         } else {
-                            m.clickable(onClickLabel = "Otevřít na celou obrazovku", onClick = onPhotoClick)
+                            m.clickable(onClickLabel = t("Otevřít na celou obrazovku"), onClick = onPhotoClick)
                                 .semantics { role = Role.Button }
                         }
                     },
@@ -399,7 +400,7 @@ private fun PhotoViewerDialog(url: String, author: String?, contentDescription: 
                     .size(48.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Zavřít")
+                    Icon(Icons.Rounded.Close, contentDescription = t("Zavřít"))
                 }
             }
             if (!author.isNullOrBlank()) {
@@ -539,22 +540,22 @@ private fun WcBody(
         TransitStopsCard(wc.latitude, wc.longitude, wc.name)
         OpeningHoursSection(hall = wc.openingHours, wc = wc.wcOpeningHours)
         wc.description?.takeIf { it.isNotBlank() }?.let {
-            Section("Popis", prettifyDescription(it))
+            Section(t("Popis"), prettifyDescription(it))
         }
-        wc.note?.takeIf { it.isNotBlank() }?.let { Section("Poznámka", it) }
-        wc.accessibilityNote?.takeIf { it.isNotBlank() }?.let { ExpandableSection("Přístupnost stanice", it) }
+        wc.note?.takeIf { it.isNotBlank() }?.let { Section(t("Poznámka"), it) }
+        wc.accessibilityNote?.takeIf { it.isNotBlank() }?.let { ExpandableSection(t("Přístupnost stanice"), it) }
         wc.floorPlanUrl?.takeIf { it.isNotBlank() }?.let { FloorPlanSection(wc.id, it) }
         AddPhotoRow(hasPhoto = hasPhoto, uploading = photoUploading, onClick = onAddPhoto)
         // Provenance metadata is visually separated from the practical info above it.
         androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Section("Původní zdroj", originalSourceLabel(wc.source))
+        Section(t("Původní zdroj"), originalSourceLabel(wc.source))
         wc.lastVerified?.let {
-            Section("Naposledy ověřeno", it.substringBefore(" "))
+            Section(t("Naposledy ověřeno"), it.substringBefore(" "))
             // STALE — the place once got confirmed but it's since aged out of "recently
             // verified"; say so explicitly instead of silently reading as never-checked.
             if (isStaleVerification(it)) {
                 Text(
-                    "Ověření je starší — informace mohou být neaktuální.",
+                    t("Ověření je starší — informace mohou být neaktuální."),
                     style = MaterialTheme.typography.bodySmall,
                     color = EuroklicTheme.extended.warning,
                 )
@@ -605,7 +606,7 @@ private fun TransitStopsCard(lat: Double, lon: Double, name: String?) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Icon(Icons.Rounded.DirectionsBus, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Zastávky a odjezdy poblíž", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                Text(t("Zastávky a odjezdy poblíž"), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
             }
             stops.forEach { stop ->
                 val stopUrl = "https://app.odjezdy.online/zastavka/" + android.net.Uri.encode(stop.id)
@@ -613,9 +614,9 @@ private fun TransitStopsCard(lat: Double, lon: Double, name: String?) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
-                        .clickable(role = Role.Button, onClickLabel = "Zobrazit odjezdy") { openUrl(context, stopUrl) }
+                        .clickable(role = Role.Button, onClickLabel = t("Zobrazit odjezdy")) { openUrl(context, stopUrl) }
                         .semantics(mergeDescendants = true) {
-                            contentDescription = "${stop.name}, ${stop.distanceM} metrů. Zobrazit odjezdy v prohlížeči."
+                            contentDescription = t("%s, %s metrů. Zobrazit odjezdy v prohlížeči.", stop.name, stop.distanceM)
                         }
                         .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -639,11 +640,11 @@ private fun TransitStopsCard(lat: Double, lon: Double, name: String?) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp)
-                    .clickable(role = Role.Button, onClickLabel = "Otevřít mapu zastávek") { openUrl(context, url) }
+                    .clickable(role = Role.Button, onClickLabel = t("Otevřít mapu zastávek")) { openUrl(context, url) }
                     .padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Všechny zastávky v okolí", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text(t("Všechny zastávky v okolí"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -651,7 +652,7 @@ private fun TransitStopsCard(lat: Double, lon: Double, name: String?) {
 
 @Composable
 private fun AddPhotoRow(hasPhoto: Boolean, uploading: Boolean, onClick: () -> Unit) {
-    val label = if (hasPhoto) "Navrhnout jinou fotku" else "Přidat fotku"
+    val label = if (hasPhoto) t("Navrhnout jinou fotku") else t("Přidat fotku")
     Surface(
         border = contrastBorder(),
         onClick = { if (!uploading) onClick() },
@@ -672,7 +673,7 @@ private fun AddPhotoRow(hasPhoto: Boolean, uploading: Boolean, onClick: () -> Un
                     strokeWidth = 2.dp,
                     modifier = Modifier
                         .size(20.dp)
-                        .semantics { contentDescription = "Nahrávám fotku" },
+                        .semantics { contentDescription = t("Nahrávám fotku") },
                 )
             } else {
                 Icon(
@@ -688,7 +689,7 @@ private fun AddPhotoRow(hasPhoto: Boolean, uploading: Boolean, onClick: () -> Un
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    "Projde schválením moderátora.",
+                    t("Projde schválením moderátora."),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -716,8 +717,8 @@ private fun ForeignBadge(country: String?) {
 private fun AccessCard(requiresKey: Boolean, wheelchair: String?) {
     val alternate = EuroklicTheme.variant != cz.euroklicmapa.data.prefs.DesignVariant.SOUCASNY
     val wheelchairLine = when (wheelchair) {
-        "yes" -> "Bezbariérový přístup do budovy: ano" to false
-        "no" -> "Bezbariérový přístup do budovy: ne" to true
+        "yes" -> t("Bezbariérový přístup do budovy: ano") to false
+        "no" -> t("Bezbariérový přístup do budovy: ne") to true
         else -> null
     }
     if (!requiresKey && wheelchairLine == null) return
@@ -733,7 +734,7 @@ private fun AccessCard(requiresKey: Boolean, wheelchair: String?) {
         ) {
             if (requiresKey) {
                 Text(
-                    "Zamčeno – pro vstup je nutný Euroklíč.",
+                    t("Zamčeno – pro vstup je nutný Euroklíč."),
                     style = MaterialTheme.typography.bodyMedium,
                     color = EuroklicTheme.extended.onKey,
                 )
@@ -771,7 +772,7 @@ private fun ExpandableSection(label: String, value: String) {
             onClick = { expanded = !expanded },
             contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
         ) {
-            Text(if (expanded) "Zobrazit méně" else "Zobrazit vše")
+            Text(if (expanded) t("Zobrazit méně") else t("Zobrazit vše"))
         }
     }
 }
@@ -791,13 +792,13 @@ private fun FloorPlanSection(locationId: Int, sourceUrl: String) {
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            "ORIENTAČNÍ PLÁNEK STANICE",
+            t("ORIENTAČNÍ PLÁNEK STANICE"),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         AsyncImage(
             model = imageUrl,
-            contentDescription = "Orientační plánek stanice — otevřít na celou obrazovku",
+            contentDescription = t("Orientační plánek stanice — otevřít na celou obrazovku"),
             placeholder = painterResource(R.drawable.placeholder),
             error = painterResource(R.drawable.placeholder),
             contentScale = ContentScale.Fit,
@@ -806,7 +807,7 @@ private fun FloorPlanSection(locationId: Int, sourceUrl: String) {
                 .height(190.dp)
                 .clip(EuroklicTheme.shapes.tile)
                 .background(Color.White) // plans are white-background line art in both app themes
-                .clickable(onClickLabel = "Otevřít na celou obrazovku", onClick = { showViewer = true })
+                .clickable(onClickLabel = t("Otevřít na celou obrazovku"), onClick = { showViewer = true })
                 .semantics { role = Role.Button },
         )
         TextButton(
@@ -814,7 +815,7 @@ private fun FloorPlanSection(locationId: Int, sourceUrl: String) {
             onClick = { uriHandler.openUri(sourceUrl) },
             contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
         ) {
-            Text("Zobrazit na cd.cz", textDecoration = TextDecoration.Underline)
+            Text(t("Zobrazit na cd.cz"), textDecoration = TextDecoration.Underline)
         }
     }
 
@@ -822,7 +823,7 @@ private fun FloorPlanSection(locationId: Int, sourceUrl: String) {
         PhotoViewerDialog(
             url = imageUrl,
             author = null,
-            contentDescription = "Orientační plánek stanice",
+            contentDescription = t("Orientační plánek stanice"),
             onDismiss = { showViewer = false },
         )
     }
@@ -839,7 +840,7 @@ private fun ReportLink(webUrl: String?) {
         // "2.0" spec §37/29: split into two distinct actions — the structured in-app dialog
         // (ReportProblemRow, above) is now "Nahlásit problém"; this stays as the escape hatch
         // for edits the dialog doesn't cover (wrong name, merge duplicates, etc.).
-        Text("Navrhnout úpravu na webu", textDecoration = TextDecoration.Underline)
+        Text(t("Navrhnout úpravu na webu"), textDecoration = TextDecoration.Underline)
     }
 }
 
@@ -876,7 +877,7 @@ private fun ReportProblemRow(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                "Nahlásit problém",
+                t("Nahlásit problém"),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
@@ -906,7 +907,7 @@ private fun ReportProblemDialog(
 
     AlertDialog(
         onDismissRequest = { if (!sending) onDismiss() },
-        title = { Text("Co je špatně?") },
+        title = { Text(t("Co je špatně?")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 cz.euroklicmapa.data.model.ReportReason.entries.forEach { r ->
@@ -929,7 +930,7 @@ private fun ReportProblemDialog(
                     value = note,
                     onValueChange = { if (it.length <= 1000) note = it },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    label = { Text("Poznámka (nepovinné)") },
+                    label = { Text(t("Poznámka (nepovinné)")) },
                     minLines = 2,
                     enabled = !sending,
                 )
@@ -944,15 +945,15 @@ private fun ReportProblemDialog(
                 if (sending) {
                     CircularProgressIndicator(
                         strokeWidth = 2.dp,
-                        modifier = Modifier.size(18.dp).semantics { contentDescription = "Odesílám hlášení" },
+                        modifier = Modifier.size(18.dp).semantics { contentDescription = t("Odesílám hlášení") },
                     )
                 } else {
-                    Text("Odeslat")
+                    Text(t("Odeslat"))
                 }
             }
         },
         dismissButton = {
-            TextButton(shape = EuroklicTheme.shapes.pill, enabled = !sending, onClick = onDismiss) { Text("Zrušit") }
+            TextButton(shape = EuroklicTheme.shapes.pill, enabled = !sending, onClick = onDismiss) { Text(t("Zrušit")) }
         },
     )
 }
@@ -975,25 +976,25 @@ private fun PickupBody(pp: PickupPointEntity, userLocation: GeoPoint?) {
         )
 
         if (pp.precision == "approx") {
-            NoticeCard("Přesná adresa není známá – poloha je jen přibližná (obec). Ověřte si ji předem.")
+            NoticeCard(t("Přesná adresa není známá – poloha je jen přibližná (obec). Ověřte si ji předem."))
         }
 
-        Section("Adresa", pp.address)
+        Section(t("Adresa"), pp.address)
         Section("Okres / kraj", listOfNotNull(pp.district, pp.kraj).joinToString(", ").ifBlank { null })
-        Section("Telefon", pp.phone)
+        Section(t("Telefon"), pp.phone)
         Section("E-mail", pp.email)
-        Section("Otevírací doba", pp.hours)
+        Section(t("Otevírací doba"), pp.hours)
 
         NoticeCard(
-            "NRZP ČR od července 2026 dočasně pozastavila výdej nových Euroklíčů kvůli " +
-                "chybějícímu financování. Než se vydáte, ověřte si aktuální stav.",
+            t("NRZP ČR od července 2026 dočasně pozastavila výdej nových Euroklíčů kvůli ") +
+                t("chybějícímu financování. Než se vydáte, ověřte si aktuální stav."),
         )
         TextButton(
             shape = EuroklicTheme.shapes.pill,
             onClick = { uriHandler.openUri(KEY_STATUS_URL) },
             contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
         ) {
-            Text("Aktuální stav výdeje klíčů", textDecoration = TextDecoration.Underline)
+            Text(t("Aktuální stav výdeje klíčů"), textDecoration = TextDecoration.Underline)
         }
     }
 }
@@ -1021,7 +1022,7 @@ private fun DistanceCard(target: GeoPoint, userLocation: GeoPoint?) {
                 color = EuroklicTheme.extended.textStrong,
             )
             Text(
-                "${formatWalkingTime(meters)} pěšky\nvzdušnou čarou, přibližně",
+                t("%s pěšky\nvzdušnou čarou, přibližně", formatWalkingTime(meters)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1044,14 +1045,14 @@ private fun CommentsSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            "Komentáře",
+            t("Komentáře"),
             style = MaterialTheme.typography.titleMedium,
             color = EuroklicTheme.extended.textStrong,
         )
         val list = comments.orEmpty()
         if (list.isEmpty()) {
             Text(
-                "Zatím žádné komentáře.",
+                t("Zatím žádné komentáře."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1111,7 +1112,7 @@ private fun CommentComposer(
             onClick = onRequestLogin,
             modifier = Modifier.fillMaxWidth().height(48.dp),
         ) {
-            Text("Přihlásit se a přidat komentář")
+            Text(t("Přihlásit se a přidat komentář"))
         }
         return
     }
@@ -1125,7 +1126,7 @@ private fun CommentComposer(
             onValueChange = { text = it },
             modifier = Modifier.fillMaxWidth(),
             minLines = 2,
-            label = { Text("Přidat komentář") },
+            label = { Text(t("Přidat komentář")) },
             isError = lenError,
             enabled = !posting,
             // Counter as supportingText → TalkBack reads it as part of the field, and
@@ -1148,10 +1149,10 @@ private fun CommentComposer(
                     strokeWidth = 2.dp,
                     modifier = Modifier
                         .size(18.dp)
-                        .semantics { contentDescription = "Odesílám komentář" },
+                        .semantics { contentDescription = t("Odesílám komentář") },
                 )
             } else {
-                Text("Odeslat")
+                Text(t("Odeslat"))
             }
         }
     }
@@ -1193,7 +1194,7 @@ private fun OpeningHoursSection(hall: String?, wc: String?) {
     val cleanHall = sanitizeStationHours(hall)
     val showWc = cleanWc != null
     val body = (cleanWc ?: cleanHall) ?: return
-    val label = if (showWc) "OTEVÍRACÍ DOBA WC" else "OTEVÍRACÍ DOBA STANICE"
+    val label = if (showWc) t("OTEVÍRACÍ DOBA WC") else t("OTEVÍRACÍ DOBA STANICE")
 
     val state = remember(body) {
         parseOpeningHours(body)?.statusAt(Calendar.getInstance()) ?: OpenState.UNKNOWN
@@ -1211,7 +1212,7 @@ private fun OpeningHoursSection(hall: String?, wc: String?) {
             if (state != OpenState.UNKNOWN) {
                 val open = state == OpenState.OPEN
                 Text(
-                    if (open) "Otevřeno" else "Zavřeno",
+                    if (open) t("Otevřeno") else t("Zavřeno"),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = if (open) EuroklicTheme.extended.onSuccess else MaterialTheme.colorScheme.onError,
                     modifier = Modifier
@@ -1222,14 +1223,14 @@ private fun OpeningHoursSection(hall: String?, wc: String?) {
                         .padding(horizontal = 10.dp, vertical = 3.dp)
                         // Bare "Otevřeno" has no context for TalkBack — spell out it's a status.
                         .semantics {
-                            contentDescription = if (open) "Stav: otevřeno" else "Stav: zavřeno"
+                            contentDescription = if (open) t("Stav: otevřeno") else t("Stav: zavřeno")
                         },
                 )
             }
         }
         Text(body, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         Text(
-            "Zdroj: ČD",
+            t("Zdroj: ČD"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -1253,7 +1254,7 @@ private fun VerifyPresenceCard(voting: Boolean, onVote: (Boolean) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
-                "Jste na místě? Ověřte, jestli je WC funkční.",
+                t("Jste na místě? Ověřte, jestli je WC funkční."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -1262,19 +1263,19 @@ private fun VerifyPresenceCard(voting: Boolean, onVote: (Boolean) -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 CompactVoteButton(
-                    text = "Funguje",
+                    text = t("Funguje"),
                     tint = EuroklicTheme.extended.success,
                     enabled = !voting,
                     onClick = { onVote(true) },
-                    contentDescription = "Ověřit, že WC funguje",
+                    contentDescription = t("Ověřit, že WC funguje"),
                     modifier = Modifier.weight(1f),
                 )
                 CompactVoteButton(
-                    text = "Nefunguje",
+                    text = t("Nefunguje"),
                     tint = MaterialTheme.colorScheme.error,
                     enabled = !voting,
                     onClick = { onVote(false) },
-                    contentDescription = "Nahlásit, že WC nefunguje",
+                    contentDescription = t("Nahlásit, že WC nefunguje"),
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -1322,13 +1323,13 @@ private fun VoteRow(
     val err = MaterialTheme.colorScheme.error
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            "OVĚŘENÍ KOMUNITOU",
+            t("OVĚŘENÍ KOMUNITOU"),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             VoteButton(
-                text = "Funguje",
+                text = t("Funguje"),
                 count = likes,
                 tint = ok,
                 icon = Icons.Rounded.ThumbUpOffAlt,
@@ -1339,7 +1340,7 @@ private fun VoteRow(
                 modifier = Modifier.weight(1f),
             )
             VoteButton(
-                text = "Nefunguje",
+                text = t("Nefunguje"),
                 count = dislikes,
                 tint = err,
                 icon = Icons.Rounded.ThumbDownOffAlt,
@@ -1351,7 +1352,7 @@ private fun VoteRow(
             )
         }
         Text(
-            message ?: "Hlasování je anonymní. Změní stav místa i pro ostatní.",
+            message ?: t("Hlasování je anonymní. Změní stav místa i pro ostatní."),
             style = MaterialTheme.typography.bodySmall,
             color = if (message != null) MaterialTheme.colorScheme.onSurface
             else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1444,7 +1445,7 @@ private fun NavigateBar(onClick: () -> Unit, modifier: Modifier = Modifier) {
             ) {
                 Icon(Icons.Rounded.Directions, contentDescription = null)
                 Spacer(Modifier.size(8.dp))
-                Text("Navigovat", style = MaterialTheme.typography.titleMedium)
+                Text(t("Navigovat"), style = MaterialTheme.typography.titleMedium)
             }
         }
     }

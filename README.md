@@ -30,11 +30,11 @@ Co je nového v které verzi: [CHANGELOG.cs.md](CHANGELOG.cs.md) (česky), [CHAN
 | Detail (status, otevírací doba, plán stanice, hlasování, komentáře) | ✅ | ✅ |
 | Přihlášení (Discord/Google, PKCE), přidání místa s fotkou, komentář/fotka k místu, nahlášení problému | ✅ | ✅ |
 | Admin fronta (schvalování) | ✅ | ✅ |
-| Odjezdy: živá mapa vozidel, zastávky, odjezdy v detailu místa | částečně (odjezdy u místa) | ✅ plný režim |
-| Widgety (nejbližší WC, odjezdy) | ❌ | ✅ |
+| Režim Odjezdy: živá mapa vozidel, zastávky, odjezdy, hledání, oblíbené | ✅ (bez aktualit a výluk) | ✅ plný režim |
+| Widgety | ✅ nejbližší WC | ✅ nejbližší WC, odjezdy |
 | Notifikace | ✅ lokální (WorkManager) | ❌ |
-| Čeština + angličtina (podle jazyka telefonu) | ❌ jen česky | ✅ |
-| „Co je nového“ po aktualizaci | ❌ | ✅ |
+| Čeština + angličtina (podle jazyka telefonu) | ✅ | ✅ |
+| „Co je nového“ po aktualizaci | ✅ | ✅ |
 
 ## Struktura repa
 

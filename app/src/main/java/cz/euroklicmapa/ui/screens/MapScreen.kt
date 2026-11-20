@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.screens
 
+import cz.euroklicmapa.util.t
 import androidx.compose.foundation.background
 import cz.euroklicmapa.ui.theme.VariantStatusBar
 import cz.euroklicmapa.ui.theme.variantFabModifier
@@ -191,7 +192,7 @@ fun MapScreen(
             NearestResult.NoLocation -> {
                 Toast.makeText(
                     context,
-                    "Poloha není známá. Povolte polohu a zkuste to znovu.",
+                    t("Poloha není známá. Povolte polohu a zkuste to znovu."),
                     Toast.LENGTH_LONG,
                 ).show()
                 viewModel.onNearestResultHandled()
@@ -199,7 +200,7 @@ fun MapScreen(
             NearestResult.NoPlaces -> {
                 Toast.makeText(
                     context,
-                    "Zatím nejsou stažená žádná místa.",
+                    t("Zatím nejsou stažená žádná místa."),
                     Toast.LENGTH_LONG,
                 ).show()
                 viewModel.onNearestResultHandled()
@@ -219,20 +220,20 @@ fun MapScreen(
     if (showRationale) {
         AlertDialog(
             onDismissRequest = { showRationale = false },
-            title = { Text("Přístup k poloze") },
+            title = { Text(t("Přístup k poloze")) },
             text = {
                 Text(
-                    "Polohu použijeme jen k seřazení míst podle vzdálenosti a k vycentrování " +
-                        "mapy na vás. Nikam mimo appku ji neposíláme.",
+                    t("Polohu použijeme jen k seřazení míst podle vzdálenosti a k vycentrování ") +
+                        t("mapy na vás. Nikam mimo appku ji neposíláme."),
                 )
             },
             confirmButton = {
                 TextButton(shape = EuroklicTheme.shapes.pill, onClick = {
                     showRationale = false
                     locationPermissions.launchMultiplePermissionRequest()
-                }) { Text("Povolit polohu") }
+                }) { Text(t("Povolit polohu")) }
             },
-            dismissButton = { TextButton(shape = EuroklicTheme.shapes.pill, onClick = { showRationale = false }) { Text("Teď ne") } },
+            dismissButton = { TextButton(shape = EuroklicTheme.shapes.pill, onClick = { showRationale = false }) { Text(t("Teď ne")) } },
         )
     }
 
@@ -343,19 +344,19 @@ fun MapScreen(
                                     when (result) {
                                         is OfflineDownloadResult.TooLarge -> Toast.makeText(
                                             context,
-                                            "Vybraná oblast je na stažení moc velká. Přibližte " +
-                                                "mapu na menší oblast a zkuste to znovu.",
+                                            t("Vybraná oblast je na stažení moc velká. Přibližte ") +
+                                                t("mapu na menší oblast a zkuste to znovu."),
                                             Toast.LENGTH_LONG,
                                         ).show()
                                         is OfflineDownloadResult.Done -> Toast.makeText(
                                             context,
-                                            "Mapa téhle oblasti je stažená pro offline použití.",
+                                            t("Mapa téhle oblasti je stažená pro offline použití."),
                                             Toast.LENGTH_SHORT,
                                         ).show()
                                         is OfflineDownloadResult.Failed -> Toast.makeText(
                                             context,
-                                            "Stahování mapy se nezdařilo. Zkuste to znovu s " +
-                                                "lepším připojením.",
+                                            t("Stahování mapy se nezdařilo. Zkuste to znovu s ") +
+                                                t("lepším připojením."),
                                             Toast.LENGTH_LONG,
                                         ).show()
                                         else -> {}
@@ -372,11 +373,11 @@ fun MapScreen(
                                     modifier = Modifier
                                         .size(20.dp)
                                         .semantics {
-                                            contentDescription = "Stahuji mapu pro offline použití, $percent %"
+                                            contentDescription = t("Stahuji mapu pro offline použití, %s %%", percent)
                                         },
                                 )
                             } else {
-                                Icon(Icons.Rounded.CloudDownload, contentDescription = "Stáhnout mapu pro offline použití")
+                                Icon(Icons.Rounded.CloudDownload, contentDescription = t("Stáhnout mapu pro offline použití"))
                             }
                         }
                         // Same "Přidat místo" action as More, just reachable without leaving
@@ -392,7 +393,7 @@ fun MapScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             contentColor = MaterialTheme.colorScheme.onSurface,
                         ) {
-                            Icon(Icons.Rounded.Add, contentDescription = "Přidat místo")
+                            Icon(Icons.Rounded.Add, contentDescription = t("Přidat místo"))
                         }
                     }
                 }
@@ -406,7 +407,7 @@ fun MapScreen(
                 ) {
                     Icon(
                         if (secondaryActionsExpanded) Icons.Rounded.Close else Icons.Rounded.MoreHoriz,
-                        contentDescription = if (secondaryActionsExpanded) "Zavřít další akce" else "Další akce",
+                        contentDescription = if (secondaryActionsExpanded) t("Zavřít další akce") else t("Další akce"),
                     )
                 }
                 // The app's one question, one tap away — mirrors the website's
@@ -424,7 +425,7 @@ fun MapScreen(
                     containerColor = EuroklicTheme.extended.brandButton,
                     contentColor = EuroklicTheme.extended.onBrandButton,
                 ) {
-                    Icon(Icons.Rounded.NearMe, contentDescription = "Najít nejbližší WC")
+                    Icon(Icons.Rounded.NearMe, contentDescription = t("Najít nejbližší WC"))
                 }
             }
         }
@@ -459,7 +460,7 @@ private fun SearchField(
             value = value,
             onValueChange = onValueChange,
             singleLine = true,
-            placeholder = { Text("Hledat adresu nebo místo") },
+            placeholder = { Text(t("Hledat adresu nebo místo")) },
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
             trailingIcon = {
                 when {
@@ -468,7 +469,7 @@ private fun SearchField(
                         modifier = Modifier.size(18.dp),
                     )
                     value.isNotEmpty() -> IconButton(onClick = onClear) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Vymazat")
+                        Icon(Icons.Rounded.Close, contentDescription = t("Vymazat"))
                     }
                 }
             },
@@ -494,9 +495,9 @@ private fun CategoryChipRow(category: PlaceCategory, onSelect: (PlaceCategory) -
     // and the selected chip uses the same brandButton blue as the FAB/Navigate CTA elsewhere,
     // instead of a pale primaryContainer that barely showed which filter was active.
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        MapFilterChip("Vše", category == PlaceCategory.ALL) { onSelect(PlaceCategory.ALL) }
-        MapFilterChip("Toalety", category == PlaceCategory.TOILET) { onSelect(PlaceCategory.TOILET) }
-        MapFilterChip("Výdejní místa", category == PlaceCategory.PICKUP) { onSelect(PlaceCategory.PICKUP) }
+        MapFilterChip(t("Vše"), category == PlaceCategory.ALL) { onSelect(PlaceCategory.ALL) }
+        MapFilterChip(t("Toalety"), category == PlaceCategory.TOILET) { onSelect(PlaceCategory.TOILET) }
+        MapFilterChip(t("Výdejní místa"), category == PlaceCategory.PICKUP) { onSelect(PlaceCategory.PICKUP) }
     }
 }
 
@@ -569,7 +570,7 @@ private fun NearbySheetList(
     ) {
         item {
             Text(
-                text = placesCount(places.size) + if (hasLocation) " v okolí" else "",
+                text = placesCount(places.size) + if (hasLocation) t(" v okolí") else "",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp, bottom = 2.dp),
@@ -597,11 +598,11 @@ private fun NearbySheetList(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(
-                        "Zatím tu nic není. Zkuste to znovu, až budete online.",
+                        t("Zatím tu nic není. Zkuste to znovu, až budete online."),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    OutlinedButton(shape = EuroklicTheme.shapes.pill, onClick = onRetry) { Text("Zkusit znovu") }
+                    OutlinedButton(shape = EuroklicTheme.shapes.pill, onClick = onRetry) { Text(t("Zkusit znovu")) }
                 }
             }
         }
@@ -642,7 +643,7 @@ private fun SelectedPlaceCard(
                 modifier = Modifier.weight(1f).padding(top = 8.dp),
             )
             IconButton(onClick = onBackToList) {
-                Icon(Icons.Rounded.Close, contentDescription = "Zpět na seznam")
+                Icon(Icons.Rounded.Close, contentDescription = t("Zpět na seznam"))
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -651,7 +652,7 @@ private fun SelectedPlaceCard(
         }
         if (meters != null) {
             Text(
-                "${formatDistance(meters)} · ${formatWalkingTime(meters)} pěšky (vzdušnou čarou)",
+                t("%s · %s pěšky (vzdušnou čarou)", formatDistance(meters), formatWalkingTime(meters)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -672,7 +673,7 @@ private fun SelectedPlaceCard(
         ) {
             Icon(Icons.Rounded.Directions, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text("Navigovat")
+            Text(t("Navigovat"))
         }
         if (showVerifyNudge) {
             VerifyNudge(onVerify = onOpenDetail)
@@ -681,7 +682,7 @@ private fun SelectedPlaceCard(
             shape = EuroklicTheme.shapes.pill,
             onClick = onOpenDetail,
             modifier = Modifier.align(Alignment.CenterHorizontally),
-        ) { Text("Zobrazit podrobnosti") }
+        ) { Text(t("Zobrazit podrobnosti")) }
     }
 }
 
@@ -702,7 +703,7 @@ private fun VerifyNudge(onVerify: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
-                "Jste na místě? Ověřte, jestli WC funguje.",
+                t("Jste na místě? Ověřte, jestli WC funguje."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -715,10 +716,10 @@ private fun VerifyNudge(onVerify: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
-                    .semantics { contentDescription = "Otevřít detail a ověřit funkčnost WC" },
+                    .semantics { contentDescription = t("Otevřít detail a ověřit funkčnost WC") },
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text("Ověřit", style = MaterialTheme.typography.labelLarge)
+                    Text(t("Ověřit"), style = MaterialTheme.typography.labelLarge)
                 }
             }
         }

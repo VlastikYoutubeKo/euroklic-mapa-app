@@ -12,6 +12,13 @@ enum Theme {
             ? UIColor(red: 0x8F / 255, green: 0xAE / 255, blue: 0xFF / 255, alpha: 1)
             : UIColor(red: 0x24 / 255, green: 0x54 / 255, blue: 0xE0 / 255, alpha: 1)
     })
+    /// Amber for TEXT on a light background: `community` / the amber accent are fine as fills but fail
+    /// AA contrast as small text on white, so warnings use this darker amber (lightened in Dark Mode).
+    static let warningText = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0xFB / 255, green: 0xBF / 255, blue: 0x24 / 255, alpha: 1)
+            : UIColor(red: 0x92 / 255, green: 0x54 / 255, blue: 0x00 / 255, alpha: 1)
+    })
     /// Official source (ČD).
     static let official = Color(hex: 0x3B82F6)
     /// Community source (OSM, WCkompas, users).

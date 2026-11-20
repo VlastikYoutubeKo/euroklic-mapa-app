@@ -39,7 +39,7 @@ struct AdminQueueView: View {
             }
             .task(id: toast) {
                 guard toast != nil else { return }
-                try? await Task.sleep(nanoseconds: 4_500_000_000)
+                try? await Task.sleep(for: .seconds(4.5))
                 toast = nil
             }
             .task { await load() }
@@ -156,7 +156,7 @@ struct AdminQueueView: View {
             Text(report.location_name ?? L("Místo #\(report.location_id)")).font(.headline)
             Text(ReportReason.label(forWire: report.reason ?? "other"))
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.accent)
+                .foregroundStyle(Theme.warningText)
             if let note = nonBlank(report.note) { Text(note).font(.callout) }
             meta(author: report.author_name, date: report.created_at)
             if let item = places.wc.first(where: { $0.id == report.location_id }) {

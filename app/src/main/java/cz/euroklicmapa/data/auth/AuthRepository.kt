@@ -1,5 +1,6 @@
 package cz.euroklicmapa.data.auth
 
+import cz.euroklicmapa.util.t
 import android.content.Context
 import android.net.Uri
 import android.util.Base64
@@ -112,14 +113,14 @@ class AuthRepository(
         pendingVerifier = null
 
         if (expectedState == null || returnedState != expectedState) {
-            _events.tryEmit(AuthEvent.Error("Přihlášení se nezdařilo (neplatný stav)."))
+            _events.tryEmit(AuthEvent.Error(t("Přihlášení se nezdařilo (neplatný stav).")))
             return
         }
         uri.getQueryParameter("error")?.let {
             Log.w("AuthRepository", "callback error: $it")
             _events.tryEmit(AuthEvent.Error(
-                if (it == "pkce_required") "Přihlášení se nezdařilo. Aktualizujte prosím aplikaci."
-                else "Přihlášení se nezdařilo.",
+                if (it == "pkce_required") t("Přihlášení se nezdařilo. Aktualizujte prosím aplikaci.")
+                else t("Přihlášení se nezdařilo."),
             ))
             return
         }
@@ -127,7 +128,7 @@ class AuthRepository(
         val code = uri.getQueryParameter("code")
         when {
             !code.isNullOrBlank() && verifier != null -> scope.launch { exchangeCode(code, verifier) }
-            else -> _events.tryEmit(AuthEvent.Error("Přihlášení se nezdařilo (chybí kód)."))
+            else -> _events.tryEmit(AuthEvent.Error(t("Přihlášení se nezdařilo (chybí kód).")))
         }
     }
 
@@ -139,7 +140,7 @@ class AuthRepository(
             null
         }
         if (token.isNullOrBlank()) {
-            _events.tryEmit(AuthEvent.Error("Přihlášení se nezdařilo (výměna kódu selhala)."))
+            _events.tryEmit(AuthEvent.Error(t("Přihlášení se nezdařilo (výměna kódu selhala).")))
             return
         }
         adoptToken(token, announceSignIn = true)
@@ -176,7 +177,7 @@ class AuthRepository(
             if (e.code() == 401 || e.code() == 403) {
                 clearLocal()
                 _state.value = AuthState.LoggedOut
-                if (announceSignIn) _events.tryEmit(AuthEvent.Error("Přihlášení vypršelo."))
+                if (announceSignIn) _events.tryEmit(AuthEvent.Error(t("Přihlášení vypršelo.")))
             } else if (_state.value is AuthState.Loading) {
                 _state.value = AuthState.LoggedOut
             }
@@ -186,7 +187,7 @@ class AuthRepository(
             // Offline with a token we can't verify — keep it, retry on next launch.
             if (_state.value is AuthState.Loading) _state.value = AuthState.LoggedOut
             if (announceSignIn) {
-                _events.tryEmit(AuthEvent.Error("Přihlášení proběhlo, ale server neodpovídá. Otevřete appku znovu."))
+                _events.tryEmit(AuthEvent.Error(t("Přihlášení proběhlo, ale server neodpovídá. Otevřete appku znovu.")))
             }
             return
         }
@@ -194,7 +195,7 @@ class AuthRepository(
         if (!me.logged_in) {
             clearLocal()
             _state.value = AuthState.LoggedOut
-            if (announceSignIn) _events.tryEmit(AuthEvent.Error("Přihlášení vypršelo."))
+            if (announceSignIn) _events.tryEmit(AuthEvent.Error(t("Přihlášení vypršelo.")))
         } else {
             _state.value = AuthState.LoggedIn(me)
             if (announceSignIn) _events.tryEmit(AuthEvent.SignedIn(me.username.orEmpty()))
@@ -221,21 +222,21 @@ class AuthRepository(
             if (e.code() == 401 || e.code() == 403) {
                 true // token already invalid server-side
             } else {
-                _events.tryEmit(AuthEvent.Error("Smazání účtu se nezdařilo (${e.code()})."))
+                _events.tryEmit(AuthEvent.Error(t("Smazání účtu se nezdařilo (%s).", e.code())))
                 return false
             }
         } catch (e: Exception) {
             Log.w("AuthRepository", "deleteAccount failed", e)
-            _events.tryEmit(AuthEvent.Error("Bez připojení. Zkuste to prosím znovu."))
+            _events.tryEmit(AuthEvent.Error(t("Bez připojení. Zkuste to prosím znovu.")))
             return false
         }
         if (!ok) {
-            _events.tryEmit(AuthEvent.Error("Smazání účtu se nezdařilo."))
+            _events.tryEmit(AuthEvent.Error(t("Smazání účtu se nezdařilo.")))
             return false
         }
         clearLocal()
         _state.value = AuthState.LoggedOut
-        _events.tryEmit(AuthEvent.Info("Účet a osobní údaje byly smazány."))
+        _events.tryEmit(AuthEvent.Info(t("Účet a osobní údaje byly smazány.")))
         return true
     }
 
@@ -245,7 +246,7 @@ class AuthRepository(
             if (_state.value is AuthState.LoggedOut) return@launch
             clearLocal()
             _state.value = AuthState.LoggedOut
-            _events.tryEmit(AuthEvent.Error("Přihlášení vypršelo, přihlaste se prosím znovu."))
+            _events.tryEmit(AuthEvent.Error(t("Přihlášení vypršelo, přihlaste se prosím znovu.")))
         }
     }
 

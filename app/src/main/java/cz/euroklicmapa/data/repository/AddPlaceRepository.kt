@@ -1,5 +1,6 @@
 package cz.euroklicmapa.data.repository
 
+import cz.euroklicmapa.util.t
 import android.content.Context
 import android.net.Uri
 import cz.euroklicmapa.data.remote.EuroklicApi
@@ -35,7 +36,7 @@ class AddPlaceRepository(
     ): AddPlaceResult {
         val text = "text/plain".toMediaType()
         val photoPart = photo?.let { uri ->
-            val bytes = downscaleToJpeg(appContext, uri) ?: return AddPlaceResult.Error("Fotku se nepodařilo zpracovat.")
+            val bytes = downscaleToJpeg(appContext, uri) ?: return AddPlaceResult.Error(t("Fotku se nepodařilo zpracovat."))
             MultipartBody.Part.createFormData(
                 "photo_file",
                 "photo.jpg",
@@ -54,18 +55,18 @@ class AddPlaceRepository(
                 resp.success -> AddPlaceResult.Success(resp.id)
                 !resp.error.isNullOrBlank() -> AddPlaceResult.Error(resp.error)
                 !resp.message.isNullOrBlank() -> AddPlaceResult.Error(resp.message)
-                else -> AddPlaceResult.Error("Odeslání se nezdařilo.")
+                else -> AddPlaceResult.Error(t("Odeslání se nezdařilo."))
             }
         } catch (e: HttpException) {
             AddPlaceResult.Error(
                 when (e.code()) {
-                    401 -> "Přihlášení vypršelo. Přihlaste se prosím znovu."
-                    413 -> "Fotka je příliš velká."
+                    401 -> t("Přihlášení vypršelo. Přihlaste se prosím znovu.")
+                    413 -> t("Fotka je příliš velká.")
                     else -> "Chyba serveru (${e.code()})."
                 },
             )
         } catch (e: Exception) {
-            AddPlaceResult.Error("Bez připojení. Zkuste to znovu, až budete online.")
+            AddPlaceResult.Error(t("Bez připojení. Zkuste to znovu, až budete online."))
         }
     }
 
@@ -78,7 +79,7 @@ class AddPlaceRepository(
      */
     suspend fun submitPhoto(placeId: Int, photo: Uri): AddPhotoResult {
         val bytes = downscaleToJpeg(appContext, photo)
-            ?: return AddPhotoResult.Error("Fotku se nepodařilo zpracovat.")
+            ?: return AddPhotoResult.Error(t("Fotku se nepodařilo zpracovat."))
         val part = MultipartBody.Part.createFormData(
             "photo_file",
             "photo.jpg",
@@ -93,22 +94,22 @@ class AddPlaceRepository(
                 resp.success -> AddPhotoResult.Success
                 !resp.error.isNullOrBlank() -> AddPhotoResult.Error(resp.error)
                 !resp.message.isNullOrBlank() -> AddPhotoResult.Error(resp.message)
-                else -> AddPhotoResult.Error("Odeslání se nezdařilo.")
+                else -> AddPhotoResult.Error(t("Odeslání se nezdařilo."))
             }
         } catch (e: SerializationException) {
-            AddPhotoResult.Error("Odpověď serveru se nepodařilo zpracovat.")
+            AddPhotoResult.Error(t("Odpověď serveru se nepodařilo zpracovat."))
         } catch (e: HttpException) {
             AddPhotoResult.Error(
                 when (e.code()) {
-                    401, 403 -> "Přihlášení vypršelo. Přihlaste se prosím znovu."
-                    404 -> "Tohle místo se nepodařilo najít."
-                    413 -> "Fotka je příliš velká (max 8 MB)."
-                    429 -> "Za poslední hodinu jste přidali hodně fotek. Zkuste to za chvíli."
+                    401, 403 -> t("Přihlášení vypršelo. Přihlaste se prosím znovu.")
+                    404 -> t("Tohle místo se nepodařilo najít.")
+                    413 -> t("Fotka je příliš velká (max 8 MB).")
+                    429 -> t("Za poslední hodinu jste přidali hodně fotek. Zkuste to za chvíli.")
                     else -> "Chyba serveru (${e.code()})."
                 },
             )
         } catch (e: Exception) {
-            AddPhotoResult.Error("Bez připojení. Zkuste to znovu, až budete online.")
+            AddPhotoResult.Error(t("Bez připojení. Zkuste to znovu, až budete online."))
         }
     }
 }

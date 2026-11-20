@@ -1,5 +1,6 @@
 package cz.euroklicmapa.data.repository
 
+import cz.euroklicmapa.util.t
 import android.util.Log
 import cz.euroklicmapa.data.local.EuroklicDao
 import cz.euroklicmapa.data.local.PickupPointEntity
@@ -55,6 +56,8 @@ interface EuroklicRepository {
     suspend fun getPickupPoint(id: Int): PickupPointEntity?
     /** One-shot ids of every cached WC (no refresh side effect) — for the notification poll worker. */
     suspend fun getAllLocationIds(): List<Int>
+    /** One-shot snapshot of the cached toilets (widgets; no network, no refresh side effect). */
+    suspend fun getAllLocationsOnce(): List<WcLocationEntity>
     /** One-shot fetch of the cached WC rows for [ids] (no refresh side effect). */
     suspend fun getLocationsByIds(ids: List<Int>): List<WcLocationEntity>
     suspend fun refreshLocations()
@@ -125,6 +128,8 @@ class EuroklicRepositoryImpl internal constructor(
     override suspend fun getPickupPoint(id: Int): PickupPointEntity? = dao.getPickupPointById(id)
 
     override suspend fun getAllLocationIds(): List<Int> = dao.getAllLocationIds()
+
+    override suspend fun getAllLocationsOnce(): List<WcLocationEntity> = dao.getAllLocationsOnce()
 
     override suspend fun getLocationsByIds(ids: List<Int>): List<WcLocationEntity> =
         if (ids.isEmpty()) emptyList() else dao.getLocationsByIds(ids)
@@ -248,24 +253,24 @@ class EuroklicRepositoryImpl internal constructor(
             resp.success -> PostCommentResult.Success
             !resp.error.isNullOrBlank() -> PostCommentResult.Error(resp.error)
             !resp.message.isNullOrBlank() -> PostCommentResult.Error(resp.message)
-            else -> PostCommentResult.Error("Komentář se nepodařilo odeslat.")
+            else -> PostCommentResult.Error(t("Komentář se nepodařilo odeslat."))
         }
     } catch (e: HttpException) {
         PostCommentResult.Error(
             when (e.code()) {
-                401, 403 -> "Přihlášení vypršelo. Přihlaste se prosím znovu."
+                401, 403 -> t("Přihlášení vypršelo. Přihlaste se prosím znovu.")
                 400 -> serverMessage(e)
-                    ?: "Komentář se nepodařilo odeslat (zkontrolujte délku 3–2000 znaků, max 1 odkaz)."
-                404 -> "Tohle místo se nepodařilo najít."
-                409 -> "Tenhle komentář jste už přidali."
-                429 -> "Za poslední dobu jste přidali hodně příspěvků. Zkuste to později."
+                    ?: t("Komentář se nepodařilo odeslat (zkontrolujte délku 3–2000 znaků, max 1 odkaz).")
+                404 -> t("Tohle místo se nepodařilo najít.")
+                409 -> t("Tenhle komentář jste už přidali.")
+                429 -> t("Za poslední dobu jste přidali hodně příspěvků. Zkuste to později.")
                 else -> "Chyba serveru (${e.code()})."
             },
         )
     } catch (e: SerializationException) {
-        PostCommentResult.Error("Odpověď serveru se nepodařilo zpracovat.")
+        PostCommentResult.Error(t("Odpověď serveru se nepodařilo zpracovat."))
     } catch (e: Exception) {
-        PostCommentResult.Error("Bez připojení. Zkuste to znovu, až budete online.")
+        PostCommentResult.Error(t("Bez připojení. Zkuste to znovu, až budete online."))
     }
 
     override suspend fun reportProblem(
@@ -284,22 +289,22 @@ class EuroklicRepositoryImpl internal constructor(
             resp.success -> ReportResult.Success
             !resp.error.isNullOrBlank() -> ReportResult.Error(resp.error)
             !resp.message.isNullOrBlank() -> ReportResult.Error(resp.message)
-            else -> ReportResult.Error("Hlášení se nepodařilo odeslat.")
+            else -> ReportResult.Error(t("Hlášení se nepodařilo odeslat."))
         }
     } catch (e: HttpException) {
         ReportResult.Error(
             when (e.code()) {
-                401, 403 -> "Přihlášení vypršelo. Přihlaste se prosím znovu."
-                400 -> serverMessage(e) ?: "Hlášení se nepodařilo odeslat (zkontrolujte vyplněná pole)."
-                404 -> "Tohle místo se nepodařilo najít."
-                409 -> "Tohle už jste nahlásili — čeká to na vyřízení."
-                429 -> "Za poslední hodinu jste toho nahlásili hodně. Zkuste to později."
+                401, 403 -> t("Přihlášení vypršelo. Přihlaste se prosím znovu.")
+                400 -> serverMessage(e) ?: t("Hlášení se nepodařilo odeslat (zkontrolujte vyplněná pole).")
+                404 -> t("Tohle místo se nepodařilo najít.")
+                409 -> t("Tohle už jste nahlásili — čeká to na vyřízení.")
+                429 -> t("Za poslední hodinu jste toho nahlásili hodně. Zkuste to později.")
                 else -> "Chyba serveru (${e.code()})."
             },
         )
     } catch (e: SerializationException) {
-        ReportResult.Error("Odpověď serveru se nepodařilo zpracovat.")
+        ReportResult.Error(t("Odpověď serveru se nepodařilo zpracovat."))
     } catch (e: Exception) {
-        ReportResult.Error("Bez připojení. Zkuste to znovu, až budete online.")
+        ReportResult.Error(t("Bez připojení. Zkuste to znovu, až budete online."))
     }
 }

@@ -81,7 +81,7 @@ struct PlaceRow: View {
                     if let badge = place.badgeLabel {
                         Text("·")
                         Text(badge)
-                            .foregroundStyle(place.status == .reported ? Theme.accent : Theme.success)
+                            .foregroundStyle(place.badgeColor)
                     }
                 }
                 .font(.caption)

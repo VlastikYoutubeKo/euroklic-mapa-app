@@ -388,3 +388,5 @@
 "Vozidlo mimo provoz" = "Vehicle out of service";
 "Verze %@ · %@" = "Version %@ · %@";
 "Verze %@" = "Version %@";
+"Funguje · %lld" = "Works · %lld";
+"Nefunguje · %lld" = "Doesn't work · %lld";

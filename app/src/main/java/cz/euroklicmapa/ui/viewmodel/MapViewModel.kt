@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.viewmodel
 
+import cz.euroklicmapa.util.t
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cz.euroklicmapa.data.location.LocationRepository
@@ -97,7 +98,7 @@ class MapViewModel(
             val hit = geocoding.search(q)
             _isSearching.value = false
             if (hit != null) _recenterTarget.value = hit.point
-            else _searchError.value = "Adresu se nepodařilo najít"
+            else _searchError.value = t("Adresu se nepodařilo najít")
         }
     }
 

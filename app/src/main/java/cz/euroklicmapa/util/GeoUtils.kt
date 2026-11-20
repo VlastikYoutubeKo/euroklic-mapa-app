@@ -28,7 +28,7 @@ fun formatWalkingTime(meters: Double): String {
     return when {
         minutes < 90 -> "~$minutes min"
         minutes < 24 * 60 -> "~${(minutes / 60.0).roundToInt()} h"
-        else -> "přes 1 den"
+        else -> t("přes 1 den")
     }
 }
 
@@ -36,9 +36,9 @@ fun distanceBetween(a: GeoPoint, b: GeoPoint): Double = a.distanceToAsDouble(b)
 
 /** Czech plural for "místo": 1 místo, 2–4 místa, 0 / 5+ míst. */
 fun placesCount(n: Int): String = when {
-    n == 1 -> "1 místo"
-    n in 2..4 -> "$n místa"
-    else -> "$n míst"
+    n == 1 -> t("1 místo")
+    n in 2..4 -> t("%s místa", n)
+    else -> t("%s míst", n)
 }
 
 private fun startOrToast(context: Context, intent: Intent, failMsg: String): Boolean = try {
@@ -51,7 +51,7 @@ private fun startOrToast(context: Context, intent: Intent, failMsg: String): Boo
 
 /** Opens a URL in the user's browser. */
 fun openUrl(context: Context, url: String) {
-    startOrToast(context, Intent(Intent.ACTION_VIEW, Uri.parse(url)), "Nemám čím otevřít odkaz.")
+    startOrToast(context, Intent(Intent.ACTION_VIEW, Uri.parse(url)), t("Nemám čím otevřít odkaz."))
 }
 
 /**
@@ -66,6 +66,6 @@ fun launchNavigation(context: Context, lat: Double, lon: Double, label: String?)
     )
     val geo = Intent(Intent.ACTION_VIEW, Uri.parse("geo:$lat,$lon?q=$lat,$lon($encodedLabel)"))
     if (!startOrToast(context, dir, "")) {
-        startOrToast(context, geo, "Nemám čím spustit navigaci.")
+        startOrToast(context, geo, t("Nemám čím spustit navigaci."))
     }
 }

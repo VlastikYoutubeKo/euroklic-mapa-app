@@ -17,6 +17,12 @@ val mapyApiKey: String = localProps.getProperty("MAPY_APIKEY")
     ?: System.getenv("MAPY_APIKEY")
     ?: ""
 
+// The changelogs (EN + CS) are bundled as assets so the app can show "What's new" in the phone's language.
+val copyChangelog = tasks.register<Copy>("copyChangelog") {
+    from(rootProject.file("CHANGELOG.md"), rootProject.file("CHANGELOG.cs.md"))
+    into(layout.buildDirectory.dir("generated/changelogAssets"))
+}
+
 android {
     namespace = "cz.euroklicmapa"
     compileSdk {
@@ -59,6 +65,11 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    sourceSets {
+        getByName("main") {
+            assets.directories.add(layout.buildDirectory.dir("generated/changelogAssets").get().asFile.path)
+        }
     }
     buildFeatures {
         compose = true
@@ -111,6 +122,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.retrofit)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.junit)
@@ -125,3 +138,5 @@ dependencies {
     "ksp"(libs.androidx.room.compiler)
     "ksp"(libs.moshi.kotlin.codegen)
 }
+// Make sure the changelog assets exist before resources are merged.
+tasks.named("preBuild") { dependsOn(copyChangelog) }

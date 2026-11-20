@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.map
 
+import cz.euroklicmapa.util.t
 import android.content.Context
 import android.view.MotionEvent
 import androidx.compose.foundation.layout.Box
@@ -100,7 +101,7 @@ fun LocationPickerMap(
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
         Icon(
             Icons.Rounded.Place,
-            contentDescription = "Značka polohy",
+            contentDescription = t("Značka polohy"),
             tint = EuroklicTheme.extended.brandButton,
             modifier = Modifier
                 .align(Alignment.Center)

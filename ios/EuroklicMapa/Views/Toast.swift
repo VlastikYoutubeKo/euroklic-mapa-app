@@ -51,7 +51,7 @@ private struct ToastModifier: ViewModifier {
                     .padding(.bottom, 16)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .accessibilityHidden(true)
-                    .onTapGesture { self.item = nil }
+                    .onTapGesture { self.item = nil }  // dismiss shortcut only; VoiceOver gets the announcement instead
                 }
             }
             .animation(.spring(duration: 0.35), value: item)
@@ -66,7 +66,7 @@ private struct ToastModifier: ViewModifier {
             }
             .task(id: item?.id) {
                 guard item != nil else { return }
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                try? await Task.sleep(for: .seconds(3))
                 if !Task.isCancelled { item = nil }
             }
     }

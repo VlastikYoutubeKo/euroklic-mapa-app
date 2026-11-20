@@ -30,6 +30,9 @@ interface EuroklicDao {
     suspend fun getLocationById(id: Int): WcLocationEntity?
 
     /** One-shot snapshot of every cached WC id — used by the notification poll worker (no Flow). */
+    @Query("SELECT * FROM locations")
+    suspend fun getAllLocationsOnce(): List<WcLocationEntity>
+
     @Query("SELECT id FROM locations")
     suspend fun getAllLocationIds(): List<Int>
 

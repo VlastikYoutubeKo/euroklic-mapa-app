@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.components
 
+import cz.euroklicmapa.util.t
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -53,7 +54,7 @@ fun PlaceCard(
     likes: Int = 0,
     dislikes: Int = 0,
 ) {
-    val sourceText = if (isPickup) "Výdejní místo klíče" else sourceLabel(source)
+    val sourceText = if (isPickup) t("Výdejní místo klíče") else sourceLabel(source)
     val secondary = subtitle?.takeIf { it.isNotBlank() } ?: sourceText
     val vb = if (isPickup) VoteBadge.NONE else voteBadge(likes, dislikes, source == "cd")
     val showStatus = vb != VoteBadge.NONE
@@ -61,7 +62,7 @@ fun PlaceCard(
     val a11y = buildString {
         append(title)
         distance?.let { append(", $it") }
-        walk?.let { append(", $it pěšky") }
+        walk?.let { append(t(", %s pěšky", it)) }
         append(", $sourceText")
         if (showStatus) append(", ${vb.label(likes, dislikes)}")
         if (foreign) append(", ${countryName(country)}")

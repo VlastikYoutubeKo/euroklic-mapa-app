@@ -1,5 +1,7 @@
 package cz.euroklicmapa.notifications
 
+import cz.euroklicmapa.util.t
+
 /**
  * Pure, Android-free bits of [QueuePollWorker] — Czech pluralisation for the notification
  * text plus the admin "should we notify" predicate. Extracted so they're unit-testable
@@ -10,9 +12,9 @@ internal object QueuePollLogic {
 
     /** Rough Czech plural for "místo". */
     internal fun places(n: Int) = when {
-        n == 1 -> "1 místo"
-        n in 2..4 -> "$n místa"
-        else -> "$n míst"
+        n == 1 -> t("1 místo")
+        n in 2..4 -> t("%s místa", n)
+        else -> t("%s míst", n)
     }
 
     internal fun photos(n: Int) = when {
@@ -23,9 +25,9 @@ internal object QueuePollLogic {
 
     /** "1 nové místo v okolí" / "3 nová místa v okolí" / "7 nových míst v okolí". */
     internal fun newPlacesNearby(n: Int) = when {
-        n == 1 -> "1 nové místo v okolí"
-        n in 2..4 -> "$n nová místa v okolí"
-        else -> "$n nových míst v okolí"
+        n == 1 -> t("1 nové místo v okolí")
+        n in 2..4 -> t("%s nová místa v okolí", n)
+        else -> t("%s nových míst v okolí", n)
     }
 
     /**

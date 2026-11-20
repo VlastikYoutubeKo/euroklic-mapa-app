@@ -21,7 +21,7 @@ Target users are people with reduced mobility, seniors, and parents with strolle
   **Superseded 2026-09-06 (user):** local notifications (WorkManager, phase 1) are in — see
   "Local notifications" below. Still no FCM/push (phase 2, BACKLOG 2.2) and no Play Store
   publishing (paid; the signed APK is distributed via GitHub Releases, see "Releases" below).
-  Widgets and the Odjezdy mode exist only on iOS so far (`ios/`); Android parity is planned. Favor the "nearest suitable toilet" use case; drop anything that only
+  The "Nearest toilet" widget (`widget/`, Jetpack Glance) and the Odjezdy mode (`odjezdy/`, switch in More) were added 2026-11-20; Odjezdy lacks alerts/service disruptions and the colour palettes of the iOS version. Favor the "nearest suitable toilet" use case; drop anything that only
   complicates the browse UI.
 - Accessibility requirements that code must uphold: 48dp min touch targets; WCAG AA contrast
   (the color tokens in `ui/theme/Color.kt` are pre-verified — recompute if you change them);
@@ -425,8 +425,10 @@ add Hilt.
   literals, or the variant won't apply). Map clusters, selection halo and the location dot read
   `ExtendedColors` too. **`ThemeContrastTest`** asserts WCAG AA for every scheme — run it after
   any colour change. Mockup: https://claude.ai/artifact/S85RyPnrNUNm3DmQfoXjdF
-- UI strings are hardcoded Czech in composables, not in `res/values/strings.xml` (the iOS app is
-  already English + Czech; Android localization is planned).
+- UI strings: the Czech text is the key — `t("Český text %s", arg)` (`util/Localization.kt`) returns it as is for a Czech
+  phone and looks up the English text in `util/EnglishStrings.kt` (generated) / `util/EnglishStringsExtra.kt` (hand-maintained)
+  otherwise; a missing key falls back to Czech. Add new strings to `EnglishStringsExtra.kt`. Only launcher/manifest strings are in `res/values*/strings.xml`.
+  Data that is matched against server text (e.g. `util/OpeningHours.kt`) must NOT be wrapped in `t()`.
 
 ## Releases
 

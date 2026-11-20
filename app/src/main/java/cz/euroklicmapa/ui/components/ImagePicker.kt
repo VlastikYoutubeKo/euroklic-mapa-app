@@ -1,5 +1,6 @@
 package cz.euroklicmapa.ui.components
 
+import cz.euroklicmapa.util.t
 import cz.euroklicmapa.ui.theme.EuroklicTheme
 import android.content.Context
 import android.net.Uri
@@ -54,8 +55,8 @@ fun rememberImagePicker(onPicked: (Uri) -> Unit): ImagePickerHandle {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Přidat fotku") },
-            text = { Text("Vyfoťte místo, nebo vyberte fotku z galerie.") },
+            title = { Text(t("Přidat fotku")) },
+            text = { Text(t("Vyfoťte místo, nebo vyberte fotku z galerie.")) },
             confirmButton = {
                 Button(shape = EuroklicTheme.shapes.pill, onClick = {
                     showDialog = false
@@ -65,7 +66,7 @@ fun rememberImagePicker(onPicked: (Uri) -> Unit): ImagePickerHandle {
                 }) {
                     Icon(Icons.Rounded.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(8.dp))
-                    Text("Vyfotit")
+                    Text(t("Vyfotit"))
                 }
             },
             dismissButton = {
@@ -75,7 +76,7 @@ fun rememberImagePicker(onPicked: (Uri) -> Unit): ImagePickerHandle {
                 }) {
                     Icon(Icons.Rounded.PhotoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(8.dp))
-                    Text("Galerie")
+                    Text(t("Galerie"))
                 }
             },
         )

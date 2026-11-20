@@ -131,7 +131,7 @@ final class ODMapViewModel: ObservableObject {
                 guard let self else { return }
                 let wait = await self.pollOnce()
                 if Task.isCancelled { return }
-                try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
+                try? await Task.sleep(for: .seconds(wait))
             }
         }
     }
@@ -235,7 +235,7 @@ final class ODMapViewModel: ObservableObject {
             return
         }
         stopsTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 450_000_000)
+            try? await Task.sleep(for: .milliseconds(450))
             guard !Task.isCancelled, let self else { return }
             let padLat = r.span.latitudeDelta * 0.6
             let padLng = r.span.longitudeDelta * 0.6
@@ -298,7 +298,7 @@ final class ODMapViewModel: ObservableObject {
         if let i = try? await api.vehicleInfo(id: id), selectedVehicleId == id {
             info = i
             if i.pending {
-                try? await Task.sleep(nanoseconds: 15_000_000_000)
+                try? await Task.sleep(for: .seconds(15))
                 if !Task.isCancelled, selectedVehicleId == id,
                    let again = try? await api.vehicleInfo(id: id, fresh: true) {
                     info = again

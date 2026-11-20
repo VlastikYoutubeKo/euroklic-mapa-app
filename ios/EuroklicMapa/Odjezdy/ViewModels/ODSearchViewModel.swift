@@ -39,7 +39,7 @@ final class ODSearchViewModel: ObservableObject {
         }
         isSearching = true
         searchTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 350_000_000)
+            try? await Task.sleep(for: .milliseconds(350))
             guard !Task.isCancelled, let self else { return }
             await self.search(q)
         }
