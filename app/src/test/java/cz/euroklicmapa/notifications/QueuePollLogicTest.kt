@@ -3,7 +3,9 @@ package cz.euroklicmapa.notifications
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import cz.euroklicmapa.util.CzechLocaleRule
 
 /**
  * A7 — the pure bits of [QueuePollWorker]: Czech pluralisation for the notification text and
@@ -11,6 +13,9 @@ import org.junit.Test
  * `EuroklicApplication` and is not unit-tested.
  */
 class QueuePollLogicTest {
+    @get:Rule
+    val czech = CzechLocaleRule()
+
 
     // ---- places(n) — "místo / místa / míst" ----------------------------------
 

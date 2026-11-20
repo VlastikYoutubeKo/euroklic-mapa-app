@@ -6,7 +6,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import cz.euroklicmapa.util.CzechLocaleRule
 import org.osmdroid.util.GeoPoint
 
 /**
@@ -14,6 +16,9 @@ import org.osmdroid.util.GeoPoint
  * Covers category filtering, distance vs. alphabetical sort, navType, title/subtitle fallbacks.
  */
 class PlacesTest {
+    @get:Rule
+    val czech = CzechLocaleRule()
+
 
     private fun wc(
         id: Int,

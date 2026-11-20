@@ -3,6 +3,7 @@ package cz.euroklicmapa.util
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
@@ -11,6 +12,9 @@ import java.util.concurrent.TimeUnit
  * the BACKLOG A7 item — every branch + the day-183 boundary.
  */
 class PlaceStatusTest {
+    @get:Rule
+    val czech = CzechLocaleRule()
+
 
     private val dayMs = TimeUnit.DAYS.toMillis(1)
 
