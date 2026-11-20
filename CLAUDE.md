@@ -19,8 +19,9 @@ Target users are people with reduced mobility, seniors, and parents with strolle
   does Discord/Google **login** (token-based), **add-place with photo**, and an **admin
   moderation queue** — see "Auth & write features" below. Anonymous voting was already in.
   **Superseded 2026-09-06 (user):** local notifications (WorkManager, phase 1) are in — see
-  "Local notifications" below. Still no widgets, no FCM/push (phase 2, BACKLOG 2.2), no Play
-  Store publishing. Favor the "nearest suitable toilet" use case; drop anything that only
+  "Local notifications" below. Still no FCM/push (phase 2, BACKLOG 2.2) and no Play Store
+  publishing (paid; the signed APK is distributed via GitHub Releases, see "Releases" below).
+  Widgets and the Odjezdy mode exist only on iOS so far (`ios/`); Android parity is planned. Favor the "nearest suitable toilet" use case; drop anything that only
   complicates the browse UI.
 - Accessibility requirements that code must uphold: 48dp min touch targets; WCAG AA contrast
   (the color tokens in `ui/theme/Color.kt` are pre-verified — recompute if you change them);
@@ -286,7 +287,8 @@ SDK **37** (preview), minSdk 24.
 ./gradlew lint                     # Android lint; report in app/build/reports/lint-results-*.html
 ```
 
-There is no CI, no ktlint/detekt, no Cursor/Copilot rule files. JVM unit tests exist in
+CI: `.github/workflows/ci.yml` (assembleDebug + unit tests), `android.yml` (signed release APK) and
+`ios.yml` (unsigned IPA); no ktlint/detekt, no Cursor/Copilot rule files. JVM unit tests exist in
 `src/test` for the pure logic (`PlaceStatusTest`, `OpeningHoursTest`, `MappersTest`,
 `FavoriteMapperTest`, `PlacesTest`, `QueuePollLogicTest`, `AdminListResponseTest`,
 `FetchLocationTest`, `ThemeContrastTest`); Compose UI and `src/androidTest` are essentially untested.
@@ -423,7 +425,18 @@ add Hilt.
   literals, or the variant won't apply). Map clusters, selection halo and the location dot read
   `ExtendedColors` too. **`ThemeContrastTest`** asserts WCAG AA for every scheme — run it after
   any colour change. Mockup: https://claude.ai/artifact/S85RyPnrNUNm3DmQfoXjdF
-- UI strings are hardcoded Czech in composables, not in `res/values/strings.xml`.
+- UI strings are hardcoded Czech in composables, not in `res/values/strings.xml` (the iOS app is
+  already English + Czech; Android localization is planned).
+
+## Releases
+
+Tag `vX.Y.Z` (after adding the version to `CHANGELOG.md` **and** `CHANGELOG.cs.md`) makes GitHub Actions
+build `EuroklicMapa.apk` (`android.yml`, signed with the release key from the GitHub secrets
+`RELEASE_KEYSTORE_BASE64`/`_PASSWORD`/`RELEASE_KEY_ALIAS`/`RELEASE_KEY_PASSWORD`; env `VERSION_NAME`/`VERSION_CODE`
+come from the tag/run number) and `EuroklicMapa.ipa` (`ios.yml`) and attach both to one GitHub Release. The release key
+(`euroklic-release.jks`) is **not** in the repo and must be kept backed up — losing it means users must reinstall.
+Its SHA-256 `37:B9:DB:C7:…:B0:CF` is in the site's `assetlinks.json`. The download page is `/app` on the site
+(`/ios` redirects there). Apps are not in the stores: users install the APK / IPA (SideStore) from a file.
 
 ## Current state
 

@@ -18,7 +18,7 @@ struct DetailView: View {
     @State private var displayDislikes: Int
     @State private var myVote: Bool?
     @State private var voting = false
-    @State private var voteMessage: String?
+    @State private var toast: ToastItem?
 
     @State private var comments: [WcComment]?
     @State private var stops: [NearbyStop] = []
@@ -47,7 +47,7 @@ struct DetailView: View {
                 if let note = nonBlank(place.accessibilityNote) { accessibilityBlock(note) }
                 if !place.isPickup { voteBlock }
                 if let comments, !comments.isEmpty { commentsBlock(comments) }
-                if !place.isPickup { ContributeBlock(place: place) }
+                if !place.isPickup { ContributeBlock(place: place) { toast = $0 } }
             }
             .padding(.horizontal, 16)
             .padding(.top, asSheet ? 14 : 8)
@@ -60,6 +60,7 @@ struct DetailView: View {
         .toolbar(asSheet ? .hidden : .visible, for: .navigationBar)
         .task {
             guard !place.isPickup else { return }
+            myVote = VoteMemory.vote(for: place.id)
             comments = (try? await EuroklicAPI().comments(locationId: place.id))?.comments ?? []
         }
         .task(id: "\(place.latitude),\(place.longitude)") {
@@ -74,12 +75,7 @@ struct DetailView: View {
             departures = await NearbyStopsService.departures(stopId: id)
             loadingDepartures = false
         }
-        .task(id: voteMessage) {
-            if voteMessage != nil {
-                try? await Task.sleep(nanoseconds: 3_500_000_000)
-                voteMessage = nil
-            }
-        }
+        .toast($toast)
     }
 
     // MARK: - Blocks
@@ -339,9 +335,6 @@ struct DetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Funguje to?").font(.title2.bold())
             VoteRow(likes: displayLikes, dislikes: displayDislikes, myVote: myVote, voting: voting, onVote: vote)
-            if let voteMessage {
-                Text(voteMessage).font(.footnote).foregroundStyle(.secondary)
-            }
         }
     }
 
@@ -484,17 +477,19 @@ struct DetailView: View {
                 if response.success {
                     if let likes = response.likes { displayLikes = likes }
                     if let dislikes = response.dislikes { displayDislikes = dislikes }
-                    voteMessage = like ? L("Díky, zaznamenáno jako funguje.") : L("Díky, zaznamenáno.")
+                    VoteMemory.save(like, for: place.id)
+                    toast = ToastItem(text: like ? L("Díky, zaznamenáno jako funguje.") : L("Díky, zaznamenáno."))
                 } else if let message = [response.message, response.error].compactMap(\.self).first(where: { !$0.isEmpty }) {
-                    // e.g. "Už jste takto hlasovali." — keep the highlight
-                    voteMessage = message
+                    // e.g. "Už jste takto hlasovali." — keep the highlight and remember it
+                    VoteMemory.save(like, for: place.id)
+                    toast = ToastItem(text: message, kind: .info)
                 } else {
                     myVote = previous
-                    voteMessage = L("Hlas se teď nepodařilo odeslat. Zkuste to znovu.")
+                    toast = ToastItem(text: L("Hlas se teď nepodařilo odeslat. Zkuste to znovu."), kind: .failure)
                 }
             } catch {
                 myVote = previous
-                voteMessage = (error as? LocalizedError)?.errorDescription ?? L("Hlas se nepodařilo odeslat.")
+                toast = ToastItem(text: (error as? LocalizedError)?.errorDescription ?? L("Hlas se nepodařilo odeslat."), kind: .failure)
             }
         }
     }

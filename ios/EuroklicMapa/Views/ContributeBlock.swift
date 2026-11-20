@@ -7,6 +7,7 @@ import UIKit
 struct ContributeBlock: View {
     @EnvironmentObject private var auth: AuthSession
     let place: PlaceItem
+    var onToast: (ToastItem) -> Void = { _ in }
 
     @State private var showPhotoSource = false
     @State private var showLibrary = false
@@ -16,7 +17,6 @@ struct ContributeBlock: View {
     @State private var showReport = false
     @State private var showLoginPrompt = false
     @State private var uploading = false
-    @State private var message: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -38,12 +38,6 @@ struct ContributeBlock: View {
                     Text("Odesílám fotku…").font(.footnote).foregroundStyle(.secondary)
                 }
                 .accessibilityElement(children: .combine)
-            }
-            if let message {
-                Text(message)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
             Text("Fotky, komentáře i hlášení nejdřív schvaluje moderátor.")
                 .font(.footnote)
@@ -104,9 +98,8 @@ struct ContributeBlock: View {
         if auth.isLoggedIn { action() } else { showLoginPrompt = true }
     }
 
-    private func show(_ text: String) {
-        message = text
-        UIAccessibility.post(notification: .announcement, argument: text)
+    private func show(_ text: String, ok: Bool = true) {
+        onToast(ToastItem(text: text, kind: ok ? .success : .failure))
     }
 
     // MARK: - Fotka
@@ -114,7 +107,7 @@ struct ContributeBlock: View {
     private func sendLibrary(_ item: PhotosPickerItem) async {
         defer { libraryItem = nil }
         guard let data = try? await item.loadTransferable(type: Data.self) else {
-            show(L("Fotku se nepodařilo načíst."))
+            show(L("Fotku se nepodařilo načíst."), ok: false)
             return
         }
         let jpeg = await Task.detached(priority: .userInitiated) {
@@ -132,13 +125,13 @@ struct ContributeBlock: View {
 
     private func upload(_ jpeg: Data?) async {
         guard let jpeg else {
-            show(L("Fotku se nepodařilo zpracovat."))
+            show(L("Fotku se nepodařilo zpracovat."), ok: false)
             return
         }
         uploading = true
         let result = await EuroklicAPI().addPhoto(placeId: place.id, jpeg: jpeg)
         uploading = false
-        show(result.message)
+        show(result.message, ok: result.isOk)
     }
 }
 
