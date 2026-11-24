@@ -15,6 +15,7 @@ struct EuroklicMapaApp: App {
                 .environmentObject(favorites)
                 .environmentObject(auth)
                 .tint(Theme.tint)
+                .onAppear { Analytics.track(.appOpen) }
         }
     }
 }

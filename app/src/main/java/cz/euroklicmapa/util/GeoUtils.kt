@@ -59,6 +59,7 @@ fun openUrl(context: Context, url: String) {
  * (Google Maps, Mapy.cz, Waze…), then a bare `geo:` intent, then the web URL in a browser.
  */
 fun launchNavigation(context: Context, lat: Double, lon: Double, label: String?) {
+    cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.NAVIGATE)
     val encodedLabel = Uri.encode(label ?: "")
     val dir = Intent(
         Intent.ACTION_VIEW,

@@ -56,18 +56,30 @@ enum Changelog {
         return entries.filter { !$0.items.isEmpty }
     }
 
-    static func load() -> [ChangelogEntry] {
-        // Czech phones get CHANGELOG.cs.md, everyone else the English CHANGELOG.md.
-        let url = (appIsCzech ? Bundle.main.url(forResource: "CHANGELOG.cs", withExtension: "md") : nil)
-            ?? Bundle.main.url(forResource: "CHANGELOG", withExtension: "md")
+    private static func loadFile(_ base: String) -> [ChangelogEntry] {
+        // Czech phones get <base>.cs.md, everyone else the English <base>.md.
+        let url = (appIsCzech ? Bundle.main.url(forResource: "\(base).cs", withExtension: "md") : nil)
+            ?? Bundle.main.url(forResource: base, withExtension: "md")
         guard let url,
               let text = try? String(contentsOf: url, encoding: .utf8)
         else { return [] }
         return parse(text)
     }
 
+    /// A beta build also shows the separate beta changelog on top; stable builds never do.
+    static func load() -> [ChangelogEntry] {
+        let stable = loadFile("CHANGELOG")
+        return isPrerelease(currentVersion) ? loadFile("CHANGELOG.beta") + stable : stable
+    }
+
+    /// `1.4.0-beta.1`: semver puts anything after a `-` into the pre-release part.
+    static func isPrerelease(_ version: String) -> Bool { version.contains("-") }
+
+    /// Full version with the pre-release suffix (CFBundleShortVersionString has to stay numeric).
     static var currentVersion: String {
-        (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? ""
+        let full = Bundle.main.object(forInfoDictionaryKey: "EKVersionName") as? String
+        if let full, !full.isEmpty, !full.hasPrefix("$(") { return full }
+        return (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? ""
     }
 
     /// "1.0" and "1.0.0" are the same release.

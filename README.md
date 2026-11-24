@@ -1,12 +1,30 @@
 # Euroklíč Mapa
 
-> *„Kde je nejbližší vhodná toaleta?"* — mapa bezbariérových WC otevíratelných
-> Euroklíčem v ČR a SR, plus výdejní místa klíče. Nativní klient veřejného webu
-> [euroklic.odjezdy.online](https://euroklic.odjezdy.online) (PHP + SQLite),
-> jehož backend je pouze konzumován, nikdy neměněn.
+**Kde je nejbližší bezbariérové WC, které odemkneš Euroklíčem?** Euroklíč Mapa to ukáže na jedné obrazovce:
+mapa toalet na Euroklíč v Česku, na Slovensku, v Německu, Rakousku a Švýcarsku, seřazená podle vzdálenosti od tebe,
+s adresou, popisem, otevírací dobou a vybavením. K tomu výdejní místa samotného klíče. Zdarma, bez reklam a bez účtu.
 
-Cíloví uživatelé: lidé s omezenou mobilitou, senioři, rodiče s kočárky.
-**Přístupnost je vstupní podmínka, ne funkce** (WCAG AA, 48 dp cíle, TalkBack/VoiceOver).
+Pro lidi s omezenou mobilitou, seniory a rodiče s kočárky.
+
+<p>
+  <img src="https://euroklic.odjezdy.online/sideload/screens/ios-1.jpg" width="170" alt="Mapa s nejbližšími toaletami">
+  <img src="https://euroklic.odjezdy.online/sideload/screens/ios-2.jpg" width="170" alt="Detail místa">
+  <img src="https://euroklic.odjezdy.online/sideload/screens/ios-3.jpg" width="170" alt="Seznam míst">
+</p>
+
+- **Funguje i bez signálu.** Stažená místa a mapa oblasti zůstanou po ruce offline.
+- **Soukromí.** Poloha se používá jen k seřazení míst a vycentrování mapy a nikam se neodesílá. Dobrovolné anonymní měření je ve výchozím stavu vypnuté, viz [PRIVACY.md](PRIVACY.md).
+- **Dělá ji komunita.** Chybějící místo přidáš s fotkou, potvrdíš hlasem, že funguje, nebo nahlásíš problém.
+- **Přístupnost je podmínka, ne funkce:** velké cíle, vysoký kontrast, TalkBack a VoiceOver, světlý i tmavý režim, česky i anglicky.
+- **Navíc režim Odjezdy:** živá mapa autobusů, tramvají a vlaků a odjezdy ze zastávek.
+
+Data jsou z OpenStreetMap (© přispěvatelé OpenStreetMap, ODbL), od Českých drah a od komunity.
+Web: [euroklic.odjezdy.online](https://euroklic.odjezdy.online) · Pro novináře a partnery: [press kit](docs/press/README.md).
+
+---
+
+*Níže je technická část pro vývojáře.* Aplikace je nativní klient veřejného webu (PHP + SQLite), jehož backend
+je pouze konzumován, nikdy neměněn. Přístupnost splňuje WCAG AA (48 dp cíle).
 
 ## Stažení
 
@@ -19,6 +37,8 @@ instalují se ze souboru. Vše je v [GitHub Releases](https://github.com/Vlastik
 | iOS 17+ | `EuroklicMapa.ipa` (nepodepsané) | přes SideStore / AltStore / Feather / LiveContainer, viz [návod](docs/ios-sidestore-navod.md) |
 
 Stránka s odkazy a zdroji pro SideStore/AltStore: <https://euroklic.odjezdy.online/app>.
+
+Beta (testovací) verze mají vlastní zdroj a changelog, viz [Beta verze](docs/beta-verze.md).
 Co je nového v které verzi: [CHANGELOG.cs.md](CHANGELOG.cs.md) (česky), [CHANGELOG.md](CHANGELOG.md) (anglicky).
 
 ## Co aplikace umí

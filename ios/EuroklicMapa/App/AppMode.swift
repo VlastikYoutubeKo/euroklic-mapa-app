@@ -27,6 +27,9 @@ struct ModePickerSection: View {
                 ForEach(AppMode.allCases) { Text($0.label).tag($0) }
             }
             .pickerStyle(.segmented)
+            .onChange(of: mode) { newMode in
+                if newMode == .odjezdy { Analytics.track(.modeDeparture) }
+            }
         } header: {
             Text("Režim aplikace")
         } footer: {

@@ -88,7 +88,10 @@ class AddPlaceViewModel(
             )
             submitting = false
             when (result) {
-                is AddPlaceResult.Success -> _submitted.trySend(Unit)
+                is AddPlaceResult.Success -> {
+                    cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.PLACE_ADD)
+                    _submitted.trySend(Unit)
+                }
                 is AddPlaceResult.Error -> error = result.message
             }
         }

@@ -12,6 +12,8 @@ settings:
   base:
     MARKETING_VERSION: 1.0
     CURRENT_PROJECT_VERSION: 1
+    # Full version incl. a pre-release suffix (1.4.0-beta.1); MARKETING_VERSION must stay numeric (1.4.0).
+    EK_VERSION_NAME: $(MARKETING_VERSION)
     SWIFT_VERSION: "5.9"
 targets:
   EuroklicMapa:
@@ -25,6 +27,10 @@ targets:
       - path: ../CHANGELOG.md
         buildPhase: resources
       - path: ../CHANGELOG.cs.md
+        buildPhase: resources
+      - path: ../CHANGELOG.beta.md
+        buildPhase: resources
+      - path: ../CHANGELOG.beta.cs.md
         buildPhase: resources
     info:
       path: EuroklicMapa/Info.plist
@@ -51,6 +57,7 @@ targets:
           The photo you choose is sent with the place as a suggestion for the moderator.
         ITSAppUsesNonExemptEncryption: false
         MapyApiKey: $(MAPY_APIKEY)
+        EKVersionName: $(EK_VERSION_NAME)
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
     dependencies:

@@ -5,6 +5,7 @@ struct MoreView: View {
     @EnvironmentObject private var auth: AuthSession
     @EnvironmentObject private var places: PlacesStore
     @AppStorage(MapProvider.storageKey) private var mapProvider: MapProvider = .mapy
+    @AppStorage(Analytics.enabledKey) private var analyticsOn = false
 
     var body: some View {
         NavigationStack {
@@ -52,6 +53,20 @@ struct MoreView: View {
                             Label("Ke schválení", systemImage: "checkmark.seal")
                         }
                     }
+                }
+
+                Section {
+                    Toggle("Pomoci vylepšit aplikaci anonymním měřením", isOn: $analyticsOn)
+                    Link(destination: URL(string: "https://euroklic.odjezdy.online/soukromi.php")!) {
+                        Label("Zásady ochrany osobních údajů", systemImage: "hand.raised")
+                    }
+                    Link(destination: URL(string: "https://euroklic.odjezdy.online/podminky")!) {
+                        Label("Podmínky použití", systemImage: "doc.text")
+                    }
+                } header: {
+                    Text("Soukromí")
+                } footer: {
+                    Text("Dobrovolné, ve výchozím stavu vypnuté. Posílá jen anonymní počty použití funkcí (např. otevření místa), nikdy polohu, hledaný text ani údaje o tobě.")
                 }
 
                 Section("Odkazy") {

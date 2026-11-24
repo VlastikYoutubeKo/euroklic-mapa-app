@@ -8,6 +8,7 @@ struct ModeSwitchPill: View {
 
     var body: some View {
         Button {
+            if target == .odjezdy { Analytics.track(.modeDeparture) }
             withAnimation(.easeInOut(duration: 0.2)) { mode = target }
         } label: {
             Label(target == .odjezdy ? L("Odjezdy") : L("Toalety"),

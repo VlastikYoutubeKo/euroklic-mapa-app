@@ -79,6 +79,7 @@ import kotlinx.coroutines.launch
 
 private const val URL_SITE = "https://euroklic.odjezdy.online/"
 private const val URL_PRIVACY = "https://euroklic.odjezdy.online/soukromi.php"
+private const val URL_TERMS = "https://euroklic.odjezdy.online/podminky"
 
 /**
  * Kept deliberately short — this used to stack the full disclaimer + "co je Euroklíč" +
@@ -110,6 +111,7 @@ fun MoreScreen(
 
     val nearbyNotif by app.notificationPrefs.nearbyEnabled.collectAsStateWithLifecycle(initialValue = false)
     val adminNotif by app.notificationPrefs.adminQueueEnabled.collectAsStateWithLifecycle(initialValue = true)
+    val analyticsOn by cz.euroklicmapa.data.analytics.Analytics.enabled(context).collectAsStateWithLifecycle(initialValue = false)
     // POST_NOTIFICATIONS is requested lazily, only when a toggle is switched ON (API 33+).
     val notifPermLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -221,6 +223,16 @@ fun MoreScreen(
                 }
             }
 
+            SectionLabel(t("Soukromí"))
+            SwitchRow(
+                title = t("Pomoci vylepšit aplikaci anonymním měřením"),
+                subtitle = t("Dobrovolné, ve výchozím stavu vypnuté. Posílá jen anonymní počty použití funkcí (např. otevření místa), nikdy polohu, hledaný text ani údaje o tobě."),
+                checked = analyticsOn,
+                onCheckedChange = { on -> scope.launch { cz.euroklicmapa.data.analytics.Analytics.setEnabled(context, on) } },
+            )
+            LinkRow(t("Zásady ochrany osobních údajů"), t("Co se měří a co ne")) { openUrl(context, URL_PRIVACY) }
+            LinkRow(t("Podmínky použití"), t("Pravidla používání aplikace a webu")) { openUrl(context, URL_TERMS) }
+
             SectionLabel(t("Notifikace"))
             SwitchRow(
                 title = t("Nové místo v okolí"),
@@ -275,7 +287,6 @@ fun MoreScreen(
             LinkRow(t("Režim Odjezdy"), t("Živá mapa vozidel a odjezdy")) { scope.launch { AppModePrefs(context).set(AppMode.ODJEZDY) } }
             LinkRow(t("Widget na plochu"), t("Nejbližší WC jedním klepnutím")) { requestNearestWidget(context) }
             LinkRow(t("Co je nového"), t("Změny v jednotlivých verzích")) { showChangelog = true }
-            LinkRow(t("Zásady ochrany osobních údajů"), t("Jak nakládáme s daty")) { openUrl(context, URL_PRIVACY) }
 
             Spacer(Modifier.padding(bottom = 24.dp))
         }

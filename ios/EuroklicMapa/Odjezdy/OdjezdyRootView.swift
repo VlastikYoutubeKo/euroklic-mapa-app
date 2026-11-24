@@ -22,7 +22,7 @@ struct OdjezdyRootView: View {
     var body: some View {
         let colors = ODColors.make(paletteId: paletteId, isDark: scheme == .dark)
         TabView(selection: $tab) {
-            ODMapTab(vm: map, location: location)
+            ODMapTab(vm: map, location: location, onOpenSearch: { tab = .search })
                 .tabItem { Label("Mapa", systemImage: "map") }
                 .tag(Tab.map)
 

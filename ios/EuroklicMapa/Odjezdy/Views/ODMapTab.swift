@@ -9,6 +9,7 @@ struct ODMapTab: View {
     @Environment(\.openURL) private var openURL
     @ObservedObject var vm: ODMapViewModel
     @ObservedObject var location: ODLocationProvider
+    let onOpenSearch: () -> Void
     @AppStorage(MapProvider.storageKey) private var providerRaw: String = MapProvider.mapy.rawValue
     @AppStorage(ODTheme.paletteKey) private var paletteId: String = ODPalette.defaultId
     @State private var showLocationDenied = false
@@ -66,6 +67,20 @@ struct ODMapTab: View {
                 }
             }
             .padding(.top, 8)
+        }
+        .overlay(alignment: .bottom) {
+            if vm.selectedVehicle == nil {
+                GeometryReader { geo in
+                    ODNearbyPanel(
+                        location: location,
+                        expandedHeight: geo.size.height * 0.55,
+                        onSearch: onOpenSearch,
+                        onOpenStop: { vm.openStop = $0 }
+                    )
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .animation(.easeInOut(duration: 0.2), value: vm.selectedVehicleId)
         .onAppear { vm.setTabVisible(true) }

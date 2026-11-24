@@ -172,6 +172,7 @@ struct AddPlaceView: View {
                     photoJPEG: photoJPEG,
                 )
                 if result.success {
+                    Analytics.track(.placeAdd)
                     resultMessage = L("Místo odesláno ke schválení. Po schválení se objeví na mapě všem.")
                     name = ""; desc = ""; coordinate = nil; photoJPEG = nil; photoItem = nil
                 } else {

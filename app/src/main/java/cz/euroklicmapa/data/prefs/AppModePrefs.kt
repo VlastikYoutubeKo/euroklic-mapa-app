@@ -17,6 +17,7 @@ class AppModePrefs(private val appContext: Context) {
 
     suspend fun set(mode: AppMode) {
         appContext.settingsDataStore.edit { it[KEY] = mode.name }
+        if (mode == AppMode.ODJEZDY) cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.MODE_DEPARTURES)
     }
 
     private companion object {

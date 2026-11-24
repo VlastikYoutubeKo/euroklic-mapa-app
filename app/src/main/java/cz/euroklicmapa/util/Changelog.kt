@@ -50,14 +50,26 @@ object Changelog {
         return entries.filter { it.items.isNotEmpty() }
     }
 
-    /** Czech UI gets `CHANGELOG.cs.md`, everything else the English `CHANGELOG.md`. */
-    fun load(context: Context): List<ChangelogEntry> {
-        val names = if (isCzechUi()) listOf("CHANGELOG.cs.md", "CHANGELOG.md") else listOf("CHANGELOG.md")
+    /** A pre-release build (`1.4.0-beta.1`): semver puts anything after a `-` into the pre-release part. */
+    fun isPrerelease(version: String): Boolean = '-' in version
+
+    private fun loadFile(context: Context, base: String): List<ChangelogEntry> {
+        val names = if (isCzechUi()) listOf("$base.cs.md", "$base.md") else listOf("$base.md")
         for (name in names) {
             val text = runCatching { context.assets.open(name).bufferedReader(Charsets.UTF_8).use { it.readText() } }.getOrNull()
             if (text != null) return parse(text)
         }
         return emptyList()
+    }
+
+    /**
+     * Czech UI gets `CHANGELOG.cs.md`, everything else the English `CHANGELOG.md`. A beta build also shows
+     * the separate beta changelog (`CHANGELOG.beta*.md`) on top; stable builds never show it.
+     */
+    fun load(context: Context): List<ChangelogEntry> {
+        val stable = loadFile(context, "CHANGELOG")
+        if (!isPrerelease(appVersionName(context))) return stable
+        return loadFile(context, "CHANGELOG.beta") + stable
     }
 
     /** "1.0" and "1.0.0" are the same release. */

@@ -147,6 +147,7 @@ class DetailViewModel(
     val reportSending: StateFlow<Boolean> = _reportSending.asStateFlow()
 
     init {
+        cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.PLACE_OPEN)
         locationRepository.refresh()
         if (type == "WC") loadComments()
     }
@@ -172,6 +173,7 @@ class DetailViewModel(
             try {
                 when (val r = repository.postComment(id, text)) {
                     PostCommentResult.Success -> {
+                        cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.COMMENT_ADD)
                         _message.value = t("Komentář odeslán ke schválení.")
                         loadComments()
                     }
@@ -191,7 +193,10 @@ class DetailViewModel(
             val result = repository.reportProblem(id, reason, note)
             _reportSending.value = false
             _message.value = when (result) {
-                ReportResult.Success -> t("Děkujeme, hlášení jsme přijali.")
+                ReportResult.Success -> {
+                    cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.REPORT)
+                    t("Děkujeme, hlášení jsme přijali.")
+                }
                 is ReportResult.Error -> result.message
             }
             onDone(result is ReportResult.Success)
@@ -219,6 +224,7 @@ class DetailViewModel(
             _myVote.value = like
             when (val outcome = repository.vote(id, like)) {
                 is VoteOutcome.Success -> {
+                    cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.VOTE)
                     votePrefs.setVote(id, like)
                     _message.value = if (like) t("Díky, zaznamenáno jako funguje.") else t("Díky, zaznamenáno.")
                 }

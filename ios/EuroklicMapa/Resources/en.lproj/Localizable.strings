@@ -407,3 +407,14 @@
 "Offline mapa funguje s mapou Mapy.com (Více → Mapa)." = "Offline maps work with the Mapy.com map (More → Map).";
 "Offline mapa" = "Offline map";
 "Stáhnout mapu pro offline použití" = "Download map for offline use";
+"Pomoci vylepšit aplikaci anonymním měřením" = "Help improve the app with anonymous statistics";
+"Zásady ochrany osobních údajů" = "Privacy policy";
+"Podmínky použití" = "Terms of use";
+"Dobrovolné, ve výchozím stavu vypnuté. Posílá jen anonymní počty použití funkcí (např. otevření místa), nikdy polohu, hledaný text ani údaje o tobě." = "Optional and off by default. Sends only anonymous counts of feature use (e.g. a place opened), never your location, search text or anything about you.";
+"Kam to bude?" = "Where to?";
+"Zastávky v okolí ukážeme, když povolíte polohu." = "We'll show nearby stops once you allow location.";
+"V okolí nejsou žádné zastávky." = "No stops nearby.";
+"Nic v nejbližších hodinách nejede." = "Nothing departs in the next few hours.";
+"Sbalit zastávky v okolí" = "Collapse nearby stops";
+"Rozbalit zastávky v okolí" = "Expand nearby stops";
+"Otevře hledání zastávky nebo vozidla" = "Opens the stop or vehicle search";

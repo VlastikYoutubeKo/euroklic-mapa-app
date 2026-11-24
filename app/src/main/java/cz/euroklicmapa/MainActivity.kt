@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (savedInstanceState == null) cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.APP_OPEN)
         handleAuthCallback(intent)
         handleDeepLink(intent)
         handleShortcutIntent(intent)

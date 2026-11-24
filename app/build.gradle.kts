@@ -19,7 +19,10 @@ val mapyApiKey: String = localProps.getProperty("MAPY_APIKEY")
 
 // The changelogs (EN + CS) are bundled as assets so the app can show "What's new" in the phone's language.
 val copyChangelog = tasks.register<Copy>("copyChangelog") {
-    from(rootProject.file("CHANGELOG.md"), rootProject.file("CHANGELOG.cs.md"))
+    from(
+        rootProject.file("CHANGELOG.md"), rootProject.file("CHANGELOG.cs.md"),
+        rootProject.file("CHANGELOG.beta.md"), rootProject.file("CHANGELOG.beta.cs.md"),
+    )
     into(layout.buildDirectory.dir("generated/changelogAssets"))
 }
 

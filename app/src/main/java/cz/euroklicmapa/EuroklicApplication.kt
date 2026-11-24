@@ -138,6 +138,7 @@ class EuroklicApplication : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        cz.euroklicmapa.data.analytics.Analytics.init(this)
 
         val database = Room.databaseBuilder(
             this,

@@ -224,6 +224,7 @@ struct MapScreen: View {
         searching = true
         Task {
             let hits = await Geocoder.search(q)
+            Analytics.track(.search)
             searchResults = hits
             searching = false
         }
@@ -358,6 +359,7 @@ struct SelectedPlaceCard: View {
     }
 
     private func openNavigation() {
+        Analytics.track(.navigate)
         let c = place.coordinate
         let directions = URL(string: "https://www.google.com/maps/dir/?api=1&destination=\(c.latitude),\(c.longitude)")
         let geo = URL(string: "geo:\(c.latitude),\(c.longitude)")

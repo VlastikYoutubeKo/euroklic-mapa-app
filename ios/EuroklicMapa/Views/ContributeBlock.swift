@@ -234,6 +234,7 @@ struct CommentComposer: View {
             let result = await EuroklicAPI().postComment(locationId: place.id, text: trimmed)
             sending = false
             if result.isOk {
+                Analytics.track(.commentAdd)
                 onResult(result.message)
                 dismiss()
             } else {
@@ -316,6 +317,7 @@ struct ReportSheet: View {
             let result = await EuroklicAPI().reportProblem(locationId: place.id, reason: reason, note: note)
             sending = false
             if result.isOk {
+                Analytics.track(.report)
                 onResult(result.message)
                 dismiss()
             } else {

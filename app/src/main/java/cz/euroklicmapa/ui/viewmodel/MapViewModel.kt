@@ -97,6 +97,7 @@ class MapViewModel(
             _searchError.value = null
             val hit = geocoding.search(q)
             _isSearching.value = false
+            cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.SEARCH)
             if (hit != null) _recenterTarget.value = hit.point
             else _searchError.value = t("Adresu se nepodařilo najít")
         }

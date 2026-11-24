@@ -6,6 +6,12 @@ package cz.euroklicmapa.util
  */
 internal val ENGLISH_EXTRA: Map<String, String> = mapOf(
     "Použít moji polohu" to "Use my location",
+    "Soukromí" to "Privacy",
+    "Pomoci vylepšit aplikaci anonymním měřením" to "Help improve the app with anonymous statistics",
+    "Dobrovolné, ve výchozím stavu vypnuté. Posílá jen anonymní počty použití funkcí (např. otevření místa), nikdy polohu, hledaný text ani údaje o tobě." to "Optional and off by default. Sends only anonymous counts of feature use (e.g. a place opened), never your location, search text or anything about you.",
+    "Co se měří a co ne" to "What is measured and what is not",
+    "Podmínky použití" to "Terms of use",
+    "Pravidla používání aplikace a webu" to "Rules for using the app and website",
     "Odjezdy" to "Departures",
     "Vybrat z galerie" to "Choose from gallery",
     "Vybrat ze souborů" to "Choose from files",

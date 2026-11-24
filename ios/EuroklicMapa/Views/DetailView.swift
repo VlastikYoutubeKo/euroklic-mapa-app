@@ -59,6 +59,7 @@ struct DetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(asSheet ? .hidden : .visible, for: .navigationBar)
         .task {
+            Analytics.track(.placeOpen)
             guard !place.isPickup else { return }
             myVote = VoteMemory.vote(for: place.id)
             comments = (try? await EuroklicAPI().comments(locationId: place.id))?.comments ?? []
@@ -449,6 +450,7 @@ struct DetailView: View {
 
     /// Hands off to the system Maps app (walking directions) — the native route.
     private func openNavigation() {
+        Analytics.track(.navigate)
         let item = MKMapItem(placemark: MKPlacemark(coordinate: place.coordinate))
         item.name = place.name
         item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking])
@@ -475,6 +477,7 @@ struct DetailView: View {
                     response = try await api.vote(id: place.id, type: like ? "like" : "dislike", csrfToken: csrf)
                 }
                 if response.success {
+                    Analytics.track(.vote)
                     if let likes = response.likes { displayLikes = likes }
                     if let dislikes = response.dislikes { displayDislikes = dislikes }
                     VoteMemory.save(like, for: place.id)
