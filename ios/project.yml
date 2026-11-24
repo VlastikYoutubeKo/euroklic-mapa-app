@@ -14,6 +14,12 @@ settings:
     CURRENT_PROJECT_VERSION: 1
     # Full version incl. a pre-release suffix (1.4.0-beta.1); MARKETING_VERSION must stay numeric (1.4.0).
     EK_VERSION_NAME: $(MARKETING_VERSION)
+    # Beta builds (ios.yml, tag v*-beta.*) override these four, so the beta is a separate app
+    # installed next to the stable one: own bundle ID, name, icon and URL scheme.
+    EK_BUNDLE_ID: cz.euroklicmapa.EuroklicMapa
+    EK_DISPLAY_NAME: Euroklíč Mapa
+    EK_APPICON: AppIcon
+    EK_URL_SCHEME: euroklicmapa
     SWIFT_VERSION: "5.9"
 targets:
   EuroklicMapa:
@@ -21,7 +27,8 @@ targets:
     platform: iOS
     settings:
       base:
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_APPICON_NAME: $(EK_APPICON)
+        PRODUCT_BUNDLE_IDENTIFIER: $(EK_BUNDLE_ID)
     sources:
       - EuroklicMapa
       - path: ../CHANGELOG.md
@@ -35,7 +42,7 @@ targets:
     info:
       path: EuroklicMapa/Info.plist
       properties:
-        CFBundleDisplayName: Euroklíč Mapa
+        CFBundleDisplayName: $(EK_DISPLAY_NAME)
         CFBundleLocalizations: [en, cs]
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -45,7 +52,7 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLName: cz.euroklicmapa.auth
             CFBundleURLSchemes:
-              - euroklicmapa
+              - $(EK_URL_SCHEME)
         NSLocationWhenInUseUsageDescription: >-
           We use your location only to sort places by distance and to center the
           map on you. It is never sent anywhere outside the app.
@@ -68,7 +75,7 @@ targets:
     deploymentTarget: "17.0"
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: cz.euroklicmapa.EuroklicMapa.Widgets
+        PRODUCT_BUNDLE_IDENTIFIER: $(EK_BUNDLE_ID).Widgets
     sources:
       - EuroklicWidgets
     info:

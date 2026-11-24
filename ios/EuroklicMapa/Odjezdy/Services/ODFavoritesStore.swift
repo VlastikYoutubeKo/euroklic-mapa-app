@@ -9,12 +9,29 @@ final class ODFavoritesStore: ObservableObject {
     @Published private(set) var stops: [ODStop] = []
 
     private let fileURL: URL
+    private var importObserver: NSObjectProtocol?
 
-    init(fileName: String = "od_favorite_stops.json") {
+    static func url(for fileName: String) -> URL {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        fileURL = dir.appendingPathComponent(fileName)
+        return dir.appendingPathComponent(fileName)
+    }
+
+    /// Soubor výchozího úložiště (čte a zapisuje ho i přenos dat, `DataTransfer`).
+    static var defaultFileURL: URL { url(for: "od_favorite_stops.json") }
+
+    init(fileName: String = "od_favorite_stops.json") {
+        fileURL = Self.url(for: fileName)
         load()
+        importObserver = NotificationCenter.default.addObserver(
+            forName: DataTransfer.didImport, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.load()
+        }
+    }
+
+    deinit {
+        if let importObserver { NotificationCenter.default.removeObserver(importObserver) }
     }
 
     func contains(_ stop: ODStop) -> Bool {

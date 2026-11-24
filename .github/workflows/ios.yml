@@ -40,14 +40,28 @@ jobs:
 
       # Tag v1.4.0 -> stable; v1.4.0-beta.1 -> beta (pre-release). CFBundleShortVersionString has to stay
       # numeric, so MARKETING_VERSION is 1.4.0 and the full name goes to EK_VERSION_NAME (shown in the app).
+      # A beta is a SEPARATE app (own bundle ID, name, icon, URL scheme), so it installs next to the stable
+      # one; data moves over with More -> Přenést data (export/import file). Login still works: the callback
+      # is caught by ASWebAuthenticationSession itself, not routed by the system URL scheme.
       - name: Build for device (unsigned)
         run: |
-          VERSION_ARG=""
+          ARGS=()
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             FULL="${GITHUB_REF_NAME#v}"
-            VERSION_ARG="MARKETING_VERSION=${FULL%%-*} EK_VERSION_NAME=$FULL CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER"
+            ARGS+=("MARKETING_VERSION=${FULL%%-*}" "EK_VERSION_NAME=$FULL" "CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER")
+            if [[ "$FULL" == *-* ]]; then
+              ARGS+=("EK_BUNDLE_ID=cz.euroklicmapa.EuroklicMapa.beta" "EK_DISPLAY_NAME=Euroklíč β"
+                     "EK_APPICON=AppIconBeta" "EK_URL_SCHEME=euroklicmapa-beta")
+            fi
           fi
-          xcodebuild -project EuroklicMapa.xcodeproj -scheme EuroklicMapa             -configuration Release -sdk iphoneos             -derivedDataPath build             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""             $VERSION_ARG build
+          xcodebuild -project EuroklicMapa.xcodeproj -scheme EuroklicMapa \
+            -configuration Release -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            "${ARGS[@]}" build
+          # CFBundleVersion of this IPA, published next to it so the site's sideload sources can fill buildVersion.
+          plutil -extract CFBundleVersion raw -o - build/Build/Products/Release-iphoneos/EuroklicMapa.app/Info.plist | tr -d '\n' > ios-build.txt
+          plutil -extract CFBundleIdentifier raw -o - build/Build/Products/Release-iphoneos/EuroklicMapa.app/Info.plist
 
       - name: Package .ipa
         run: |
@@ -86,55 +100,13 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: ios/EuroklicMapa.ipa
+          files: |
+            ios/EuroklicMapa.ipa
+            ios/ios-build.txt
           prerelease: ${{ steps.notes.outputs.beta == 'true' }}
           make_latest: ${{ steps.notes.outputs.beta == 'true' && 'false' || 'true' }}
           body_path: ${{ steps.notes.outputs.found == 'true' && 'RELEASE_NOTES.md' || '' }}
           generate_release_notes: ${{ steps.notes.outputs.found != 'true' }}
 
-      # One beta source per sideloading store (same layout as the stable sideload_<store>.json on the site):
-      # .../beta-source/beta-altstore.json | -sidestore | -feather | -livecontainer | -esign  (branch `beta-source`).
-      # Each beta tag prepends its version (with its own changelog) so older betas stay listed.
-      # The beta app has a BETA badge on its icon (beta/icon-beta-512.png).
-      - name: Update beta sources
-        if: startsWith(github.ref, 'refs/tags/v') && steps.notes.outputs.beta == 'true'
-        working-directory: .
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-        run: |
-          VER="${GITHUB_REF_NAME#v}"
-          SIZE=$(stat -f%z ios/EuroklicMapa.ipa)
-          DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          RAW="https://raw.githubusercontent.com/$REPO"
-          ICON="$RAW/main/beta/icon-beta-512.png"
-          git clone --depth 1 --branch beta-source "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" src 2>/dev/null             || { mkdir src && git -C src init -q -b beta-source && git -C src remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"; }
-          for STORE in AltStore SideStore Feather LiveContainer ESign; do
-            LOWER=$(echo "$STORE" | tr '[:upper:]' '[:lower:]')
-            FILE="src/beta-$LOWER.json"
-            [ -f "$FILE" ] || echo '{"apps":[{"versions":[]}]}' > "$FILE"
-            jq -n --arg ver "$VER" --arg build "$GITHUB_RUN_NUMBER" --arg date "$DATE" --argjson size "$SIZE"                --arg url "https://github.com/$REPO/releases/download/$GITHUB_REF_NAME/EuroklicMapa.ipa"                --arg src "$RAW/beta-source/beta-$LOWER.json" --arg icon "$ICON" --arg store "$STORE" --arg lower "$LOWER"                --rawfile notes RELEASE_NOTES.md '
-              input as $old
-              | ($notes | sub("^## English\n";"") ) as $desc
-              | {name:("Euroklíč Mapa BETA pro " + $store), identifier:("cz.odjezdy.online.euroklic.beta." + $lower),
-                 sourceURL:$src, subtitle:"Testovací verze", website:"https://euroklic.odjezdy.online/",
-                 description:"Beta (testovací) verze Euroklíč Mapy, mohou v ní být chyby. Stabilní verze je v hlavním zdroji. Aplikace je nepodepsaná, obchod ji podepíše tvým účtem.",
-                 iconURL:$icon, tintColor:"#E8590C",
-                 apps:[{name:"Euroklíč Mapa BETA", bundleIdentifier:"cz.euroklicmapa.EuroklicMapa",
-                   developerName:"Euroklíč Mapa", subtitle:"BETA: testovací verze",
-                   localizedDescription:"Testovací (beta) verze Euroklíč Mapy. Je to stejná aplikace jako stabilní verze, jen s novinkami, které se ještě zkoušejí, a může obsahovat chyby. Nainstaluje se přes stabilní verzi a nahradí ji.",
-                   iconURL:$icon, tintColor:"#E8590C", category:"lifestyle",
-                   versions: ([{version:$ver, buildVersion:$build, date:$date, size:$size, downloadURL:$url,
-                                localizedDescription:$desc, minOSVersion:"17.0"}]
-                              + (($old.apps[0].versions // []) | map(select(.version != $ver)))) }]}
-              | .apps[0] += {version:$ver, versionDate:$date, size:$size, downloadURL:$url, versionDescription:$desc}
-            ' "$FILE" > "$FILE.new"
-            mv "$FILE.new" "$FILE"
-          done
-          rm -f src/beta.json
-          cd src
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -q -m "Beta sources: $VER"
-          git push origin beta-source
+      # Sideload sources (stable and beta, one JSON per store) are generated by the site from these
+      # GitHub Releases: the beta is a second app entry read from the newest pre-release + ios-build.txt.

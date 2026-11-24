@@ -440,9 +440,11 @@ come from the tag/run number) and `EuroklicMapa.ipa` (`ios.yml`) and attach both
 Its SHA-256 `37:B9:DB:C7:…:B0:CF` is in the site's `assetlinks.json`. The download page is `/app` on the site
 (`/ios` redirects there). Apps are not in the stores: users install the APK / IPA (SideStore) from a file.
 **Beta:** a tag with a suffix (`v1.4.0-beta.1`) is a GitHub *pre-release* (never "latest"); its notes come from the separate
-`CHANGELOG.beta.md` / `CHANGELOG.beta.cs.md`, `ios.yml` prepends it to one beta source per store (`beta-{altstore,sidestore,feather,livecontainer,esign}.json`,
-branch `beta-source`, BETA-badged icon `beta/icon-beta-512.png`), and beta builds also show the beta changelog in-app (`Changelog.load`). iOS: `MARKETING_VERSION` stays numeric
-(`1.4.0`), the full name is `EK_VERSION_NAME` → Info.plist `EKVersionName`. See `docs/beta-verze.md`.
+`CHANGELOG.beta.md` / `CHANGELOG.beta.cs.md`, and beta builds also show the beta changelog in-app (`Changelog.load`). iOS: `MARKETING_VERSION` stays numeric
+(`1.4.0`), the full name is `EK_VERSION_NAME` → Info.plist `EKVersionName`. **The iOS beta is a separate app**: `ios.yml` overrides
+`EK_BUNDLE_ID` (`…EuroklicMapa.beta`), `EK_DISPLAY_NAME`, `EK_APPICON` (`AppIconBeta`) and `EK_URL_SCHEME` (defaults in `ios/project.yml`);
+data moves between the two via More → Přenos dat (`Services/DataTransfer.swift`, JSON export/import). Each release also carries
+`ios-build.txt` (the IPA's `CFBundleVersion`); the sideload sources are built by the site from Releases (beta = second app entry). See `docs/beta-verze.md`.
 
 ## Current state
 

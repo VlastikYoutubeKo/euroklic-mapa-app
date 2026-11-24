@@ -74,6 +74,7 @@ struct ODMapTab: View {
                     ODNearbyPanel(
                         location: location,
                         expandedHeight: geo.size.height * 0.55,
+                        availableHeight: geo.size.height,
                         onSearch: onOpenSearch,
                         onOpenStop: { vm.openStop = $0 }
                     )

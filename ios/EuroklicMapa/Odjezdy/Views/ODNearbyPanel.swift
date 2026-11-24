@@ -6,9 +6,11 @@ struct ODNearbyEntry: Identifiable {
     let stop: ODStop
     let distanceM: Int
     let departures: [ODDeparture]
+    /// Odjezdy se nepodařilo načíst (není to totéž jako „nic nejede“).
+    let failed: Bool
     var id: String { stop.id }
 
-    /// Převažující typ dopravy – podle něj je kulatá ikona řádku.
+    /// Převažující typ dopravy – podle něj je ikona v pruhu zastávky.
     var type: ODTransportType {
         var counts: [ODTransportType: Int] = [:]
         for d in departures { counts[d.type, default: 0] += 1 }
@@ -16,11 +18,13 @@ struct ODNearbyEntry: Identifiable {
     }
 }
 
-/// Zastávky kolem polohy a jejich nejbližší odjezdy; obnova po ~30 s, dokud je panel vidět.
+/// Zastávky kolem polohy a jejich nejbližší odjezdy; obnova po ~30 s, dokud je panel rozbalený.
 @MainActor
 final class ODNearbyViewModel: ObservableObject {
     @Published private(set) var entries: [ODNearbyEntry] = []
     @Published private(set) var isLoading = true
+    /// Poslední načtení selhalo (zobrazená data můžou být starší).
+    @Published private(set) var lastLoadFailed = false
 
     private let api = ODAPIClient.shared
     private static let maxStops = 6
@@ -42,6 +46,7 @@ final class ODNearbyViewModel: ObservableObject {
                 minLat: lat - 0.006, maxLat: lat + 0.006,
                 minLng: lng - 0.009, maxLng: lng + 0.009
             )
+            try Task.checkCancellation()
             var seen = Set<String>()
             let nearest = list
                 .map { ODNearbyStop(stop: $0, distanceM: Int(location.distance(from: CLLocation(latitude: $0.lat, longitude: $0.lng)))) }
@@ -50,71 +55,96 @@ final class ODNearbyViewModel: ObservableObject {
                 .prefix(Self.maxStops)
 
             var out: [ODNearbyEntry] = []
-            let cutoff = Date().addingTimeInterval(-60)
             for n in nearest {
-                if Task.isCancelled { return }
-                let deps = (try? await api.departures(stopId: n.stop.id, limit: 12, minutes: 180)) ?? []
-                let upcoming = deps
-                    .filter { $0.realTime >= cutoff && !$0.cancelled }
-                    .sorted { $0.realTime < $1.realTime }
-                out.append(ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: Array(upcoming.prefix(6))))
+                try Task.checkCancellation()
+                do {
+                    let deps = try await api.departures(stopId: n.stop.id, limit: 12, minutes: 180)
+                    // Časový filtr před prefixem, ať odjeté spoje nevytlačí platné (view filtruje ještě jednou).
+                    let cutoff = Date().addingTimeInterval(-60)
+                    let upcoming = deps
+                        .filter { !$0.cancelled && $0.realTime >= cutoff }
+                        .sorted { $0.realTime < $1.realTime }
+                    out.append(ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: Array(upcoming.prefix(8)), failed: false))
+                } catch is CancellationError {
+                    throw CancellationError()
+                } catch {
+                    out.append(ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: [], failed: true))
+                }
             }
+            // Starý běh (poloha se mezitím změnila) nesmí přepsat nový výsledek.
+            try Task.checkCancellation()
             entries = out
+            lastLoadFailed = false
         } catch is CancellationError {
             return
         } catch {
-            // Panel je doplněk mapy; bez dat zůstane předchozí stav.
+            // Předchozí data zůstanou, jen se ukáže upozornění.
+            lastLoadFailed = true
         }
         isLoading = false
     }
 }
 
-/// Spodní panel na mapě: pole „Kam to bude?“ a zastávky v okolí s odjezdy (v duchu appky Catch).
-/// Tažením nahoru/dolů nebo klepnutím na úchyt se rozbalí a sbalí.
+/// Spodní panel na mapě: pole pro hledání a zastávky v okolí s odjezdy (ve stylu cedule a řádků odjezdů z appky).
+/// Tažením úchytu nahoru/dolů nebo klepnutím na něj se rozbalí a sbalí.
 struct ODNearbyPanel: View {
     @Environment(\.odColors) private var c
     @ObservedObject var location: ODLocationProvider
     let expandedHeight: CGFloat
+    /// Celá dostupná výška nad lištou; rozbalený panel ji nesmí přerůst.
+    let availableHeight: CGFloat
     let onSearch: () -> Void
     let onOpenStop: (ODStop) -> Void
 
     @StateObject private var vm = ODNearbyViewModel()
     @State private var expanded = false
 
-    private static let collapsedHeight: CGFloat = 128
+    /// Úchyt (44) + pole hledání (48+) + okraje; roste s velikostí písma.
+    @ScaledMetric(relativeTo: .body) private var collapsedHeight: CGFloat = 116
 
     private var locationKey: String {
         guard let l = location.location else { return "none" }
         return String(format: "%.3f,%.3f", l.coordinate.latitude, l.coordinate.longitude)
     }
 
+    /// Rozbalený panel nesmí být nižší než sbalený (nízký landscape, velké písmo).
+    /// Shora omezený dostupnou výškou (úchyt i hledání musí zůstat na obrazovce).
+    private var openHeight: CGFloat {
+        min(max(expandedHeight, collapsedHeight + 180), max(availableHeight - 16, collapsedHeight))
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            handle
-            searchField
-                .padding(.horizontal, 16)
+            VStack(spacing: 0) {
+                handle
+                searchField
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+            }
+            // Tažení jen za horní část, ať nesoupeří s posouváním seznamu.
+            .gesture(
+                DragGesture(minimumDistance: 12).onEnded { value in
+                    if value.translation.height < -30 { expanded = true }
+                    if value.translation.height > 30 { expanded = false }
+                }
+            )
             if expanded {
                 list
             }
         }
-        .frame(height: expanded ? expandedHeight : Self.collapsedHeight, alignment: .top)
+        .frame(height: expanded ? openHeight : collapsedHeight, alignment: .top)
         .frame(maxWidth: .infinity)
         .background(
-            UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20, style: .continuous)
+            UnevenRoundedRectangle(topLeadingRadius: 10, topTrailingRadius: 10, style: .continuous)
                 .fill(c.surface)
                 .shadow(color: Color.black.opacity(0.25), radius: 8, y: -2)
                 .ignoresSafeArea(edges: .bottom)
         )
         .animation(.easeInOut(duration: 0.22), value: expanded)
-        .task(id: locationKey) {
-            if let l = location.location { await vm.run(around: l) }
+        // Odjezdy se načítají jen při rozbaleném panelu (sbalený je neukazuje).
+        .task(id: "\(locationKey)|\(expanded)") {
+            if expanded, let l = location.location { await vm.run(around: l) }
         }
-        .gesture(
-            DragGesture(minimumDistance: 12).onEnded { value in
-                if value.translation.height < -30 { expanded = true }
-                if value.translation.height > 30 { expanded = false }
-            }
-        )
     }
 
     private var handle: some View {
@@ -124,7 +154,7 @@ struct ODNearbyPanel: View {
             Capsule()
                 .fill(c.muted.opacity(0.6))
                 .frame(width: 40, height: 5)
-                .frame(maxWidth: .infinity, minHeight: 28)
+                .frame(maxWidth: .infinity, minHeight: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -137,16 +167,16 @@ struct ODNearbyPanel: View {
                 Image(systemName: "magnifyingglass")
                     .font(.body.weight(.semibold))
                     .accessibilityHidden(true)
-                Text("Kam to bude?")
+                Text("Zastávka, linka nebo SPZ")
                     .font(.body.weight(.semibold))
                 Spacer(minLength: 0)
             }
             .foregroundStyle(c.text)
             .padding(.horizontal, 14)
             .frame(minHeight: 48)
-            .background(c.surface2, in: Capsule())
-            .overlay(Capsule().stroke(c.line, lineWidth: 1))
-            .contentShape(Capsule())
+            .background(c.surface2, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(c.line, lineWidth: 1))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityHint("Otevře hledání zastávky nebo vozidla")
@@ -157,15 +187,21 @@ struct ODNearbyPanel: View {
     private var list: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("V okolí")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(c.text)
+                Text(L("Zastávky v okolí").uppercased())
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(c.muted)
                     .padding(.horizontal, 16)
-                    .padding(.top, 18)
+                    .padding(.top, 6)
                     .padding(.bottom, 6)
                     .accessibilityAddTraits(.isHeader)
+                if vm.lastLoadFailed && !vm.entries.isEmpty {
+                    ODBanner(symbol: "wifi.slash", text: L("Odjezdy se nepodařilo obnovit, ukazuji poslední načtené."), tone: .warning)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 8)
+                }
                 content
             }
+            .padding(.bottom, 100) // poslední řádek se musí dát vysunout nad plovoucí lištu záložek
         }
     }
 
@@ -199,9 +235,10 @@ struct ODNearbyPanel: View {
                     .frame(maxWidth: .infinity)
                     .padding(32)
             } else {
-                Text("V okolí nejsou žádné zastávky.")
+                Text(vm.lastLoadFailed ? L("Zastávky v okolí se nepodařilo načíst.") : L("V okolí nejsou žádné zastávky."))
                     .font(.subheadline)
                     .foregroundStyle(c.muted)
+                    .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .padding(32)
             }
@@ -217,72 +254,47 @@ struct ODNearbyPanel: View {
     }
 
     private func row(_ entry: ODNearbyEntry, now: Date) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        // Filtr podle aktuálního času, ať po neúspěšné obnově nezůstanou odjeté spoje jako „teď“.
+        let upcoming = entry.departures.filter { $0.realTime >= now.addingTimeInterval(-60) }
+        return VStack(spacing: 0) {
             Button {
                 onOpenStop(entry.stop)
             } label: {
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle().fill(c.lineColor(for: entry.type == .train ? .train : .bus))
-                        Image(systemName: entry.type.symbol)
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(Color.white)
-                    }
-                    .frame(width: 40, height: 40)
-                    .accessibilityHidden(true)
-                    Text(entry.stop.name)
+                HStack(spacing: 10) {
+                    Image(systemName: entry.type.symbol)
                         .font(.body.weight(.semibold))
-                        .foregroundStyle(c.text)
+                        .foregroundStyle(c.signText)
+                        .accessibilityHidden(true)
+                    Text(entry.stop.name)
+                        .font(.headline)
+                        .foregroundStyle(c.signText)
                         .multilineTextAlignment(.leading)
                     Spacer(minLength: 0)
                     Text(ODSearchTab.formatDistance(entry.distanceM))
                         .font(.footnote)
-                        .foregroundStyle(c.muted)
+                        .foregroundStyle(c.signText)
                 }
+                .padding(.horizontal, 16)
                 .frame(minHeight: 44)
+                .background(c.sign)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(L("Zastávka \(entry.stop.name)") + ", " + ODSearchTab.formatDistance(entry.distanceM))
             .accessibilityHint("Zobrazí odjezdy ze zastávky")
 
-            if entry.departures.isEmpty {
-                Text("Nic v nejbližších hodinách nejede.")
+            if upcoming.isEmpty {
+                Text(entry.failed ? L("Odjezdy se nepodařilo načíst.") : L("Nic v nejbližších hodinách nejede."))
                     .font(.footnote)
                     .foregroundStyle(c.muted)
-                    .padding(.leading, 52)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
-                        ForEach(entry.departures) { d in
-                            chip(d, now: now)
-                        }
-                    }
-                    .padding(.leading, 52)
-                    .padding(.trailing, 16)
+                ForEach(upcoming.prefix(3)) { d in
+                    ODDepartureRow(departure: d, now: now, isExpanded: false, isInteractive: false)
                 }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .overlay(alignment: .bottom) { Rectangle().fill(c.line).frame(height: 1) }
-    }
-
-    /// Štítek linky + odpočet („6m“) do hodiny, jinak čas odjezdu.
-    private func chip(_ d: ODDeparture, now: Date) -> some View {
-        let mins = ODTime.minutesUntil(d.realTime, now: now)
-        let when: String
-        if mins <= 0 { when = L("teď") }
-        else if mins < 60 { when = "\(mins)m" }
-        else { when = ODTime.hm(d.realTime) }
-        return HStack(spacing: 6) {
-            ODLineBadge(line: d.line, cls: d.lineClass)
-            Text(when)
-                .font(mins < 60 ? .title3.weight(.bold) : .body)
-                .monospacedDigit()
-                .foregroundStyle(c.text)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(L("Linka \(d.line.isEmpty ? L("bez čísla") : d.line)") + ", \(d.destination), " + (mins < 60 ? "za \(max(mins, 0)) min" : "v \(ODTime.hm(d.realTime))"))
+        .padding(.bottom, 14)
     }
 }

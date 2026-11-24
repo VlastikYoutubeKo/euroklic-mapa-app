@@ -6,6 +6,8 @@ struct ODDepartureRow: View {
     let departure: ODDeparture
     let now: Date
     let isExpanded: Bool
+    /// `false` = řádek jen ukazuje odjezd (panel V okolí), VoiceOver pak nehlásí tlačítko ani rozbalení.
+    var isInteractive: Bool = true
 
     private var subtitle: String {
         var parts: [String] = []
@@ -99,8 +101,8 @@ struct ODDepartureRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spokenLabel)
-        .accessibilityHint(isExpanded ? L("Skryje podrobnosti") : L("Zobrazí podrobnosti"))
-        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(isInteractive ? (isExpanded ? L("Skryje podrobnosti") : L("Zobrazí podrobnosti")) : "")
+        .accessibilityAddTraits(isInteractive ? .isButton : [])
     }
 
     @ViewBuilder

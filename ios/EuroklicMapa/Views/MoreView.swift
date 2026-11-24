@@ -69,6 +69,8 @@ struct MoreView: View {
                     Text("Dobrovolné, ve výchozím stavu vypnuté. Posílá jen anonymní počty použití funkcí (např. otevření místa), nikdy polohu, hledaný text ani údaje o tobě.")
                 }
 
+                DataTransferSection()
+
                 Section("Odkazy") {
                     Link(destination: URL(string: "https://euroklic.odjezdy.online")!) {
                         Label("euroklic.odjezdy.online", systemImage: "safari")
