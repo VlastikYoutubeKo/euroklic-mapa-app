@@ -9,7 +9,7 @@ struct EuroklicMapaApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootTabView()
+            AppEntryView()
                 .environmentObject(places)
                 .environmentObject(location)
                 .environmentObject(favorites)

@@ -18,6 +18,17 @@ enum ODMapFilter: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Krátký název pro čip filtru.
+    var shortTitle: String {
+        switch self {
+        case .bus: return L("Autobus")
+        case .train: return L("Vlak")
+        case .tram: return L("Tramvaj")
+        case .ferry: return L("Přívoz")
+        case .stops: return L("Zastávky")
+        }
+    }
+
     var symbol: String {
         switch self {
         case .bus: return "bus.fill"

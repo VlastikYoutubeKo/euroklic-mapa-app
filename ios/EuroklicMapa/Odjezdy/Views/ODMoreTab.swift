@@ -4,6 +4,7 @@ import SwiftUI
 struct ODMoreTab: View {
     @Environment(\.odColors) private var c
     @Environment(\.openURL) private var openURL
+    @State private var showIntro = false
 
     var body: some View {
         NavigationStack {
@@ -27,6 +28,10 @@ struct ODMoreTab: View {
                     } label: {
                         rowLabel(L("O aplikaci"), symbol: "info.circle", detail: L("Zdroje dat a soukromí"))
                     }
+                    Button { showIntro = true } label: {
+                        rowLabel(L("Jak aplikace funguje"), symbol: "questionmark.circle", detail: L("Krátký úvod"))
+                    }
+                    .buttonStyle(.plain)
                 }
                 .listRowBackground(c.surface)
 
@@ -44,6 +49,9 @@ struct ODMoreTab: View {
             .scrollContentBackground(.hidden)
             .background(c.bg)
             .navigationTitle("Více")
+            .sheet(isPresented: $showIntro) {
+                OnboardingView(isRevisit: true) { showIntro = false }
+            }
         }
     }
 

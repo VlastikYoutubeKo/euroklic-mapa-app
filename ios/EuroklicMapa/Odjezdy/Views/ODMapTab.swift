@@ -54,9 +54,12 @@ struct ODMapTab: View {
                 HStack {
                     ModeSwitchPill(target: .euroklic) // one tap back to the toilet map
                     Spacer(minLength: 0)
+                    locationButton
                 }
                 .padding(.horizontal, 12)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 filterRow
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 notices
                 Spacer(minLength: 0)
                 if let v = vm.selectedVehicle {
@@ -110,37 +113,42 @@ struct ODMapTab: View {
     // MARK: Filtry
 
     private var filterRow: some View {
-        HStack(alignment: .top, spacing: 8) {
-            ForEach(ODMapFilter.allCases) { f in
-                ODRoundFilterButton(filter: f, isOn: vm.enabled.contains(f)) {
-                    var set = vm.enabled
-                    if set.contains(f) { set.remove(f) } else { set.insert(f) }
-                    vm.enabled = set
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(ODMapFilter.allCases) { f in
+                    ODFilterChip(filter: f, isOn: vm.enabled.contains(f)) {
+                        var set = vm.enabled
+                        if set.contains(f) { set.remove(f) } else { set.insert(f) }
+                        vm.enabled = set
+                    }
                 }
             }
-            Spacer(minLength: 0)
-            Button {
-                if let loc = location.location {
-                    vm.center(on: loc.coordinate, meters: 2000)
-                } else if location.isDenied {
-                    showLocationDenied = true
-                } else {
-                    location.request()
-                }
-            } label: {
-                Image(systemName: "location.fill")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(c.accent)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(c.surface))
-                    .overlay(Circle().stroke(c.line, lineWidth: 1.5))
-                    .shadow(color: Color.black.opacity(0.18), radius: 4, y: 2)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Moje poloha")
-            .accessibilityHint("Vycentruje mapu na vás")
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
         }
-        .padding(.horizontal, 12)
+    }
+
+    private var locationButton: some View {
+        Button {
+            if let loc = location.location {
+                vm.center(on: loc.coordinate, meters: 2000)
+            } else if location.isDenied {
+                showLocationDenied = true
+            } else {
+                location.request()
+            }
+        } label: {
+            Image(systemName: "location.fill")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(c.accent)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(c.surface))
+                .overlay(Circle().stroke(c.line, lineWidth: 1.5))
+                .shadow(color: Color.black.opacity(0.18), radius: 4, y: 2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Moje poloha")
+        .accessibilityHint("Vycentruje mapu na vás")
     }
 
     // MARK: Hlášky

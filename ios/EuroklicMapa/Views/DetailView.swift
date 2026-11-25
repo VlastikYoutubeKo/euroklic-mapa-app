@@ -26,6 +26,7 @@ struct DetailView: View {
     @State private var departures: [Departure] = []
     @State private var loadingDepartures = false
     @State private var showPhoto = false
+    @State private var departuresOpen = false
     @State private var selectedProvider: String?
 
     init(place: PlaceItem, asSheet: Bool = false) {
@@ -40,11 +41,12 @@ struct DetailView: View {
             VStack(spacing: 22) {
                 if asSheet { topBar }
                 titleBlock
+                noteCallout
                 navigateButton
-                if !stops.isEmpty { departuresBlock }
-                photoBlock
                 detailsBlock
                 if let note = nonBlank(place.accessibilityNote) { accessibilityBlock(note) }
+                photoBlock
+                if !stops.isEmpty { departuresBlock }
                 if !place.isPickup { voteBlock }
                 if let comments, !comments.isEmpty { commentsBlock(comments) }
                 if !place.isPickup { ContributeBlock(place: place) { toast = $0 } }
@@ -91,7 +93,7 @@ struct DetailView: View {
             }
             Spacer()
             HStack(spacing: 10) {
-                favoriteButton { circleIcon(favorites.isFavorite(place) ? "star.fill" : "star") }
+                favoriteButton { circleIcon(favorites.isFavorite(place) ? "bookmark.fill" : "bookmark") }
                 moreMenu { circleIcon("ellipsis") }
                 Button { dismiss() } label: { circleIcon("xmark") }
                     .accessibilityLabel("Zavřít")
@@ -150,27 +152,49 @@ struct DetailView: View {
         .frame(maxWidth: .infinity)
     }
 
+    /// Operating note ("WC closed long-term", key needed, ...) shown right under the title,
+    /// because it decides whether the place is usable at all.
+    @ViewBuilder
+    private var noteCallout: some View {
+        if let note = nonBlank(place.note) {
+            VStack(alignment: .leading, spacing: 6) {
+                Label {
+                    Text("Poznámka k místu").font(.subheadline.weight(.semibold))
+                } icon: {
+                    Image(systemName: "info.circle.fill").foregroundStyle(Theme.warningText)
+                }
+                Text(note).font(.callout).multilineTextAlignment(.leading)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color(.secondarySystemBackground)))
+            .accessibilityElement(children: .combine)
+        }
+    }
+
     private var navigateButton: some View {
         Button(action: openNavigation) {
-            VStack(spacing: 2) {
-                Image(systemName: "figure.walk")
-                    .font(.title3.weight(.semibold))
-                Text(navigateLabel)
-                    .font(.headline)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
+            Label(navigateLabel, systemImage: "figure.walk")
+                .font(.headline)
+                .frame(maxWidth: .infinity, minHeight: 52)
         }
         .buttonStyle(.borderedProminent)
-        .buttonBorderShape(.capsule)
+        .buttonBorderShape(.roundedRectangle(radius: 16))
         .tint(Theme.brand)
-        .controlSize(.large)
         .accessibilityLabel(navigateAccessibility)
     }
 
     private var departuresBlock: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        DisclosureGroup(isExpanded: $departuresOpen) {
+            departuresContent.padding(.top, 10)
+        } label: {
             Text("Odjezdy").font(.title2.bold())
+        }
+        .tint(.primary)
+    }
+
+    private var departuresContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -409,7 +433,6 @@ struct DetailView: View {
         default: break
         }
         if let description = nonBlank(place.description) { rows.append((L("Popis"), prettifyDescription(description))) }
-        if let note = nonBlank(place.note) { rows.append((L("Poznámka"), note)) }
         if let address = nonBlank(place.subtitle) { rows.append((L("Oblast"), address)) }
         if let userLocation = location.lastLocation {
             let d = userLocation.distance(from: CLLocation(latitude: place.latitude, longitude: place.longitude))

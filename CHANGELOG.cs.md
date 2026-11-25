@@ -7,6 +7,15 @@ a stejný soubor je zabalený i v aplikaci (Více → Co je nového; po aktualiz
 Nadpis sekce musí mít tvar `## <verze> — <datum>`, položky jsou odrážky `- `. Odrážka začínající
 `[Android]` nebo `[iOS]` se ukáže jen v dané aplikaci (značka se skryje), odrážky bez značky v obou.
 
+## 1.4.0 — 2026-11-25
+- Dobrovolné anonymní měření používání (Více → Soukromí). Ve výchozím stavu je vypnuté, počítá jen, které funkce se používají, a nikdy nesbírá polohu ani osobní údaje. Podrobnosti jsou v PRIVACY.md.
+- [iOS] Krátká úvodní obrazovka při prvním spuštění. Znovu ji otevřete ve Více → Jak aplikace funguje.
+- [iOS] Přepracovaný detail místa: poznámka k místu (například dlouhodobé uzavření) je hned pod názvem, tlačítko Navigovat je kompaktnější, přístupnost stanice je před odjezdy, odjezdy jdou sbalit a místo se ukládá záložkou.
+- [iOS] Klidnější mapa: jedno výrazné tlačítko „Nejbližší WC“, ostatní akce (Přidat místo, Stáhnout mapu) jsou v menu a přepínač Odjezdy je vedlejší tlačítko. Ovládání mapy i seznam nejbližších míst fungují i při největší velikosti písma.
+- [iOS] Odjezdy: panel dole na mapě se zastávkami v okolí a jejich nejbližšími odjezdy (zastávky se ukážou hned, odjezdy se doplní, jak se načtou), filtry dopravy s názvem a fajfkou a hledání zastávky nebo vozidla.
+- [iOS] Více → Přenos dat: oblíbená místa, oblíbené zastávky, hlasy a nastavení se dají exportovat do souboru a naimportovat v jiné kopii aplikace, například v betě. Statistiky jsou o úroveň níž.
+- [iOS] Oblíbené mají srozumitelnější prázdný stav.
+
 ## 1.3.0 — 2026-11-20
 - Offline režim: bez připojení aplikace funguje ze stažených míst a uložené mapy a nahoře na mapě to napíše. Mapu oblasti jde stáhnout předem (tlačítko stažení na mapě). Na iPhonu to funguje jen s mapou Mapy.com.
 - Rychlé přepnutí mezi Euroklíčem a Odjezdy přímo na mapě (už ne přes Více). Na Androidu je i zástupce na ploše: dlouhé podržení ikony → Odjezdy.

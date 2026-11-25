@@ -8,12 +8,10 @@ struct FavoritesView: View {
         NavigationStack {
             Group {
                 if favorites.items.isEmpty {
-                    VStack(spacing: 10) {
-                        Image(systemName: "bookmark").font(.largeTitle).foregroundStyle(.secondary)
-                        Text("Zatím nic v oblíbených.")
-                        Text("V detailu místa klepni na srdíčko / záložku.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                    ContentUnavailableView {
+                        Label("Zatím nic v oblíbených", systemImage: "bookmark")
+                    } description: {
+                        Text("V detailu místa klepněte na záložku, ať se sem místo uloží.")
                     }
                 } else {
                     List {

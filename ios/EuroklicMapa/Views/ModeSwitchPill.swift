@@ -16,9 +16,9 @@ struct ModeSwitchPill: View {
                 .font(.footnote.weight(.semibold))
                 .padding(.horizontal, 14)
                 .frame(minHeight: 44)
-                .foregroundStyle(.white)
-                .background(Capsule().fill(Theme.brand))
-                .shadow(radius: 3, y: 1)
+                .foregroundStyle(Theme.tint)
+                .background(Capsule().fill(.regularMaterial))
+                .overlay(Capsule().stroke(Color(.separator), lineWidth: 0.5))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(target == .odjezdy ? L("Přepnout na režim Odjezdy") : L("Zpět na Euroklíč Mapu"))

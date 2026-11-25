@@ -6,6 +6,7 @@ struct MoreView: View {
     @EnvironmentObject private var places: PlacesStore
     @AppStorage(MapProvider.storageKey) private var mapProvider: MapProvider = .mapy
     @AppStorage(Analytics.enabledKey) private var analyticsOn = false
+    @State private var showIntro = false
 
     var body: some View {
         NavigationStack {
@@ -14,20 +15,6 @@ struct MoreView: View {
 
                 Section {
                     AuthCard()
-                }
-
-                Section("Statistiky") {
-                    let s = places.stats
-                    LabeledContent("Bezbariérových WC", value: s.totalWc.formatted())
-                    LabeledContent("Ověřeno hlasováním", value: s.verifiedWc.formatted())
-                    LabeledContent("Nahlášeno nefunkční", value: s.reportedWc.formatted())
-                    LabeledContent("Výdejních míst klíče", value: s.totalPickup.formatted())
-                    if let top = s.topLiked {
-                        LabeledContent("Nejlépe hodnocené", value: "\(top.name) (+\(top.likes)👍)")
-                    }
-                    if let worst = s.topDisliked {
-                        LabeledContent("Nejvíce problémové", value: "\(worst.name) (\(worst.dislikes)👎)")
-                    }
                 }
 
                 Section {
@@ -82,6 +69,15 @@ struct MoreView: View {
 
                 Section {
                     NavigationLink {
+                        StatsListView()
+                    } label: {
+                        Label("Statistiky", systemImage: "chart.bar")
+                    }
+                    Button { showIntro = true } label: {
+                        Label("Jak aplikace funguje", systemImage: "questionmark.circle")
+                    }
+                    .foregroundStyle(.primary)
+                    NavigationLink {
                         ChangelogView(entries: Changelog.load())
                             .navigationTitle("Co je nového")
                             .navigationBarTitleDisplayMode(.inline)
@@ -105,6 +101,9 @@ struct MoreView: View {
                 }
             }
             .navigationTitle("Více")
+            .sheet(isPresented: $showIntro) {
+                OnboardingView(isRevisit: true) { showIntro = false }
+            }
         }
     }
 
@@ -174,5 +173,28 @@ struct AuthCard: View {
             .font(.system(size: 44))
             .foregroundStyle(auth.isLoggedIn ? Theme.tint : .secondary)
             .frame(width: 48, height: 48)
+    }
+}
+
+/// Statistiky seznamu míst (dřív přímo ve Více, teď o úroveň níž, ať praktická nastavení nejsou pod nimi).
+struct StatsListView: View {
+    @EnvironmentObject private var places: PlacesStore
+
+    var body: some View {
+        List {
+            let s = places.stats
+            LabeledContent("Bezbariérových WC", value: s.totalWc.formatted())
+            LabeledContent("Ověřeno hlasováním", value: s.verifiedWc.formatted())
+            LabeledContent("Nahlášeno nefunkční", value: s.reportedWc.formatted())
+            LabeledContent("Výdejních míst klíče", value: s.totalPickup.formatted())
+            if let top = s.topLiked {
+                LabeledContent("Nejlépe hodnocené", value: "\(top.name) (+\(top.likes)👍)")
+            }
+            if let worst = s.topDisliked {
+                LabeledContent("Nejvíce problémové", value: "\(worst.name) (\(worst.dislikes)👎)")
+            }
+        }
+        .navigationTitle("Statistiky")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

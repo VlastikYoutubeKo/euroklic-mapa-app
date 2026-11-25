@@ -5,6 +5,7 @@ import SwiftUI
 /// action (Nejbližší WC), selected-place card pinned to the bottom — the same
 /// persistent-sheet feel as the Android `BottomSheetScaffold`.
 struct MapScreen: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject private var places: PlacesStore
     @EnvironmentObject private var location: LocationService
     @EnvironmentObject private var favorites: FavoritesStore
@@ -42,63 +43,22 @@ struct MapScreen: View {
 
                 VStack {
                     topControls
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     Spacer()
-                    if selected == nil, let loc = location.lastLocation {
-                        NearbyPanel(
-                            items: Array(places.flattened(category: category, userLocation: loc).prefix(3)),
-                            userLocation: loc,
-                            onSelect: { selected = $0 },
-                        )
+                    if selected == nil {
+                        VStack(alignment: .trailing, spacing: 12) {
+                            mapActions
+                            if let loc = location.lastLocation {
+                                NearbyPanel(
+                                    items: Array(places.flattened(category: category, userLocation: loc).prefix(dynamicTypeSize.isAccessibilitySize ? 1 : 3)),
+                                    userLocation: loc,
+                                    onSelect: { selected = $0 },
+                                )
+                            }
+                        }
                         .padding(.horizontal)
                         .padding(.bottom, 8)
                     }
-                }
-
-                if selected == nil {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 14) {
-                            // The app's one question, one tap away — same as the Android FAB.
-                            Button(action: findNearest) {
-                                Image(systemName: "location.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(.white)
-                                    .frame(width: 56, height: 56)
-                                    .background(Circle().fill(Theme.brand))
-                                    .shadow(radius: 4, y: 2)
-                            }
-                            .accessibilityLabel("Najít nejbližší WC")
-
-                            Button(action: downloadMap) {
-                                Group {
-                                    if downloading {
-                                        ProgressView(value: downloadProgress).progressViewStyle(.circular)
-                                    } else {
-                                        Image(systemName: "arrow.down.circle").font(.title3).foregroundStyle(Theme.tint)
-                                    }
-                                }
-                                .frame(width: 44, height: 44)
-                                .background(Circle().fill(.thinMaterial))
-                                .shadow(radius: 3, y: 1)
-                            }
-                            .accessibilityLabel("Stáhnout mapu pro offline použití")
-
-                            Button(action: { showAddPlace = true }) {
-                                Image(systemName: "plus")
-                                    .font(.title3)
-                                    .foregroundStyle(Theme.tint)
-                                    .frame(width: 44, height: 44)
-                                    .background(Circle().fill(.thinMaterial))
-                                    .shadow(radius: 3, y: 1)
-                            }
-                            .accessibilityLabel("Přidat místo")
-                        }
-                        .padding(.trailing, 16)
-                        .padding(.bottom, location.lastLocation != nil ? 190 : 8)
-                    }
-                }
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -133,6 +93,44 @@ struct MapScreen: View {
                 if places.wc.isEmpty { await refresh() }
             }
         }
+    }
+
+    private var mapActions: some View {
+                        VStack(alignment: .trailing, spacing: 12) {
+                            // Secondary actions live in one menu so the map stays calm.
+                            Menu {
+                                Button { showAddPlace = true } label: { Label("Přidat místo", systemImage: "plus") }
+                                Button(action: downloadMap) { Label("Stáhnout mapu pro offline použití", systemImage: "arrow.down.circle") }
+                                    .disabled(downloading)
+                            } label: {
+                                Group {
+                                    if downloading {
+                                        ProgressView(value: downloadProgress).progressViewStyle(.circular)
+                                    } else {
+                                        Image(systemName: "ellipsis").font(.title3.weight(.semibold)).foregroundStyle(Theme.tint)
+                                    }
+                                }
+                                .frame(width: 44, height: 44)
+                                .background(Circle().fill(.regularMaterial))
+                                .overlay(Circle().stroke(Color(.separator), lineWidth: 0.5))
+                            }
+                            .accessibilityLabel("Další akce")
+
+                            // The app's one question, one tap away.
+                            Button(action: findNearest) {
+                                Label("Nejbližší WC", systemImage: "location.fill")
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 8)
+                                    .frame(minHeight: 52)
+                                    .background(Capsule().fill(Theme.brand))
+                                    .shadow(radius: 4, y: 2)
+                            }
+                            .accessibilityLabel("Najít nejbližší WC")
+                        }
     }
 
     /// Address search (Nominatim, CZ/SK) above the category chips; picking a hit flies the map there.
@@ -374,6 +372,7 @@ struct SelectedPlaceCard: View {
 
 /// Compact "nearby" strip — the Android sheet's peek state, without the full list.
 struct NearbyPanel: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let items: [PlaceItem]
     let userLocation: CLLocation
     let onSelect: (PlaceItem) -> Void
@@ -388,18 +387,37 @@ struct NearbyPanel: View {
                 .padding(.bottom, 4)
             ForEach(items) { item in
                 Button { onSelect(item) } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: item.isPickup ? "shippingbox.fill" : "figure.stand")
-                            .foregroundStyle(Theme.tint)
-                            .frame(width: 24)
-                        Text(item.name).lineLimit(1)
-                        Spacer(minLength: 8)
-                        Text(formatDistance(distance(item)))
-                            .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                    Group {
+                        if dynamicTypeSize.isAccessibilitySize {
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(alignment: .top, spacing: 10) {
+                                    Image(systemName: item.isPickup ? "shippingbox.fill" : "figure.stand")
+                                        .foregroundStyle(Theme.tint)
+                                        .frame(width: 24)
+                                    Text(item.name).multilineTextAlignment(.leading)
+                                }
+                                Text(formatDistance(distance(item)))
+                                    .font(.subheadline.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                                    .padding(.leading, 34)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 8)
+                        } else {
+                            HStack(spacing: 10) {
+                                Image(systemName: item.isPickup ? "shippingbox.fill" : "figure.stand")
+                                    .foregroundStyle(Theme.tint)
+                                    .frame(width: 24)
+                                Text(item.name).lineLimit(2).multilineTextAlignment(.leading)
+                                Spacer(minLength: 8)
+                                Text(formatDistance(distance(item)))
+                                    .font(.subheadline.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
                     .padding(.horizontal, 14)
-                    .frame(minHeight: 44)
+                    .frame(minHeight: 52)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -407,6 +425,7 @@ struct NearbyPanel: View {
             }
         }
         .padding(.bottom, 6)
+        .frame(maxWidth: .infinity)
         .background(RoundedRectangle(cornerRadius: 20).fill(.regularMaterial))
         .shadow(radius: 6, y: 2)
     }

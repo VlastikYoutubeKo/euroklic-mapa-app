@@ -101,8 +101,8 @@ struct ODEmptyState: View {
     }
 }
 
-/// Kulaté tlačítko filtru (44 pt), zapnuté = plné, vypnuté = obrys.
-struct ODRoundFilterButton: View {
+/// Čip filtru dopravy: ikona + název, zapnutý stav má navíc fajfku (nespoléhá jen na barvu).
+struct ODFilterChip: View {
     @Environment(\.odColors) private var c
     let filter: ODMapFilter
     let isOn: Bool
@@ -110,15 +110,17 @@ struct ODRoundFilterButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: filter.symbol)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(isOn ? c.inkText : c.text)
-                .frame(width: 44, height: 44)
-                .background(
-                    Circle().fill(isOn ? c.ink : c.surface)
-                )
-                .overlay(Circle().stroke(isOn ? c.ink : c.line, lineWidth: 1.5))
-                .shadow(color: Color.black.opacity(0.18), radius: 4, y: 2)
+            HStack(spacing: 6) {
+                Image(systemName: isOn ? "checkmark" : filter.symbol)
+                    .font(.footnote.weight(.bold))
+                Text(filter.shortTitle).font(.subheadline.weight(.semibold))
+            }
+            .foregroundStyle(isOn ? c.inkText : c.text)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 44)
+            .background(Capsule().fill(isOn ? c.ink : c.surface))
+            .overlay(Capsule().stroke(isOn ? c.ink : c.line, lineWidth: 1.5))
+            .shadow(color: Color.black.opacity(0.15), radius: 3, y: 1)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(filter.title)

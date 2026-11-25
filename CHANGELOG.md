@@ -9,6 +9,15 @@ A section heading must look like `## <version> — <date>`, items are `- ` bulle
 with `[Android]` or `[iOS]` is shown only in that app (the tag is hidden); untagged bullets are shown
 in both. Keep both files in sync.
 
+## 1.4.0 — 2026-11-25
+- Optional anonymous usage measurement (More → Privacy). It is off by default, only counts which features are used and never collects location or personal data. Details are in PRIVACY.md.
+- [iOS] A short welcome screen on first launch. You can open it again in More → How the app works.
+- [iOS] Redesigned place detail: the note about the place (for example a long-term closure) is right under the title, the Navigate button is more compact, station accessibility comes before the departures, departures can be collapsed, and saving a place uses a bookmark.
+- [iOS] A calmer map: one clear "Nearest toilet" button, the other actions (Add a place, Download map) are in a menu, and the Odjezdy switch is a secondary button. The map controls and the list of nearby places also hold up at the largest text sizes.
+- [iOS] Odjezdy: a panel at the bottom of the map with stops nearby and their next departures (stops show up immediately, departures fill in as they load), transport filters with names and a checkmark, and search for a stop or vehicle.
+- [iOS] More → Data transfer: export favorite places, favorite stops, votes and settings to a file and import them in another copy of the app, for example the beta. Statistics moved one level down.
+- [iOS] Favorites have a clearer empty state.
+
 ## 1.3.0 — 2026-11-20
 - Offline mode: without a connection the app runs from the downloaded places and the saved map, and says so at the top of the map. The map of an area can be downloaded in advance (the download button on the map). On iPhone this works with the Mapy.com map only.
 - One-tap switch between Euroklíč and Odjezdy right on the map (no more digging through More). On Android there is also a home-screen shortcut: long-press the app icon → Departures.

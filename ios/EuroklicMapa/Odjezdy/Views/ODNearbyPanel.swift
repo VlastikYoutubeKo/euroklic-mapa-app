@@ -8,6 +8,8 @@ struct ODNearbyEntry: Identifiable {
     let departures: [ODDeparture]
     /// Odjezdy se nepodařilo načíst (není to totéž jako „nic nejede“).
     let failed: Bool
+    /// Odjezdy se ještě načítají (zastávka je vidět hned, řádky se doplní).
+    var loading: Bool = false
     var id: String { stop.id }
 
     /// Převažující typ dopravy – podle něj je ikona v pruhu zastávky.
@@ -48,33 +50,74 @@ final class ODNearbyViewModel: ObservableObject {
             )
             try Task.checkCancellation()
             var seen = Set<String>()
-            let nearest = list
-                .map { ODNearbyStop(stop: $0, distanceM: Int(location.distance(from: CLLocation(latitude: $0.lat, longitude: $0.lng)))) }
-                .sorted { $0.distanceM < $1.distanceM }
-                .filter { seen.insert($0.stop.name).inserted }
-                .prefix(Self.maxStops)
+            let nearest = Array(
+                list
+                    .map { ODNearbyStop(stop: $0, distanceM: Int(location.distance(from: CLLocation(latitude: $0.lat, longitude: $0.lng)))) }
+                    .sorted { $0.distanceM < $1.distanceM }
+                    .filter { seen.insert($0.stop.name).inserted }
+                    .prefix(Self.maxStops)
+            )
 
-            var out: [ODNearbyEntry] = []
-            for n in nearest {
-                try Task.checkCancellation()
-                do {
-                    let deps = try await api.departures(stopId: n.stop.id, limit: 12, minutes: 180)
-                    // Časový filtr před prefixem, ať odjeté spoje nevytlačí platné (view filtruje ještě jednou).
-                    let cutoff = Date().addingTimeInterval(-60)
-                    let upcoming = deps
-                        .filter { !$0.cancelled && $0.realTime >= cutoff }
-                        .sorted { $0.realTime < $1.realTime }
-                    out.append(ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: Array(upcoming.prefix(8)), failed: false))
-                } catch is CancellationError {
-                    throw CancellationError()
-                } catch {
-                    out.append(ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: [], failed: true))
+            // Zastávky ukázat hned (u již načtených nechat jejich odjezdy), odjezdy doplňovat průběžně.
+            let previous = entries
+            var working: [ODNearbyEntry] = nearest.map { n in
+                if let old = previous.first(where: { $0.id == n.stop.id && !$0.failed && !$0.loading }) {
+                    return ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: old.departures, failed: false)
+                }
+                return ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: [], failed: false, loading: true)
+            }
+            try Task.checkCancellation()
+            entries = working
+            isLoading = false
+
+            let api = self.api
+            var anyFailed = false
+            try await withThrowingTaskGroup(of: (Int, ODNearbyEntry?).self) { group in
+                for (i, n) in nearest.enumerated() {
+                    group.addTask {
+                        // Jeden opakovaný pokus při přechodné chybě sítě či serveru.
+                        for attempt in 0..<2 {
+                            do {
+                                let deps = try await api.departures(stopId: n.stop.id, limit: 12, minutes: 180)
+                                // Časový filtr před prefixem, ať odjeté spoje nevytlačí platné (view filtruje ještě jednou).
+                                let cutoff = Date().addingTimeInterval(-60)
+                                let upcoming = deps
+                                    .filter { !$0.cancelled && $0.realTime >= cutoff }
+                                    .sorted { $0.realTime < $1.realTime }
+                                return (i, ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: Array(upcoming.prefix(8)), failed: false))
+                            } catch is CancellationError {
+                                return (i, nil)
+                            } catch {
+                                // Při omezení ze strany serveru neopakovat (klient je do konce blokace odmítne);
+                                // další pokus přinese pravidelná obnova.
+                                if let apiError = error as? ODAPIError, case .rateLimited = apiError { break }
+                                if attempt == 0 {
+                                    do { try await Task.sleep(for: .seconds(1.5)) } catch { return (i, nil) }
+                                }
+                            }
+                        }
+                        return (i, ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: [], failed: true))
+                    }
+                }
+                for try await (i, entry) in group {
+                    // Starý běh (poloha se mezitím změnila) nesmí přepsat nový výsledek.
+                    try Task.checkCancellation()
+                    guard let entry else { continue }
+                    var next = entry
+                    if entry.failed {
+                        anyFailed = true
+                        // Neúspěšná obnova nesmí smazat dřív načtené odjezdy.
+                        if let old = previous.first(where: { $0.id == entry.id && !$0.failed && !$0.loading }),
+                           !old.departures.isEmpty {
+                            next = ODNearbyEntry(stop: entry.stop, distanceM: entry.distanceM, departures: old.departures, failed: false)
+                        }
+                    }
+                    working[i] = next
+                    entries = working
                 }
             }
-            // Starý běh (poloha se mezitím změnila) nesmí přepsat nový výsledek.
             try Task.checkCancellation()
-            entries = out
-            lastLoadFailed = false
+            lastLoadFailed = anyFailed
         } catch is CancellationError {
             return
         } catch {
@@ -101,6 +144,8 @@ struct ODNearbyPanel: View {
 
     /// Úchyt (44) + pole hledání (48+) + okraje; roste s velikostí písma.
     @ScaledMetric(relativeTo: .body) private var collapsedHeight: CGFloat = 116
+    /// Rezerva pod seznamem pro plovoucí lištu záložek (roste s velikostí písma).
+    @ScaledMetric(relativeTo: .body) private var bottomInset: CGFloat = 100
 
     private var locationKey: String {
         guard let l = location.location else { return "none" }
@@ -135,7 +180,7 @@ struct ODNearbyPanel: View {
         .frame(height: expanded ? openHeight : collapsedHeight, alignment: .top)
         .frame(maxWidth: .infinity)
         .background(
-            UnevenRoundedRectangle(topLeadingRadius: 10, topTrailingRadius: 10, style: .continuous)
+            UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20, style: .continuous)
                 .fill(c.surface)
                 .shadow(color: Color.black.opacity(0.25), radius: 8, y: -2)
                 .ignoresSafeArea(edges: .bottom)
@@ -167,7 +212,7 @@ struct ODNearbyPanel: View {
                 Image(systemName: "magnifyingglass")
                     .font(.body.weight(.semibold))
                     .accessibilityHidden(true)
-                Text("Zastávka, linka nebo SPZ")
+                Text("Zastávka nebo vozidlo")
                     .font(.body.weight(.semibold))
                 Spacer(minLength: 0)
             }
@@ -201,7 +246,7 @@ struct ODNearbyPanel: View {
                 }
                 content
             }
-            .padding(.bottom, 100) // poslední řádek se musí dát vysunout nad plovoucí lištu záložek
+            .padding(.bottom, bottomInset) // poslední řádek se musí dát vysunout nad plovoucí lištu záložek
         }
     }
 
@@ -231,9 +276,15 @@ struct ODNearbyPanel: View {
             .padding(24)
         } else if vm.entries.isEmpty {
             if vm.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .padding(32)
+                VStack(spacing: 10) {
+                    ProgressView()
+                    Text("Načítám zastávky…")
+                        .font(.subheadline)
+                        .foregroundStyle(c.muted)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(32)
+                .accessibilityElement(children: .combine)
             } else {
                 Text(vm.lastLoadFailed ? L("Zastávky v okolí se nepodařilo načíst.") : L("V okolí nejsou žádné zastávky."))
                     .font(.subheadline)
@@ -283,7 +334,17 @@ struct ODNearbyPanel: View {
             .accessibilityLabel(L("Zastávka \(entry.stop.name)") + ", " + ODSearchTab.formatDistance(entry.distanceM))
             .accessibilityHint("Zobrazí odjezdy ze zastávky")
 
-            if upcoming.isEmpty {
+            if entry.loading {
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text("Načítám odjezdy…")
+                        .font(.footnote)
+                        .foregroundStyle(c.muted)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
+            } else if upcoming.isEmpty {
                 Text(entry.failed ? L("Odjezdy se nepodařilo načíst.") : L("Nic v nejbližších hodinách nejede."))
                     .font(.footnote)
                     .foregroundStyle(c.muted)
