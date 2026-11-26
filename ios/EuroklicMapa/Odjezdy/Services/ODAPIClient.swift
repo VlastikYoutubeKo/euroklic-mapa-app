@@ -311,6 +311,21 @@ actor ODAPIClient {
         return try decodeList(ODDeparture.self, from: data)
     }
 
+    /// Odjezdy z více zastávek jedním dotazem (`stopIds=a,b,c`, server je sloučí; každý odjezd nese své `stopId`).
+    /// `limit` platí pro všechny zastávky dohromady, proto ho volající násobí počtem zastávek.
+    func departures(stopIds: [String], limit: Int, minutes: Int) async throws -> [ODDeparture] {
+        guard !stopIds.isEmpty else { return [] }
+        let q: [(String, String)] = [
+            ("stopIds", stopIds.joined(separator: ",")),
+            ("limit", String(limit)),
+            ("minutes", String(minutes))
+        ]
+        guard let url = makeURL(path: "/api/v2/departures", query: q) else { throw ODAPIError.badData }
+        let data = try await load(url, ttl: 20)
+        try checkBody(data)
+        return try decodeList(ODDeparture.self, from: data)
+    }
+
     // MARK: Aktuality
 
     func alerts() async throws -> [ODAlert] {

@@ -8,6 +8,7 @@ struct DetailView: View {
     @EnvironmentObject private var favorites: FavoritesStore
     @EnvironmentObject private var location: LocationService
     @EnvironmentObject private var auth: AuthSession
+    @EnvironmentObject private var route: RouteStore
     @Environment(\.dismiss) private var dismiss
 
     let place: PlaceItem
@@ -42,6 +43,8 @@ struct DetailView: View {
                 if asSheet { topBar }
                 titleBlock
                 noteCallout
+                routePicker
+                routeNoteView
                 navigateButton
                 detailsBlock
                 if let note = nonBlank(place.accessibilityNote) { accessibilityBlock(note) }
@@ -78,8 +81,16 @@ struct DetailView: View {
             departures = await NearbyStopsService.departures(stopId: id)
             loadingDepartures = false
         }
+        .task(id: routeTaskId) {
+            guard let from = location.lastLocation?.coordinate else { return }
+            route.load(key: place.favoriteKey, from: from, to: place.coordinate)
+        }
+        .onDisappear { route.clear(key: place.favoriteKey) }
         .toast($toast)
     }
+
+    /// Znovu se spočítá, až když poloha poprvé dorazí (ne při každém posunu o pár metrů).
+    private var routeTaskId: String { "\(place.favoriteKey)|\(location.lastLocation != nil)" }
 
     // MARK: - Blocks
 
@@ -172,9 +183,54 @@ struct DetailView: View {
         }
     }
 
+    /// Pěšky / MHD: nabídne se jen to, co dává smysl (pěšky do ~45 min, MHD jen když ho mapa zná).
+    @ViewBuilder
+    private var routePicker: some View {
+        if route.options.count > 1 {
+            Picker(L("Způsob cesty"), selection: Binding(
+                get: { route.selected ?? route.options[0].mode },
+                set: { route.select($0) }
+            )) {
+                ForEach(route.options) { option in
+                    Text("\(option.mode.title) · \(option.seconds.routeDuration)").tag(option.mode)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    /// Vysvětlení pod tlačítkem Vyrazit (nahoře by odsunulo tlačítko pod okraj sheetu).
+    @ViewBuilder
+    private var routeNoteView: some View {
+        if let note = routeNote {
+            Text(note)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var routeNote: String? {
+        switch route.selected {
+        case .walking:
+            let distance = route.selectedOption?.meters.map { formatDistance($0) } ?? ""
+            return L("\(distance) pěšky, orientační trasa. Bezbariérovost cesty není ověřená.")
+        case .transit:
+            if let far = route.walkingTooFar, let meters = far.meters {
+                return L("Pěšky je to příliš daleko (\(formatDistance(meters))). Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená.")
+            }
+            return L("Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená.")
+        case nil:
+            if let far = route.walkingTooFar, let meters = far.meters {
+                return L("Pěšky je to příliš daleko (\(formatDistance(meters))).")
+            }
+            return nil
+        }
+    }
+
     private var navigateButton: some View {
         Button(action: openNavigation) {
-            Label(navigateLabel, systemImage: "figure.walk")
+            Label(navigateLabel, systemImage: route.selected?.symbol ?? "figure.walk")
                 .font(.headline)
                 .frame(maxWidth: .infinity, minHeight: 52)
         }
@@ -389,7 +445,7 @@ struct DetailView: View {
     private var bottomToolbar: some View {
         HStack(spacing: 28) {
             favoriteButton {
-                Image(systemName: favorites.isFavorite(place) ? "star.fill" : "star")
+                Image(systemName: favorites.isFavorite(place) ? "bookmark.fill" : "bookmark")
                     .font(.title3)
                     .frame(width: 44, height: 44)
             }
@@ -449,13 +505,15 @@ struct DetailView: View {
     }
 
     private var navigateLabel: String {
-        guard let d = walkingDistance else { return L("Navigovat") }
-        return "Navigovat · \(formatWalkingTime(d))"
+        if let option = route.selectedOption { return L("Vyrazit · \(option.seconds.routeDuration)") }
+        return L("Navigovat")
     }
 
     private var navigateAccessibility: String {
-        guard let d = walkingDistance else { return L("Navigovat k místu") }
-        return L("Navigovat k místu, \(formatDistance(d)), \(formatWalkingTime(d)) pěšky")
+        if let option = route.selectedOption {
+            return L("Vyrazit, \(option.mode.title), \(option.seconds.routeDuration)")
+        }
+        return L("Navigovat k místu")
     }
 
     private var webURL: URL? {
@@ -476,7 +534,17 @@ struct DetailView: View {
         Analytics.track(.navigate)
         let item = MKMapItem(placemark: MKPlacemark(coordinate: place.coordinate))
         item.name = place.name
-        item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking])
+        // A conscious choice wins. Without one: walking for a short hop, otherwise let Maps pick
+        // (never force a 5 km walk the app itself would not offer).
+        let mode: String
+        switch route.selected {
+        case .transit: mode = MKLaunchOptionsDirectionsModeTransit
+        case .walking: mode = MKLaunchOptionsDirectionsModeWalking
+        case nil:
+            let tooFar = route.walkingTooFar != nil || (walkingDistance ?? 0) > 3_000
+            mode = tooFar ? MKLaunchOptionsDirectionsModeDefault : MKLaunchOptionsDirectionsModeWalking
+        }
+        item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: mode])
     }
 
     // MARK: - Vote (CSRF + cookie flow, one 403 retry — mirrors Android)

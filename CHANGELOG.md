@@ -9,6 +9,13 @@ A section heading must look like `## <version> — <date>`, items are `- ` bulle
 with `[Android]` or `[iOS]` is shown only in that app (the tag is hidden); untagged bullets are shown
 in both. Keep both files in sync.
 
+## 1.5.0 — 2026-11-26
+- Getting there: a choice between walking and public transport next to the Navigate button. Walking is only offered where it makes sense (up to about 45 minutes), a longer trip offers public transport only. The times are estimates and the app says that the accessibility of the way is not verified.
+- [iOS] The walking route is drawn right on the map along real paths, with the time and distance. For public transport the app shows an estimate and Maps then show the route with changes.
+- [iOS] Odjezdy look more like the rest of the app: the same tab bar and bookmark icon as in Euroklíč, filters with a name and the yellow mark, softer cards and a smooth switch between the two modes. The stop sign, the line badges and the delay colours stay as they were.
+- [iOS] Odjezdy: stops nearby load faster (one request instead of six).
+- [iOS] The place detail sheet opens a bit higher so the Go button is always in view.
+
 ## 1.4.1 — 2026-11-26
 - A new version notice: the app asks the server at most every 12 hours whether a newer version exists and, if so, shows a card at the top of More with a download button (Later hides it for that version). Beta builds are never prompted. It is an anonymous request, see PRIVACY.md.
 - The place note from OpenStreetMap is no longer taken from disused places, so stations no longer show an outdated "closed" note (for example Praha hl.n.). The data are fixed on the server, no update is needed for that.

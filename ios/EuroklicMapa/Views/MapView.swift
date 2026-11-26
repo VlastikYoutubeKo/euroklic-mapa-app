@@ -13,6 +13,8 @@ struct MapView: UIViewRepresentable {
     var recenterTarget: CLLocationCoordinate2D?
     /// Receives the visible area (for "Stáhnout mapu"); optional.
     var viewport: MapViewport?
+    /// Pěší trasa k vybranému místu (kreslí se přes dlaždice, pod značkami).
+    var route: MKPolyline?
     var onSelect: (PlaceItem?) -> Void
 
     func makeUIView(context: Context) -> MKMapView {
@@ -59,6 +61,17 @@ struct MapView: UIViewRepresentable {
             context.coordinator.lastRecenterKey = nil
         }
 
+        // Route line: replace only our own polylines, never the tile overlay.
+        if context.coordinator.lastRoute !== route {
+            map.removeOverlays(map.overlays.filter { $0 is MKPolyline })
+            context.coordinator.lastRoute = route
+            if let route {
+                map.addOverlay(route, level: .aboveRoads)
+                // The detail sheet covers the lower part of the screen: put the whole line into the free band above it.
+                map.setVisibleMapRect(Self.rect(showing: route.boundingMapRect, in: map.bounds.size), animated: true)
+            }
+        }
+
         // Diff annotations (keep the tile overlay + user location).
         let desired = Dictionary(uniqueKeysWithValues: items.map { ($0.favoriteKey, $0) })
         let current = map.annotations.compactMap { $0 as? PlaceAnnotation }
@@ -94,6 +107,27 @@ struct MapView: UIViewRepresentable {
         if selectedKey == nil { context.coordinator.lastSelectedKey = nil }
     }
 
+    /// Podíl výšky, který zabere sheet s detailem místa (musí sedět s `presentationDetents` v MapScreen).
+    static let routeSheetFraction: CGFloat = 0.58
+
+    /// Výřez mapy, ve kterém je celá trasa ve volném pásu nad sheetem (pod vyhledáváním).
+    static func rect(showing route: MKMapRect, in size: CGSize) -> MKMapRect {
+        guard size.width > 0, size.height > 0, route.size.width + route.size.height > 0 else { return route }
+        let topReserved: CGFloat = 0.16
+        let free = 1 - routeSheetFraction - topReserved
+        let aspect = size.width / size.height
+        // Výška výřezu tak, aby trasa zabrala ~85 % volného pásu na výšku a ~80 % na šířku.
+        let fromHeight = route.size.height / Double(free * 0.85)
+        let fromWidth = route.size.width / 0.8 / Double(aspect)
+        let minHeight = MKMapPointsPerMeterAtLatitude(MKMapPoint(x: route.midX, y: route.midY).coordinate.latitude) * 700
+        let height = max(fromHeight, fromWidth, minHeight)
+        let width = height * Double(aspect)
+        // Střed trasy má být uprostřed volného pásu, ne uprostřed obrazovky.
+        let bandCenter = Double(topReserved + free / 2)
+        let centerY = route.midY + height * (0.5 - bandCenter)
+        return MKMapRect(x: route.midX - width / 2, y: centerY - height / 2, width: width, height: height)
+    }
+
     func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
 
     final class Coordinator: NSObject, MKMapViewDelegate {
@@ -102,6 +136,7 @@ struct MapView: UIViewRepresentable {
         var appliedProvider: MapProvider?
         var didCenterOnUser = false
         var lastRecenterKey: String?
+        var lastRoute: MKPolyline?
 
         init(parent: MapView) { self.parent = parent }
 
@@ -112,6 +147,14 @@ struct MapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let tiles = overlay as? MKTileOverlay {
                 return MKTileOverlayRenderer(tileOverlay: tiles)
+            }
+            if let line = overlay as? MKPolyline {
+                let renderer = MKPolylineRenderer(polyline: line)
+                renderer.strokeColor = UIColor(Theme.brand)
+                renderer.lineWidth = 6
+                renderer.lineCap = .round
+                renderer.lineJoin = .round
+                return renderer
             }
             return MKOverlayRenderer(overlay: overlay)
         }

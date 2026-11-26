@@ -7,6 +7,13 @@ a stejný soubor je zabalený i v aplikaci (Více → Co je nového; po aktualiz
 Nadpis sekce musí mít tvar `## <verze> — <datum>`, položky jsou odrážky `- `. Odrážka začínající
 `[Android]` nebo `[iOS]` se ukáže jen v dané aplikaci (značka se skryje), odrážky bez značky v obou.
 
+## 1.5.0 — 2026-11-26
+- Cesta k místu: u tlačítka Navigovat je volba mezi pěšky a MHD. Pěšky se nabídne jen tam, kde to dává smysl (do zhruba 45 minut), u delší cesty je jen MHD. Časy jsou odhady a aplikace říká, že bezbariérovost cesty není ověřená.
+- [iOS] Trasa pěšky se kreslí přímo na mapě po skutečných cestách, s časem a vzdáleností. U MHD aplikace ukáže odhad a trasu s přestupy pak ukážou Mapy.
+- [iOS] Odjezdy víc připomínají zbytek aplikace: stejná lišta záložek a ikona záložky jako v Euroklíči, filtry s názvem a žlutou značkou, měkčí karty a plynulé přepnutí mezi oběma režimy. Cedule zastávky, štítky linek a barvy zpoždění zůstaly beze změny.
+- [iOS] Odjezdy: zastávky v okolí se načítají rychleji (jeden dotaz místo šesti).
+- [iOS] List s detailem místa se otevírá o něco výš, ať je tlačítko Vyrazit pořád vidět.
+
 ## 1.4.1 — 2026-11-26
 - Upozornění na novou verzi: aplikace se nejvýš jednou za 12 hodin zeptá serveru, jestli existuje novější verze, a když ano, ukáže nahoře ve Více kartu s tlačítkem ke stažení („Později“ ji pro tu verzi schová). Betaverze se na nic neptá. Jde o anonymní dotaz, viz PRIVACY.md.
 - Poznámka k místu z OpenStreetMap se už nebere z vyřazených míst, takže u nádraží (například Praha hl.n.) už není zastaralá poznámka o zavření. Data jsou opravená na serveru, kvůli tomu nemusíte aktualizovat.

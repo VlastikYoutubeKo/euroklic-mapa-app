@@ -114,7 +114,7 @@ struct ODMapTab: View {
 
     private var filterRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: 0) {
                 ForEach(ODMapFilter.allCases) { f in
                     ODFilterChip(filter: f, isOn: vm.enabled.contains(f)) {
                         var set = vm.enabled
@@ -123,9 +123,12 @@ struct ODMapTab: View {
                     }
                 }
             }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 4)
         }
+        // Pevný podklad, ať jsou popisky čitelné nad jakoukoli mapou.
+        .background(c.surface.opacity(0.96), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(c.line, lineWidth: 1))
+        .padding(.horizontal, 12)
     }
 
     private var locationButton: some View {

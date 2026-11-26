@@ -169,7 +169,7 @@ struct ODStopSheet: View {
         Button {
             if !favorites.toggle(vm.stop) { showLimitAlert = true }
         } label: {
-            Image(systemName: isFavorite ? "star.fill" : "star")
+            Image(systemName: isFavorite ? "bookmark.fill" : "bookmark")
                 .font(.title3)
                 .foregroundStyle(c.signText)
                 .frame(width: 44, height: 44)

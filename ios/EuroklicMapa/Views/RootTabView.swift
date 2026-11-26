@@ -11,6 +11,7 @@ struct RootTabView: View {
         Group {
             if mode == .odjezdy {
                 OdjezdyRootView()
+                    .transition(.opacity)
             } else {
                 TabView {
                     MapScreen()
@@ -22,8 +23,10 @@ struct RootTabView: View {
                     MoreView()
                         .tabItem { Label("Více", systemImage: "ellipsis") }
                 }
+                .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: mode)
         .sheet(item: $whatsNew) { WhatsNewSheet(entry: $0) }
         .onAppear(perform: checkWhatsNew)
     }

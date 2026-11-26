@@ -101,7 +101,8 @@ struct ODEmptyState: View {
     }
 }
 
-/// Čip filtru dopravy: ikona + název, zapnutý stav má navíc fajfku (nespoléhá jen na barvu).
+/// Filtr dopravy podle pravidel Odjezdů: žádná vyplněná pilulka, aktivní má žlutou „značku“ (3 pt podtržení)
+/// a tučné písmo, takže stav nespoléhá jen na barvu. Cíl min. 44 pt.
 struct ODFilterChip: View {
     @Environment(\.odColors) private var c
     let filter: ODMapFilter
@@ -111,16 +112,19 @@ struct ODFilterChip: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Image(systemName: isOn ? "checkmark" : filter.symbol)
-                    .font(.footnote.weight(.bold))
-                Text(filter.shortTitle).font(.subheadline.weight(.semibold))
+                Image(systemName: filter.symbol).font(.body.weight(.semibold))
+                Text(filter.shortTitle).font(.subheadline.weight(isOn ? .bold : .regular))
             }
-            .foregroundStyle(isOn ? c.inkText : c.text)
+            .foregroundStyle(isOn ? c.text : c.muted)
             .padding(.horizontal, 12)
             .frame(minHeight: 44)
-            .background(Capsule().fill(isOn ? c.ink : c.surface))
-            .overlay(Capsule().stroke(isOn ? c.ink : c.line, lineWidth: 1.5))
-            .shadow(color: Color.black.opacity(0.15), radius: 3, y: 1)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(isOn ? c.mark : Color.clear)
+                    .frame(height: 3)
+                    .padding(.horizontal, 10)
+            }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(filter.title)
@@ -136,8 +140,8 @@ struct ODCardBackground: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(c.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(c.line, lineWidth: 1))
+            .background(c.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(c.line, lineWidth: 1))
     }
 }
 

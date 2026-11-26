@@ -7,6 +7,7 @@ struct EuroklicMapaApp: App {
     @StateObject private var favorites = FavoritesStore()
     @StateObject private var auth = AuthSession()
     @StateObject private var update = UpdateStore()
+    @StateObject private var route = RouteStore()
 
     var body: some Scene {
         WindowGroup {
@@ -16,6 +17,7 @@ struct EuroklicMapaApp: App {
                 .environmentObject(favorites)
                 .environmentObject(auth)
                 .environmentObject(update)
+                .environmentObject(route)
                 .tint(Theme.tint)
                 .onAppear { Analytics.track(.appOpen) }
                 .task { await update.refreshIfDue() }

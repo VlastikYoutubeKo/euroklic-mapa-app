@@ -70,7 +70,7 @@
 "Klepnutím zobrazíte nebo skryjete" = "Klepnutím zobrazíte nebo skryjete";
 "teď" = "teď";
 "Zatím žádné oblíbené zastávky" = "Zatím žádné oblíbené zastávky";
-"Otevřete zastávku a klepněte na hvězdičku. Najdete ji pak tady a odjezdy budou na jedno klepnutí." = "Otevřete zastávku a klepněte na hvězdičku. Najdete ji pak tady a odjezdy budou na jedno klepnutí.";
+"Otevřete zastávku a klepněte na záložku. Najdete ji pak tady a odjezdy budou na jedno klepnutí." = "Otevřete zastávku a klepněte na záložku. Najdete ji pak tady a odjezdy budou na jedno klepnutí.";
 "Uloženo %lld z %lld zastávek. Oblíbené zůstávají jen v tomto zařízení." = "Uloženo %lld z %lld zastávek. Oblíbené zůstávají jen v tomto zařízení.";
 "Oblíbená zastávka %@" = "Oblíbená zastávka %@";
 "Zobrazí odjezdy" = "Zobrazí odjezdy";
@@ -468,3 +468,12 @@
 "Nainstalujete ji ze stránky aplikace, stejně jako minule." = "Nainstalujete ji ze stránky aplikace, stejně jako minule.";
 "Stáhnout" = "Stáhnout";
 "Později" = "Později";
+"Pěšky" = "Pěšky";
+"MHD" = "MHD";
+"Způsob cesty" = "Způsob cesty";
+"Vyrazit · %@" = "Vyrazit · %@";
+"Vyrazit, %@, %@" = "Vyrazit, %@, %@";
+"Pěšky je to příliš daleko (%@)." = "Pěšky je to příliš daleko (%@).";
+"%@ pěšky, orientační trasa. Bezbariérovost cesty není ověřená." = "%@ pěšky, orientační trasa. Bezbariérovost cesty není ověřená.";
+"Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená." = "Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená.";
+"Pěšky je to příliš daleko (%@). Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená." = "Pěšky je to příliš daleko (%@). Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená.";

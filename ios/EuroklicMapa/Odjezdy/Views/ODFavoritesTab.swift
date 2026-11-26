@@ -14,9 +14,9 @@ struct ODFavoritesTab: View {
                 if favorites.stops.isEmpty {
                     ScrollView {
                         ODEmptyState(
-                            symbol: "star",
+                            symbol: "bookmark",
                             title: L("Zatím žádné oblíbené zastávky"),
-                            message: L("Otevřete zastávku a klepněte na hvězdičku. Najdete ji pak tady a odjezdy budou na jedno klepnutí.")
+                            message: L("Otevřete zastávku a klepněte na záložku. Najdete ji pak tady a odjezdy budou na jedno klepnutí.")
                         )
                         .padding(.top, 40)
                     }
@@ -62,7 +62,7 @@ struct ODFavoritesTab: View {
             sheetStop = stop
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: "star.fill")
+                Image(systemName: "bookmark.fill")
                     .font(.title3)
                     .foregroundStyle(c.mark)
                     .accessibilityHidden(true)

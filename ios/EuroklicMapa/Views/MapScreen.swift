@@ -5,6 +5,7 @@ import SwiftUI
 /// action (Nejbližší WC), selected-place card pinned to the bottom — the same
 /// persistent-sheet feel as the Android `BottomSheetScaffold`.
 struct MapScreen: View {
+    @EnvironmentObject private var route: RouteStore
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject private var places: PlacesStore
     @EnvironmentObject private var location: LocationService
@@ -37,6 +38,7 @@ struct MapScreen: View {
                     provider: mapProvider,
                     recenterTarget: recenterTarget,
                     viewport: viewport,
+                    route: route.polyline,
                     onSelect: { selected = $0 },
                 )
                 .ignoresSafeArea()
@@ -65,8 +67,8 @@ struct MapScreen: View {
             .sheet(item: $selected) { place in
                 DetailView(place: place, asSheet: true)
                     .id(place.favoriteKey)
-                    .presentationDetents([.fraction(0.42), .large])
-                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.42)))
+                    .presentationDetents([.fraction(MapView.routeSheetFraction), .large])
+                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(MapView.routeSheetFraction)))
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(28)
             }

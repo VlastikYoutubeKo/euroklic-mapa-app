@@ -18,6 +18,8 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.FilterChip
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -118,6 +120,9 @@ import cz.euroklicmapa.util.isStaleVerification
 import cz.euroklicmapa.util.formatDistance
 import cz.euroklicmapa.util.formatWalkingTime
 import cz.euroklicmapa.util.launchNavigation
+import cz.euroklicmapa.util.MAX_WALK_MINUTES
+import cz.euroklicmapa.util.NavMode
+import cz.euroklicmapa.util.walkingMinutes
 import cz.euroklicmapa.util.openUrl
 import cz.euroklicmapa.util.parseOpeningHours
 import cz.euroklicmapa.util.sanitizeStationHours
@@ -317,8 +322,24 @@ fun DetailScreen(
         }
 
         if (navTarget != null) {
+            // Walking only where it makes sense (≈45 min), otherwise public transport. The mode is passed
+            // to the maps app, which draws the route; bounded by the straight line, so it is only a hint.
+            val straight = userLocation?.let { distanceBetween(it, navTarget) }
+            val walkingOk = straight != null && walkingMinutes(straight) <= MAX_WALK_MINUTES
+            val modes = when {
+                straight == null -> listOf(NavMode.WALKING)
+                walkingOk -> listOf(NavMode.WALKING, NavMode.TRANSIT)
+                else -> listOf(NavMode.TRANSIT)
+            }
+            var chosen by rememberSaveable { mutableStateOf(NavMode.WALKING) }
+            val mode = if (chosen in modes) chosen else modes.first()
             NavigateBar(
-                onClick = { launchNavigation(context, navTarget.latitude, navTarget.longitude, navLabel) },
+                modes = if (straight == null) emptyList() else modes,
+                selected = mode,
+                onSelect = { chosen = it },
+                walkingMinutes = straight?.let { walkingMinutes(it) },
+                tooFarKm = if (straight != null && !walkingOk) formatDistance(straight) else null,
+                onClick = { launchNavigation(context, navTarget.latitude, navTarget.longitude, navLabel, mode) },
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
@@ -1426,14 +1447,59 @@ private fun NoticeCard(text: String) {
 }
 
 @Composable
-private fun NavigateBar(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun NavigateBar(
+    modes: List<NavMode>,
+    selected: NavMode,
+    onSelect: (NavMode) -> Unit,
+    walkingMinutes: Int?,
+    tooFarKm: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         border = contrastBorder(),
         color = EuroklicTheme.extended.cardSurface,
         shadowElevation = 12.dp,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Box(modifier = Modifier.navigationBarsPadding().padding(16.dp)) {
+        Column(
+            modifier = Modifier.navigationBarsPadding().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            if (modes.size > 1) {
+                Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    modes.forEach { m ->
+                        FilterChip(
+                            selected = m == selected,
+                            onClick = { onSelect(m) },
+                            label = {
+                                Text(
+                                    when (m) {
+                                        NavMode.WALKING -> t("Pěšky") + (walkingMinutes?.let { " · ~$it min" } ?: "")
+                                        NavMode.TRANSIT -> t("MHD")
+                                    },
+                                    modifier = Modifier.heightIn(min = 32.dp),
+                                )
+                            },
+                            modifier = Modifier.heightIn(min = 48.dp),
+                        )
+                    }
+                }
+            }
+            if (modes.isNotEmpty()) {
+                Text(
+                    t("Orientační čas, bezbariérovost cesty není ověřená."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (tooFarKm != null) {
+                Text(
+                    t("Pěšky je to příliš daleko (%s), nabízíme MHD.", tooFarKm),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Button(
                 shape = EuroklicTheme.shapes.pill,
                 onClick = onClick,
@@ -1445,7 +1511,10 @@ private fun NavigateBar(onClick: () -> Unit, modifier: Modifier = Modifier) {
             ) {
                 Icon(Icons.Rounded.Directions, contentDescription = null)
                 Spacer(Modifier.size(8.dp))
-                Text(t("Navigovat"), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    if (selected == NavMode.TRANSIT) t("Navigovat MHD") else t("Navigovat"),
+                    style = MaterialTheme.typography.titleMedium,
+                )
             }
         }
     }

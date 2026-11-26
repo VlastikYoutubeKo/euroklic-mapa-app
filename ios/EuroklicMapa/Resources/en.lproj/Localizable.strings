@@ -65,7 +65,7 @@
 "Klepnutím zobrazíte nebo skryjete" = "Tap to show or hide";
 "teď" = "now";
 "Zatím žádné oblíbené zastávky" = "No favorite stops yet";
-"Otevřete zastávku a klepněte na hvězdičku. Najdete ji pak tady a odjezdy budou na jedno klepnutí." = "Open a stop and tap the star. You'll find it here, with its departures one tap away.";
+"Otevřete zastávku a klepněte na záložku. Najdete ji pak tady a odjezdy budou na jedno klepnutí." = "Open a stop and tap the bookmark. You'll find it here, with its departures one tap away.";
 "Uloženo %lld z %lld zastávek. Oblíbené zůstávají jen v tomto zařízení." = "Saved %lld of %lld stops. Favorites stay on this device only.";
 "Oblíbená zastávka %@" = "Favorite stop %@";
 "Zobrazí odjezdy" = "Shows departures";
@@ -460,3 +460,12 @@
 "Nainstalujete ji ze stránky aplikace, stejně jako minule." = "Install it from the app page, the same way as before.";
 "Stáhnout" = "Download";
 "Později" = "Later";
+"Pěšky" = "On foot";
+"MHD" = "Public transport";
+"Způsob cesty" = "How to get there";
+"Vyrazit · %@" = "Go · %@";
+"Vyrazit, %@, %@" = "Go, %@, %@";
+"Pěšky je to příliš daleko (%@)." = "It is too far to walk (%@).";
+"%@ pěšky, orientační trasa. Bezbariérovost cesty není ověřená." = "%@ on foot, an approximate route. Accessibility of the way is not verified.";
+"Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená." = "Estimated time by public transport; Maps shows the route with changes. Accessibility is not verified.";
+"Pěšky je to příliš daleko (%@). Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená." = "It is too far to walk (%@). Estimated time by public transport; Maps shows the route with changes. Accessibility is not verified.";

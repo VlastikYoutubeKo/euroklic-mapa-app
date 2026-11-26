@@ -22,6 +22,19 @@ fun formatDistance(meters: Double): String {
     }
 }
 
+/** How to get to a place: on foot or by public transport. */
+enum class NavMode(val travelMode: String) { WALKING("walking"), TRANSIT("transit") }
+
+/** Walking is offered up to this many minutes (a longer walk is pointless for our users). */
+const val MAX_WALK_MINUTES = 45
+
+/** Real paths are about a third longer than the straight line. */
+private const val PATH_FACTOR = 1.3
+
+/** Estimated walking minutes for a straight-line distance, with the path factor included. */
+fun walkingMinutes(straightMeters: Double): Int =
+    (straightMeters * PATH_FACTOR / 1000.0 / WALKING_KMH * 60.0).roundToInt().coerceAtLeast(1)
+
 /** Rough straight-line walking time, e.g. "~7 min". Always an approximation. */
 fun formatWalkingTime(meters: Double): String {
     val minutes = (meters / 1000.0 / WALKING_KMH * 60.0).roundToInt().coerceAtLeast(1)
@@ -58,12 +71,12 @@ fun openUrl(context: Context, url: String) {
  * Opens turn-by-turn navigation. Tries the universal Google Maps directions URL first
  * (Google Maps, Mapy.cz, Waze…), then a bare `geo:` intent, then the web URL in a browser.
  */
-fun launchNavigation(context: Context, lat: Double, lon: Double, label: String?) {
+fun launchNavigation(context: Context, lat: Double, lon: Double, label: String?, mode: NavMode = NavMode.WALKING) {
     cz.euroklicmapa.data.analytics.Analytics.track(cz.euroklicmapa.data.analytics.AnalyticsEvent.NAVIGATE)
     val encodedLabel = Uri.encode(label ?: "")
     val dir = Intent(
         Intent.ACTION_VIEW,
-        Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$lat,$lon"),
+        Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$lat,$lon&travelmode=${mode.travelMode}"),
     )
     val geo = Intent(Intent.ACTION_VIEW, Uri.parse("geo:$lat,$lon?q=$lat,$lon($encodedLabel)"))
     if (!startOrToast(context, dir, "")) {

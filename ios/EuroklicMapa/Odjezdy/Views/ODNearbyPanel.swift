@@ -72,8 +72,33 @@ final class ODNearbyViewModel: ObservableObject {
 
             let api = self.api
             var anyFailed = false
+
+            // 1) Jeden dotaz na všechny zastávky (dřív šest pomalých dotazů, někdy omezených serverem).
+            let cutoff = Date().addingTimeInterval(-60)
+            func upcoming(_ deps: [ODDeparture]) -> [ODDeparture] {
+                deps.filter { !$0.cancelled && $0.realTime >= cutoff }.sorted { $0.realTime < $1.realTime }
+            }
+            var grouped: [String: [ODDeparture]] = [:]
+            do {
+                let all = try await api.departures(stopIds: nearest.map(\.stop.id), limit: 15 * nearest.count, minutes: 180)
+                grouped = Dictionary(grouping: all) { $0.stopId ?? "" }
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                // Dávka selhala: zastávky se dotáhnou po jedné (viz níže).
+            }
+            try Task.checkCancellation()
+            for (i, n) in nearest.enumerated() {
+                if let deps = grouped[n.stop.id], !deps.isEmpty {
+                    working[i] = ODNearbyEntry(stop: n.stop, distanceM: n.distanceM, departures: Array(upcoming(deps).prefix(8)), failed: false)
+                }
+            }
+            entries = working
+
+            // 2) Zbylé zastávky (dávka je nevrátila nebo selhala): po jedné, s jedním opakováním.
+            let missing = nearest.enumerated().filter { (grouped[$0.element.stop.id] ?? []).isEmpty }
             try await withThrowingTaskGroup(of: (Int, ODNearbyEntry?).self) { group in
-                for (i, n) in nearest.enumerated() {
+                for (i, n) in missing {
                     group.addTask {
                         // Jeden opakovaný pokus při přechodné chybě sítě či serveru.
                         for attempt in 0..<2 {

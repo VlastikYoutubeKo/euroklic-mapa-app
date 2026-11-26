@@ -44,16 +44,14 @@ struct OdjezdyRootView: View {
                 map.center(on: stop.coordinate, meters: 900)
                 tab = .map
             })
-            .tabItem { Label("Oblíbené", systemImage: "star") }
+            .tabItem { Label("Oblíbené", systemImage: "bookmark.fill") }
             .tag(Tab.favorites)
 
             ODMoreTab()
-                .tabItem { Label("Více", systemImage: "ellipsis.circle") }
+                .tabItem { Label("Více", systemImage: "ellipsis") }
                 .tag(Tab.more)
         }
         .tint(colors.accent)
-        .toolbarBackground(colors.surface, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
         .background(colors.bg.ignoresSafeArea())
         .environment(\.odColors, colors)
         .environmentObject(favorites)
