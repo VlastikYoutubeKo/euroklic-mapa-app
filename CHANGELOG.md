@@ -9,6 +9,10 @@ A section heading must look like `## <version> — <date>`, items are `- ` bulle
 with `[Android]` or `[iOS]` is shown only in that app (the tag is hidden); untagged bullets are shown
 in both. Keep both files in sync.
 
+## 1.4.1 — 2026-11-26
+- A new version notice: the app asks the server at most every 12 hours whether a newer version exists and, if so, shows a card at the top of More with a download button (Later hides it for that version). Beta builds are never prompted. It is an anonymous request, see PRIVACY.md.
+- The place note from OpenStreetMap is no longer taken from disused places, so stations no longer show an outdated "closed" note (for example Praha hl.n.). The data are fixed on the server, no update is needed for that.
+
 ## 1.4.0 — 2026-11-25
 - Optional anonymous usage measurement (More → Privacy). It is off by default, only counts which features are used and never collects location or personal data. Details are in PRIVACY.md.
 - [iOS] A short welcome screen on first launch. You can open it again in More → How the app works.

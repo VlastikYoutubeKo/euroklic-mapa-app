@@ -108,6 +108,8 @@ fun MoreScreen(
     val isAdmin = (authState as? AuthState.LoggedIn)?.me?.is_admin == true
 
     val version = remember(context) { appVersionName(context) }
+    val update by cz.euroklicmapa.data.update.UpdateChecker.available(context)
+        .collectAsStateWithLifecycle(initialValue = null)
 
     val nearbyNotif by app.notificationPrefs.nearbyEnabled.collectAsStateWithLifecycle(initialValue = false)
     val adminNotif by app.notificationPrefs.adminQueueEnabled.collectAsStateWithLifecycle(initialValue = true)
@@ -144,6 +146,14 @@ fun MoreScreen(
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            update?.let { info ->
+                UpdateCard(
+                    version = info.version,
+                    onDownload = { openUrl(context, info.page) },
+                    onLater = { scope.launch { cz.euroklicmapa.data.update.UpdateChecker.dismiss(context, info.version) } },
+                )
+            }
+
             AuthCard(
                 state = authState,
                 onRequestLogin = { showLoginDialog = true },
@@ -344,6 +354,33 @@ fun MoreScreen(
                 TextButton(shape = EuroklicTheme.shapes.pill, enabled = !deleting, onClick = { showDeleteDialog = false }) { Text(t("Zrušit")) }
             },
         )
+    }
+}
+
+@Composable
+private fun UpdateCard(version: String, onDownload: () -> Unit, onLater: () -> Unit) {
+    Surface(
+        border = contrastBorder(),
+        color = EuroklicTheme.extended.cardSurface,
+        shape = EuroklicTheme.shapes.card,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                t("Je dostupná nová verze %s", version),
+                style = MaterialTheme.typography.titleMedium,
+                color = EuroklicTheme.extended.textStrong,
+            )
+            Text(
+                t("Nainstalujete ji ze stránky aplikace, stejně jako minule."),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onDownload, modifier = Modifier.heightIn(min = 48.dp)) { Text(t("Stáhnout")) }
+                TextButton(onClick = onLater, modifier = Modifier.heightIn(min = 48.dp)) { Text(t("Později")) }
+            }
+        }
     }
 }
 

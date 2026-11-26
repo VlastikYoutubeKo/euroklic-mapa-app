@@ -49,10 +49,19 @@ final class PlaceStatusTests: XCTestCase {
         XCTAssertEqual(voteBadge(likes: 0, dislikes: 0, isCd: false), .none)
     }
 
+    /// Texty jsou lokalizované podle jazyka simulátoru/telefonu: test platí pro češtinu i angličtinu.
+    private func assertLabel(_ actual: String, czech: String, english: String,
+                             file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue([czech, english].contains(actual), "Neočekávaný text: \(actual)", file: file, line: line)
+    }
+
     func testBadgeLabelsMirrorWebsite() {
-        XCTAssertEqual(VoteBadge.reported.label(likes: 1, dislikes: 2), "Nahlášeno nefunguje (2👎)")
-        XCTAssertEqual(VoteBadge.verified.label(likes: 4, dislikes: 0), "Ověřeno · 4👍")
-        XCTAssertEqual(VoteBadge.cdNoVotes.label(likes: 0, dislikes: 0), "Zatím bez hlasů")
+        assertLabel(VoteBadge.reported.label(likes: 1, dislikes: 2),
+                    czech: "Nahlášeno nefunguje (2👎)", english: "Reported as not working (2👎)")
+        assertLabel(VoteBadge.verified.label(likes: 4, dislikes: 0),
+                    czech: "Ověřeno · 4👍", english: "Verified · 4👍")
+        assertLabel(VoteBadge.cdNoVotes.label(likes: 0, dislikes: 0),
+                    czech: "Zatím bez hlasů", english: "No votes yet")
     }
 
     func testEqualVotesIsNotReported() {

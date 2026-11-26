@@ -34,6 +34,14 @@ Chyby při odeslání se ignorují. Měření lze kdykoli vypnout stejným přep
 Kód měření je v repu: `app/src/main/java/cz/euroklicmapa/data/analytics/Analytics.kt` (Android)
 a `ios/EuroklicMapa/Services/Analytics.swift` (iOS).
 
+## Kontrola nové verze
+
+Aplikace se instaluje ze souboru, takže se sama neaktualizuje. Proto se nejvýš jednou za 12 hodin zeptá serveru
+`https://euroklic.odjezdy.online/api_app_version.php` na číslo nejnovější stabilní verze. Je to obyčejný dotaz bez
+účtu, bez ID zařízení a bez jakýchkoli dat o tobě (server jako každý web vidí jen to, že se někdo zeptal). Když je
+verze vyšší než tvoje, ukáže se ve Více karta s odkazem na stažení; „Později“ ji pro tu verzi schová.
+Betaverze se na novou verzi neptá. Kód: `data/update/UpdateChecker.kt` (Android) a `Services/UpdateChecker.swift` (iOS).
+
 ## Ostatní komunikace
 
 Aplikace stahuje seznam míst z `euroklic.odjezdy.online` a dlaždice mapy z Mapy.com (na iPhonu volitelně Apple Maps).

@@ -7,6 +7,10 @@ a stejný soubor je zabalený i v aplikaci (Více → Co je nového; po aktualiz
 Nadpis sekce musí mít tvar `## <verze> — <datum>`, položky jsou odrážky `- `. Odrážka začínající
 `[Android]` nebo `[iOS]` se ukáže jen v dané aplikaci (značka se skryje), odrážky bez značky v obou.
 
+## 1.4.1 — 2026-11-26
+- Upozornění na novou verzi: aplikace se nejvýš jednou za 12 hodin zeptá serveru, jestli existuje novější verze, a když ano, ukáže nahoře ve Více kartu s tlačítkem ke stažení („Později“ ji pro tu verzi schová). Betaverze se na nic neptá. Jde o anonymní dotaz, viz PRIVACY.md.
+- Poznámka k místu z OpenStreetMap se už nebere z vyřazených míst, takže u nádraží (například Praha hl.n.) už není zastaralá poznámka o zavření. Data jsou opravená na serveru, kvůli tomu nemusíte aktualizovat.
+
 ## 1.4.0 — 2026-11-25
 - Dobrovolné anonymní měření používání (Více → Soukromí). Ve výchozím stavu je vypnuté, počítá jen, které funkce se používají, a nikdy nesbírá polohu ani osobní údaje. Podrobnosti jsou v PRIVACY.md.
 - [iOS] Krátká úvodní obrazovka při prvním spuštění. Znovu ji otevřete ve Více → Jak aplikace funguje.

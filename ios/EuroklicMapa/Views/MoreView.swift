@@ -11,6 +11,7 @@ struct MoreView: View {
     var body: some View {
         NavigationStack {
             List {
+                UpdateSection()
                 ModePickerSection()
 
                 Section {

@@ -78,6 +78,13 @@ fun MainScreen() {
     whatsNew?.let { entry -> ChangelogDialog(entries = listOf(entry), onDismiss = { whatsNew = null }) }
 
     LaunchedEffect(Unit) {
+        cz.euroklicmapa.data.update.UpdateChecker.refreshIfDue(context)
+        cz.euroklicmapa.data.update.UpdateChecker.takeAnnouncement(context)?.let { info ->
+            Toast.makeText(context, t("Je dostupná nová verze %s (Více)", info.version), Toast.LENGTH_LONG).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
         app.authRepository.events.collect { ev ->
             val msg = when (ev) {
                 is AuthEvent.SignedIn ->

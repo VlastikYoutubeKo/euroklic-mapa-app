@@ -9,6 +9,8 @@ struct ODMoreTab: View {
     var body: some View {
         NavigationStack {
             List {
+                UpdateSection()
+                    .listRowBackground(c.surface)
                 ModePickerSection()
                     .listRowBackground(c.surface)
 

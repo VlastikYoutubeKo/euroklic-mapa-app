@@ -456,3 +456,7 @@
 "Zastávka nebo vozidlo" = "Stop or vehicle";
 "Načítám zastávky…" = "Loading stops…";
 "Anonymní měření je ve výchozím stavu vypnuté" = "Anonymous usage measurement is off by default";
+"Je dostupná nová verze %@" = "A new version %@ is available";
+"Nainstalujete ji ze stránky aplikace, stejně jako minule." = "Install it from the app page, the same way as before.";
+"Stáhnout" = "Download";
+"Později" = "Later";
