@@ -29,6 +29,8 @@ struct PlaceItem: Identifiable, Hashable, Codable {
     let phone: String?
     let description: String?
     let note: String?
+    /// Tvrzení zdroje o stavu místa (např. „v OpenStreetMap vedeno jako vyřazené“), ne potvrzené zavření.
+    var statusText: String? = nil
 
     var favoriteKey: String { "\(isPickup ? "pp" : "wc")_\(id)" }
     var coordinate: CLLocationCoordinate2D {

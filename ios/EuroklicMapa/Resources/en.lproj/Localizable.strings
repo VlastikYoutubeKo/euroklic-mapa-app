@@ -469,3 +469,4 @@
 "%@ pěšky, orientační trasa. Bezbariérovost cesty není ověřená." = "%@ on foot, an approximate route. Accessibility of the way is not verified.";
 "Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená." = "Estimated time by public transport; Maps shows the route with changes. Accessibility is not verified.";
 "Pěšky je to příliš daleko (%@). Odhad času s MHD, trasu s přestupy ukážou Mapy. Bezbariérovost není ověřená." = "It is too far to walk (%@). Estimated time by public transport; Maps shows the route with changes. Accessibility is not verified.";
+"Stav místa" = "Status of the place";

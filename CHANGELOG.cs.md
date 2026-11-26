@@ -7,6 +7,10 @@ a stejný soubor je zabalený i v aplikaci (Více → Co je nového; po aktualiz
 Nadpis sekce musí mít tvar `## <verze> — <datum>`, položky jsou odrážky `- `. Odrážka začínající
 `[Android]` nebo `[iOS]` se ukáže jen v dané aplikaci (značka se skryje), odrážky bez značky v obou.
 
+## 1.5.1 — 2026-11-26
+- [iOS] Místo, které OpenStreetMap vede jako vyřazené z provozu, má v detailu jasné upozornění: „v OpenStreetMap vedeno jako vyřazené, stav neověřen“. Místo se neskrývá a aplikace netvrdí, že je zavřené.
+- [iOS] Odjezdy: zastávky v okolí se načítají jedním dotazem a nástupiště jedné zastávky jsou sloučená, takže je seznam kratší a přehlednější. Názvy zastávek jako „Praha,,Hlavní nádraží“ se už píšou správně.
+
 ## 1.5.0 — 2026-11-26
 - Cesta k místu: u tlačítka Navigovat je volba mezi pěšky a MHD. Pěšky se nabídne jen tam, kde to dává smysl (do zhruba 45 minut), u delší cesty je jen MHD. Časy jsou odhady a aplikace říká, že bezbariérovost cesty není ověřená.
 - [iOS] Trasa pěšky se kreslí přímo na mapě po skutečných cestách, s časem a vzdáleností. U MHD aplikace ukáže odhad a trasu s přestupy pak ukážou Mapy.

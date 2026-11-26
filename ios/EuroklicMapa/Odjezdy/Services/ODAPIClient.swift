@@ -326,6 +326,32 @@ actor ODAPIClient {
         return try decodeList(ODDeparture.self, from: data)
     }
 
+    /// Zastávky v okolí včetně jejich nejbližších odjezdů jedním dotazem (server slučuje nástupiště pod uzel).
+    func nearbyDepartures(lat: Double, lng: Double, radius: Int, maxStops: Int, limit: Int, minutes: Int) async throws -> [ODNearbyStopDepartures] {
+        let q: [(String, String)] = [
+            ("lat", String(format: "%.5f", lat)),
+            ("lng", String(format: "%.5f", lng)),
+            ("radius", String(radius)),
+            ("maxStops", String(maxStops)),
+            ("limit", String(limit)),
+            ("minutes", String(minutes))
+        ]
+        guard let url = makeURL(path: "/api/v2/nearby-departures", query: q) else { throw ODAPIError.badData }
+        let data = try await load(url, ttl: 20)
+        try checkBody(data)
+        guard let raw = try? JSONDecoder().decode(ODNearbyRaw.self, from: data), let stops = raw.stops else {
+            throw ODAPIError.badData
+        }
+        return stops.compactMap { $0.value }.map { dto in
+            ODNearbyStopDepartures(
+                stop: ODStop(id: dto.id, name: dto.name, lat: dto.lat, lng: dto.lng, provider: dto.provider ?? ""),
+                distanceM: Int((dto.distanceMeters ?? 0).rounded()),
+                departures: (dto.departures ?? []).compactMap { $0.value },
+                unavailable: dto.unavailable ?? false
+            )
+        }
+    }
+
     // MARK: Aktuality
 
     func alerts() async throws -> [ODAlert] {
@@ -333,4 +359,27 @@ actor ODAPIClient {
         let data = try await load(url, ttl: 120)
         return try decodeList(ODAlert.self, from: data)
     }
+}
+
+/// Zastávka z `/api/v2/nearby-departures` s odjezdy; `unavailable` = odjezdy se teď nepodařilo načíst.
+struct ODNearbyStopDepartures {
+    let stop: ODStop
+    let distanceM: Int
+    let departures: [ODDeparture]
+    let unavailable: Bool
+}
+
+private struct ODNearbyRaw: Decodable {
+    let stops: [ODLossy<ODNearbyStopDTO>]?
+}
+
+private struct ODNearbyStopDTO: Decodable {
+    let id: String
+    let name: String
+    let lat: Double
+    let lng: Double
+    let provider: String?
+    let distanceMeters: Double?
+    let unavailable: Bool?
+    let departures: [ODLossy<ODDeparture>]?
 }

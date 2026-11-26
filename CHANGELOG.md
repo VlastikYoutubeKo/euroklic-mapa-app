@@ -9,6 +9,10 @@ A section heading must look like `## <version> — <date>`, items are `- ` bulle
 with `[Android]` or `[iOS]` is shown only in that app (the tag is hidden); untagged bullets are shown
 in both. Keep both files in sync.
 
+## 1.5.1 — 2026-11-26
+- [iOS] A place that OpenStreetMap lists as out of service now shows a clear notice in its detail: "listed as out of service in OpenStreetMap, status not verified". The place is not hidden and the app does not claim it is closed.
+- [iOS] Odjezdy: stops nearby load in a single request and the platforms of one stop are merged, so the list is shorter and tidier. Stop names such as "Praha,,Hlavní nádraží" are now written correctly.
+
 ## 1.5.0 — 2026-11-26
 - Getting there: a choice between walking and public transport next to the Navigate button. Walking is only offered where it makes sense (up to about 45 minutes), a longer trip offers public transport only. The times are estimates and the app says that the accessibility of the way is not verified.
 - [iOS] The walking route is drawn right on the map along real paths, with the time and distance. For public transport the app shows an estimate and Maps then show the route with changes.

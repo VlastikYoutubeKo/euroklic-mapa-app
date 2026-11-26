@@ -42,6 +42,7 @@ struct DetailView: View {
             VStack(spacing: 22) {
                 if asSheet { topBar }
                 titleBlock
+                statusCallout
                 noteCallout
                 routePicker
                 routeNoteView
@@ -225,6 +226,25 @@ struct DetailView: View {
                 return L("Pěšky je to příliš daleko (\(formatDistance(meters))).")
             }
             return nil
+        }
+    }
+
+    /// Stav místa podle zdroje (např. vyřazené v OpenStreetMap). Jen upozornění, místo se neskrývá.
+    @ViewBuilder
+    private var statusCallout: some View {
+        if let text = nonBlank(place.statusText) {
+            VStack(alignment: .leading, spacing: 6) {
+                Label {
+                    Text("Stav místa").font(.subheadline.weight(.semibold))
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.warningText)
+                }
+                Text(text).font(.callout).multilineTextAlignment(.leading)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color(.secondarySystemBackground)))
+            .accessibilityElement(children: .combine)
         }
     }
 

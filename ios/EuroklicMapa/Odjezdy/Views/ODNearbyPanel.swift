@@ -40,9 +40,48 @@ final class ODNearbyViewModel: ObservableObject {
         }
     }
 
+    /// Jeden dotaz na zastávky v okolí i s odjezdy. `false` = nepovedlo se / nic nevrátil, ať běží starý postup.
+    private func loadFromNearby(around location: CLLocation) async throws -> Bool {
+        let result = try await api.nearbyDepartures(
+            lat: location.coordinate.latitude, lng: location.coordinate.longitude,
+            radius: 700, maxStops: 12, limit: 10, minutes: 180
+        )
+        var seen = Set<String>()
+        let chosen = result.filter { seen.insert($0.stop.name).inserted }.prefix(Self.maxStops)
+        guard !chosen.isEmpty else { return false }
+        try Task.checkCancellation()
+        let previous = entries
+        let cutoff = Date().addingTimeInterval(-60)
+        var anyUnavailable = false
+        entries = chosen.map { item in
+            if item.unavailable {
+                anyUnavailable = true
+                // Neúspěšná obnova nesmí smazat dřív načtené odjezdy.
+                if let old = previous.first(where: { $0.id == item.stop.id && !$0.failed && !$0.loading }), !old.departures.isEmpty {
+                    return ODNearbyEntry(stop: item.stop, distanceM: item.distanceM, departures: old.departures, failed: false)
+                }
+                return ODNearbyEntry(stop: item.stop, distanceM: item.distanceM, departures: [], failed: true)
+            }
+            let upcoming = item.departures
+                .filter { !$0.cancelled && $0.realTime >= cutoff }
+                .sorted { $0.realTime < $1.realTime }
+            return ODNearbyEntry(stop: item.stop, distanceM: item.distanceM, departures: Array(upcoming.prefix(8)), failed: false)
+        }
+        lastLoadFailed = anyUnavailable
+        isLoading = false
+        return true
+    }
+
     func load(around location: CLLocation) async {
         let lat = location.coordinate.latitude
         let lng = location.coordinate.longitude
+        do {
+            if try await loadFromNearby(around: location) { return }
+        } catch is CancellationError {
+            return
+        } catch {
+            // Nový endpoint nedostupný: pokračuje starý postup (zastávky v okolí + odjezdy dávkou).
+        }
         do {
             let list = try await api.stops(
                 minLat: lat - 0.006, maxLat: lat + 0.006,

@@ -84,6 +84,7 @@ final class PlacesStore: ObservableObject {
                     phone: nil,
                     description: p.description,
                     note: p.note,
+                    statusText: p.status == "osm_disused" ? p.status_text : nil,
                 )
             }
         } catch {

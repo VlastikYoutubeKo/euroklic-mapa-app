@@ -46,6 +46,10 @@ struct WcProperties: Decodable {
     let country: String?
     /// Direct ČD `/planek/{planekId}` page; ~60/109 ČD rows.
     let floor_plan_url: String?
+    /// `"unknown" | "osm_disused"` (unknown values = unknown). Only a claim of the source, not a confirmed closure.
+    let status: String?
+    /// Czech text for `osm_disused`, otherwise null.
+    let status_text: String?
 }
 
 // MARK: - Pickup points (`api_pickup_points.php`)
