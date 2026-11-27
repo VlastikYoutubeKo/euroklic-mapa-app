@@ -7,6 +7,11 @@ a stejný soubor je zabalený i v aplikaci (Více → Co je nového; po aktualiz
 Nadpis sekce musí mít tvar `## <verze> — <datum>`, položky jsou odrážky `- `. Odrážka začínající
 `[Android]` nebo `[iOS]` se ukáže jen v dané aplikaci (značka se skryje), odrážky bez značky v obou.
 
+## 1.6.0 — 2026-11-27
+- Spojení MHD: v detailu místa nové tlačítko „Spojení MHD“ najde cestu z vaší polohy k místu podle jízdních řádů odjezdy.online (autobusy, vlaky, tramvaje i metro po celé ČR). Ukáže, kdy vyjít, pěšky k zastávce, linky s číslem, směrem a časy, přestupy, pěšky k místu a kdy dorazíte. Chůze je odhad vzdušnou čarou a aplikace říká, že bezbariérovost cesty ani zastávek není ověřená. Pokud je spoj v datech jízdních řádů označen jako bezbariérový, aplikace to napíše. První hledání dne může trvat až minutu.
+- Nově v menu místa i v okně se spojením: „Trasa pěšky v Mapy.com“ otevře pěší trasu v Mapy.com (Mapy.com zvenku v režimu MHD otevřít nejdou).
+- Pro dny, na které jízdní řády ještě nejsou, spojení nejde a aplikace to řekne.
+
 ## 1.5.1 — 2026-11-26
 - [iOS] Místo, které OpenStreetMap vede jako vyřazené z provozu, má v detailu jasné upozornění: „v OpenStreetMap vedeno jako vyřazené, stav neověřen“. Místo se neskrývá a aplikace netvrdí, že je zavřené.
 - [iOS] Odjezdy: zastávky v okolí se načítají jedním dotazem a nástupiště jedné zastávky jsou sloučená, takže je seznam kratší a přehlednější. Názvy zastávek jako „Praha,,Hlavní nádraží“ se už píšou správně.

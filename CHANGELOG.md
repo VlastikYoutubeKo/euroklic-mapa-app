@@ -9,6 +9,11 @@ A section heading must look like `## <version> — <date>`, items are `- ` bulle
 with `[Android]` or `[iOS]` is shown only in that app (the tag is hidden); untagged bullets are shown
 in both. Keep both files in sync.
 
+## 1.6.0 — 2026-11-27
+- Connections by public transport: in a place's detail the new "Spojení MHD" button finds a way from where you are to the place with the timetables of odjezdy.online (buses, trains, trams and metro across Czechia). It shows when to leave, the walk to the stop, the lines with the line number, direction and times, transfers, the walk to the place and when you arrive. Walking is an estimate along a straight line, and the app says that the accessibility of the way and of the stops is not verified. If a vehicle is marked as accessible in the timetable data, the app says so. The first search of the day can take up to a minute.
+- New in the place menu and in the connection window: "Trasa pěšky v Mapy.com" opens a walking route in Mapy.com (Mapy.com cannot be opened in the public transport mode from outside).
+- The connection is not available for days the timetables do not cover yet (the app says so).
+
 ## 1.5.1 — 2026-11-26
 - [iOS] A place that OpenStreetMap lists as out of service now shows a clear notice in its detail: "listed as out of service in OpenStreetMap, status not verified". The place is not hidden and the app does not claim it is closed.
 - [iOS] Odjezdy: stops nearby load in a single request and the platforms of one stop are merged, so the list is shorter and tidier. Stop names such as "Praha,,Hlavní nádraží" are now written correctly.

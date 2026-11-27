@@ -61,6 +61,8 @@ actor ODAPIClient {
     static let shared = ODAPIClient()
 
     private let session: URLSession
+    /// Plánovač spojení: první dotaz dne může trvat i minutu (server staví index), proto delší limity.
+    private let longSession: URLSession
     private let base = "https://app.odjezdy.online"
     private var blockedUntil: Date?
     private var cache: [String: (stored: Date, data: Data)] = [:]
@@ -75,6 +77,14 @@ actor ODAPIClient {
         config.httpShouldSetCookies = false
         config.urlCredentialStorage = nil
         session = URLSession(configuration: config)
+        let longConfig = URLSessionConfiguration.ephemeral
+        longConfig.requestCachePolicy = .reloadIgnoringLocalCacheData
+        longConfig.timeoutIntervalForRequest = 100
+        longConfig.timeoutIntervalForResource = 110
+        longConfig.httpCookieStorage = nil
+        longConfig.httpShouldSetCookies = false
+        longConfig.urlCredentialStorage = nil
+        longSession = URLSession(configuration: longConfig)
     }
 
     // MARK: Jádro
@@ -106,7 +116,7 @@ actor ODAPIClient {
         return left > 0 ? left : nil
     }
 
-    private func load(_ url: URL, ttl: TimeInterval, timeout: TimeInterval = 20) async throws -> Data {
+    private func load(_ url: URL, ttl: TimeInterval, timeout: TimeInterval = 20, long: Bool = false) async throws -> Data {
         let key = url.absoluteString
         let now = Date()
         if ttl > 0, let hit = cache[key], now.timeIntervalSince(hit.stored) < ttl {
@@ -120,7 +130,7 @@ actor ODAPIClient {
         if let running = inflight[key] {
             return try await running.value
         }
-        let session = self.session
+        let session = long ? self.longSession : self.session
         let task = Task<Data, Error> { try await Self.perform(session: session, url: url, timeout: timeout) }
         inflight[key] = task
         do {
@@ -350,6 +360,23 @@ actor ODAPIClient {
                 unavailable: dto.unavailable ?? false
             )
         }
+    }
+
+    /// Spojení z polohy `from` k místu `to` (dveře–dveře: chůze k zastávce, jízda, chůze k cíli).
+    /// `radius` (100–2000 m) jen když chceme širší okolí zastávek než výchozích 800 m.
+    func journey(fromLat: Double, fromLng: Double, toLat: Double, toLng: Double, time: String, radius: Int? = nil) async throws -> JourneyResult {
+        var q: [(String, String)] = [
+            ("fromLat", String(format: "%.5f", fromLat)),
+            ("fromLng", String(format: "%.5f", fromLng)),
+            ("toLat", String(format: "%.5f", toLat)),
+            ("toLng", String(format: "%.5f", toLng)),
+            ("time", time),
+            ("variants", "3")
+        ]
+        if let radius { q.append(("radius", String(radius))) }
+        guard let url = makeURL(path: "/api/v2/journey", query: q) else { throw ODAPIError.badData }
+        let data = try await load(url, ttl: 120, timeout: 100, long: true)
+        return try JourneyResult.decode(data)
     }
 
     // MARK: Aktuality

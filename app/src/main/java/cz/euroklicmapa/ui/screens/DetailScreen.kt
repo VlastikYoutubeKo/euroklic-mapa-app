@@ -1,6 +1,7 @@
 package cz.euroklicmapa.ui.screens
 
 import cz.euroklicmapa.util.t
+import cz.euroklicmapa.ui.components.JourneySheet
 import cz.euroklicmapa.ui.theme.VariantStatusBar
 import cz.euroklicmapa.ui.theme.PhotoCaptionScrim
 import cz.euroklicmapa.ui.theme.PhotoCaptionText
@@ -332,7 +333,17 @@ fun DetailScreen(
                 else -> listOf(NavMode.TRANSIT)
             }
             var chosen by rememberSaveable { mutableStateOf(NavMode.WALKING) }
+            var showJourney by rememberSaveable { mutableStateOf(false) }
             val mode = if (chosen in modes) chosen else modes.first()
+            if (showJourney) {
+                JourneySheet(
+                    target = navTarget,
+                    targetName = navLabel,
+                    origin = userLocation,
+                    onOpenMaps = { launchNavigation(context, navTarget.latitude, navTarget.longitude, navLabel, NavMode.TRANSIT) },
+                    onDismiss = { showJourney = false },
+                )
+            }
             NavigateBar(
                 modes = if (straight == null) emptyList() else modes,
                 selected = mode,
@@ -340,6 +351,7 @@ fun DetailScreen(
                 walkingMinutes = straight?.let { walkingMinutes(it) },
                 tooFarKm = if (straight != null && !walkingOk) formatDistance(straight) else null,
                 onClick = { launchNavigation(context, navTarget.latitude, navTarget.longitude, navLabel, mode) },
+                onJourney = { showJourney = true },
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
@@ -1454,6 +1466,7 @@ private fun NavigateBar(
     walkingMinutes: Int?,
     tooFarKm: String?,
     onClick: () -> Unit,
+    onJourney: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -1515,6 +1528,13 @@ private fun NavigateBar(
                     if (selected == NavMode.TRANSIT) t("Navigovat MHD") else t("Navigovat"),
                     style = MaterialTheme.typography.titleMedium,
                 )
+            }
+            OutlinedButton(
+                shape = EuroklicTheme.shapes.pill,
+                onClick = onJourney,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) {
+                Text(t("Spojení MHD"), style = MaterialTheme.typography.titleSmall)
             }
         }
     }

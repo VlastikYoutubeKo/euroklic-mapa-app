@@ -34,7 +34,12 @@ class ODApi(
     @Volatile private var blockedUntil = 0L
     private val cache = HashMap<String, Pair<Long, String>>()
 
-    private suspend fun get(path: String, query: Map<String, String> = emptyMap(), ttlMs: Long = 0): String =
+    private suspend fun get(
+        path: String,
+        query: Map<String, String> = emptyMap(),
+        ttlMs: Long = 0,
+        longTimeout: Boolean = false,
+    ): String =
         withContext(Dispatchers.IO) {
             val now = System.currentTimeMillis()
             if (now < blockedUntil) throw ODError.RateLimited(blockedUntil)
@@ -47,7 +52,11 @@ class ODApi(
             }
             val request = Request.Builder().url(url).header("Accept", "application/json").build()
             try {
-                client.newCall(request).execute().use { resp ->
+                val http = if (longTimeout) {
+                    // Planner: the first request of the day builds the index on the server (~1 min).
+                    client.newBuilder().readTimeout(100, TimeUnit.SECONDS).callTimeout(110, TimeUnit.SECONDS).build()
+                } else client
+                http.newCall(request).execute().use { resp ->
                     if (resp.code == 429) {
                         val reset = resp.header("X-RateLimit-Reset")?.toLongOrNull()?.times(1000)
                         blockedUntil = minOf(reset ?: (now + 30_000), now + 120_000)
@@ -87,6 +96,27 @@ class ODApi(
 
     suspend fun departures(stopId: String, limit: Int = 60, minutes: Int = 240): ODDeparturesResponse =
         decode(get("api/v2/departures", mapOf("stopId" to stopId, "limit" to "$limit", "minutes" to "$minutes"), ttlMs = 15_000))
+
+    /** Connection from [fromLat]/[fromLng] to the place (walk to a stop, ride, walk to the place). */
+    suspend fun journey(
+        fromLat: Double,
+        fromLng: Double,
+        toLat: Double,
+        toLng: Double,
+        time: String,
+        radius: Int? = null,
+    ): JourneyResult {
+        val q = linkedMapOf(
+            "fromLat" to "%.5f".format(java.util.Locale.US, fromLat),
+            "fromLng" to "%.5f".format(java.util.Locale.US, fromLng),
+            "toLat" to "%.5f".format(java.util.Locale.US, toLat),
+            "toLng" to "%.5f".format(java.util.Locale.US, toLng),
+            "time" to time,
+            "variants" to "3",
+        )
+        if (radius != null) q["radius"] = "$radius"
+        return parseJourneyResponse(get("api/v2/journey", q, ttlMs = 120_000, longTimeout = true))
+    }
 
     suspend fun vehicleInfo(vehicleId: String): ODVehicleInfoResponse =
         decode(get("api/vehicle-info/${java.net.URLEncoder.encode(vehicleId, "UTF-8")}", ttlMs = 5_000))

@@ -29,6 +29,7 @@ struct DetailView: View {
     @State private var showPhoto = false
     @State private var departuresOpen = false
     @State private var selectedProvider: String?
+    @State private var showJourney = false
 
     init(place: PlaceItem, asSheet: Bool = false) {
         self.place = place
@@ -47,6 +48,7 @@ struct DetailView: View {
                 routePicker
                 routeNoteView
                 navigateButton
+                journeyButton
                 detailsBlock
                 if let note = nonBlank(place.accessibilityNote) { accessibilityBlock(note) }
                 photoBlock
@@ -87,6 +89,9 @@ struct DetailView: View {
             route.load(key: place.favoriteKey, from: from, to: place.coordinate)
         }
         .onDisappear { route.clear(key: place.favoriteKey) }
+        .sheet(isPresented: $showJourney) {
+            JourneyView(place: place, origin: location.lastLocation?.coordinate, openMaps: openNavigation)
+        }
         .toast($toast)
     }
 
@@ -123,6 +128,9 @@ struct DetailView: View {
             if let url = webURL { Link(destination: url) { Label("Otevřít na webu", systemImage: "safari") } }
             if let plan = nonBlank(place.floorPlanUrl), let url = URL(string: plan) {
                 Link(destination: url) { Label("Plán stanice (ČD)", systemImage: "map") }
+            }
+            if let mapy = MapyLink.walkingRoute(from: location.lastLocation?.coordinate, to: place.coordinate) {
+                Link(destination: mapy) { Label("Trasa pěšky v Mapy.com", systemImage: "figure.walk") }
             }
             if let all = URL(string: String(format: "https://app.odjezdy.online/blizko?lat=%.6f&lng=%.6f", place.latitude, place.longitude)) {
                 Link(destination: all) { Label("Všechny zastávky v okolí", systemImage: "bus") }
@@ -246,6 +254,18 @@ struct DetailView: View {
             .background(RoundedRectangle(cornerRadius: 16).fill(Color(.secondarySystemBackground)))
             .accessibilityElement(children: .combine)
         }
+    }
+
+    /// Spojení MHD / vlakem z polohy k místu (plánovač odjezdy.online), vedle navigace do Map.
+    private var journeyButton: some View {
+        Button { showJourney = true } label: {
+            Label(L("Spojení MHD"), systemImage: "bus.fill")
+                .font(.headline)
+                .frame(maxWidth: .infinity, minHeight: 48)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.roundedRectangle(radius: 16))
+        .tint(Theme.brand)
     }
 
     private var navigateButton: some View {
