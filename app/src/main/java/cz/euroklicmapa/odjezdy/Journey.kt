@@ -1,5 +1,7 @@
 package cz.euroklicmapa.odjezdy
 
+import cz.euroklicmapa.util.formatDistance
+import cz.euroklicmapa.util.t
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -32,7 +34,23 @@ sealed interface JourneyLeg {
         val agency: String?,
         /** `true` = marked as accessible; `null` = unknown (we never claim "not accessible"). */
         val wheelchairAccessible: Boolean?,
-    ) : JourneyLeg
+        /** Current delay in seconds, only when the server knows it. */
+        val delaySeconds: Double? = null,
+        /** Stops of this leg (not sent yet; once sent, the "after leaving stop X" hint appears). */
+        val stops: List<JourneyStop> = emptyList(),
+    ) : JourneyLeg {
+        /** The stop before the exit stop; null when the list does not tell reliably. */
+        val stopBeforeExit: String?
+            get() {
+                val i = stops.indexOfLast { it.name == to.name }
+                if (i <= 0) return null
+                val name = stops[i - 1].name
+                return name.takeIf { it.isNotBlank() && !(it == from.name && i - 1 != 0) }
+            }
+
+        /** A STOP button only makes sense in a bus, trolleybus or tram; unknown vehicle = say nothing. */
+        val mayNeedStopButton: Boolean get() = mode in setOf("bus", "trolleybus", "tram")
+    }
 
     data class Walk(val from: JourneyStop, val to: JourneyStop, val seconds: Double) : JourneyLeg
 }
@@ -85,6 +103,8 @@ private fun parseLeg(e: JsonElement): JourneyLeg? {
         stopCount = o["stopCount"].int(),
         agency = o["agency"].str(),
         wheelchairAccessible = o["wheelchairAccessible"].bool(),
+        delaySeconds = o["delaySeconds"].dbl(),
+        stops = (o["stops"] as? JsonArray).orEmpty().map { parseStop(it) },
     )
 }
 
@@ -141,6 +161,9 @@ object JourneyClock {
         return if (day > 0) "$text +1" else text
     }
 
+    /** Server time for display ("24:03" -> "0:03 +1"); an unknown shape stays as it is. */
+    fun display(text: String): String = minutes(text)?.let { format(it) } ?: text
+
     fun ceilMinutes(seconds: Double): Int = max(1, ceil(seconds / 60.0).toInt())
 }
 
@@ -152,3 +175,43 @@ fun mapyWalkingUrl(fromLat: Double?, fromLng: Double?, toLat: Double, toLng: Dou
 
 /** One shared client for the connection planner (its first request of the day can take about a minute). */
 val sharedJourneyApi: ODApi by lazy { ODApi() }
+
+/**
+ * Plain-sentence instructions step by step. Nothing is made up: the STOP button is mentioned only for bus,
+ * trolleybus and tram, and "after leaving stop X" only when the stop list really has X.
+ */
+fun journeyGuide(journey: Journey): List<String> = buildList {
+    val firstStop = journey.legs.filterIsInstance<JourneyLeg.Ride>().firstOrNull()?.from?.name
+    if (journey.walkToStart.seconds > 0 && firstStop != null) {
+        add(t("Dojděte pěšky k zastávce %s (%s).", firstStop, formatDistance(journey.walkToStart.meters)))
+    }
+    journey.legs.forEach { leg ->
+        when (leg) {
+            is JourneyLeg.Ride -> {
+                val departure = JourneyClock.display(leg.departure)
+                if (leg.headsign.isBlank()) {
+                    add(t("Na zastávce %s nastupte do linky %s, odjezd %s.", leg.from.name, leg.lineLabel, departure))
+                } else {
+                    add(t("Na zastávce %s nastupte do linky %s směr %s, odjezd %s.", leg.from.name, leg.lineLabel, leg.headsign, departure))
+                }
+                if (leg.mayNeedStopButton) {
+                    val previous = leg.stopBeforeExit
+                    add(
+                        if (previous != null) t("Po odjezdu ze zastávky %s stiskněte tlačítko STOP, pokud je vaše zastávka na znamení.", previous)
+                        else t("Je-li vaše výstupní zastávka na znamení, stiskněte před ní včas tlačítko STOP."),
+                    )
+                }
+                val arrival = JourneyClock.display(leg.arrival)
+                val count = leg.stopCount
+                add(
+                    if (count != null && count > 0) t("Vystupte na zastávce %s (%s. zastávka, příjezd %s).", leg.to.name, count.toString(), arrival)
+                    else t("Vystupte na zastávce %s, příjezd %s.", leg.to.name, arrival),
+                )
+            }
+            is JourneyLeg.Walk -> if (!(leg.from.name == leg.to.name && leg.seconds <= 90)) {
+                add(t("Přejděte pěšky na zastávku %s (%s).", leg.to.name, "~${JourneyClock.ceilMinutes(leg.seconds)} min"))
+            }
+        }
+    }
+    if (journey.walkFromEnd.seconds > 0) add(t("Dojděte pěšky k cíli (%s).", formatDistance(journey.walkFromEnd.meters)))
+}

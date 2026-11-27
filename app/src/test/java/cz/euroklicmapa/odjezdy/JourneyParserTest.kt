@@ -52,6 +52,34 @@ class JourneyParserTest {
         assertEquals("13:05", JourneyClock.format(13 * 60 + 5))
     }
 
+    private fun ride(mode: String, stops: String = ""): Journey = parseJourneyResponse(
+        """{"journeys":[{"departure":"23:56","arrival":"24:03","walkToStart":{"meters":100,"seconds":80},
+        "walkFromEnd":{"meters":200,"seconds":170},"legs":[{"kind":"ride","line":"135","mode":"$mode",
+        "headsign":"Florenc","from":{"name":"A"},"to":{"name":"C"},"departure":"23:56","arrival":"24:03",
+        "stopCount":2,"delaySeconds":185$stops}]}]}""",
+    ).journeys.single()
+
+    @Test fun stopBeforeExitOnlyFromList() {
+        val with = ride("bus", ""","stops":[{"name":"A"},{"name":"B"},{"name":"C"}]""").legs.single() as JourneyLeg.Ride
+        assertEquals("B", with.stopBeforeExit)
+        assertEquals(185.0, with.delaySeconds!!, 0.01)
+        assertNull((ride("bus").legs.single() as JourneyLeg.Ride).stopBeforeExit)
+    }
+
+    @Test fun guideMentionsStopButtonOnlyForRoadVehicles() {
+        assertEquals(5, journeyGuide(ride("bus")).size)
+        assertEquals(4, journeyGuide(ride("metro")).size)
+        assertTrue(journeyGuide(ride("tram")).any { it.contains("STOP") })
+        assertTrue(journeyGuide(ride("train")).none { it.contains("STOP") })
+    }
+
+    @Test fun favoriteNameRepairNeedsSameIdAndPlace() {
+        val stored = ODStop("CIS-1", "Foreign name", 50.08, 14.43)
+        assertEquals("Na Smetance", repairedFavorite(stored, listOf(ODStop("CIS-1", "Na Smetance", 50.0801, 14.4301)))?.name)
+        assertNull(repairedFavorite(stored, listOf(ODStop("CIS-1", "Elsewhere", 49.8, 18.2))))
+        assertNull(repairedFavorite(stored, listOf(ODStop("CIS-2", "Na Smetance", 50.08, 14.43))))
+    }
+
     @Test fun mapyWalkingUrl() {
         val url = mapyWalkingUrl(50.0, 14.0, 50.1, 14.1)
         assertTrue(url.startsWith("https://mapy.com/fnc/v1/route?"))

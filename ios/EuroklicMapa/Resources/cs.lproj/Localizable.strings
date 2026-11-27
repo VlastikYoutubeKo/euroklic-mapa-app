@@ -503,3 +503,15 @@
 "Spojení se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu." = "Spojení se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu.";
 "Otevřít v Mapách" = "Otevřít v Mapách";
 "Trasa pěšky v Mapy.com" = "Trasa pěšky v Mapy.com";
+"Dojděte pěšky k zastávce %@ (%@)." = "Dojděte pěšky k zastávce %@ (%@).";
+"Na zastávce %@ nastupte do linky %@, odjezd %@." = "Na zastávce %@ nastupte do linky %@, odjezd %@.";
+"Na zastávce %@ nastupte do linky %@ směr %@, odjezd %@." = "Na zastávce %@ nastupte do linky %@ směr %@, odjezd %@.";
+"Po odjezdu ze zastávky %@ stiskněte tlačítko STOP, pokud je vaše zastávka na znamení." = "Po odjezdu ze zastávky %@ stiskněte tlačítko STOP, pokud je vaše zastávka na znamení.";
+"Je-li vaše výstupní zastávka na znamení, stiskněte před ní včas tlačítko STOP." = "Je-li vaše výstupní zastávka na znamení, stiskněte před ní včas tlačítko STOP.";
+"Vystupte na zastávce %@ (%@. zastávka, příjezd %@)." = "Vystupte na zastávce %@ (%@. zastávka, příjezd %@).";
+"Vystupte na zastávce %@, příjezd %@." = "Vystupte na zastávce %@, příjezd %@.";
+"Přejděte pěšky na zastávku %@ (%@)." = "Přejděte pěšky na zastávku %@ (%@).";
+"Dojděte pěšky k cíli (%@)." = "Dojděte pěšky k cíli (%@).";
+"Pokyny krok za krokem" = "Pokyny krok za krokem";
+"Skrýt pokyny" = "Skrýt pokyny";
+"Aktuální zpoždění ~%@ min" = "Aktuální zpoždění ~%@ min";

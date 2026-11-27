@@ -64,6 +64,20 @@ struct JourneyRide: Hashable {
     let agency: String?
     /// `true` = označeno jako bezbariérové; `nil` = neznámé (nikdy neříkáme „není“).
     let wheelchairAccessible: Bool?
+    /// Aktuální zpoždění v sekundách (jen když ho server zná), jinak `nil`.
+    var delaySeconds: Double? = nil
+    /// Zastávky na trase úseku (server je zatím neposílá; až bude, doplní se pokyn „po odjezdu ze zastávky…“).
+    var stops: [JourneyStop] = []
+
+    /// Zastávka před výstupní; `nil`, když ji ze seznamu nejde spolehlivě určit.
+    var stopBeforeExit: String? {
+        guard let i = stops.lastIndex(where: { $0.name == to.name }), i > 0 else { return nil }
+        let name = stops[i - 1].name
+        return name.isEmpty || name == from.name && i - 1 != 0 ? nil : name
+    }
+
+    /// Tlačítko STOP dává smysl jen v autobusu, trolejbusu a tramvaji; u neznámého druhu mlčíme.
+    var mayNeedStopButton: Bool { ["bus", "trolleybus", "tram"].contains(mode ?? "") }
 }
 
 struct JourneyTransferWalk: Hashable {
@@ -78,7 +92,7 @@ enum JourneyLeg: Decodable, Hashable {
 
     private enum CodingKeys: String, CodingKey {
         case kind, line, lineLabel, mode, headsign, from, to, departure, arrival, stopCount, seconds
-        case agency, wheelchairAccessible
+        case agency, wheelchairAccessible, delaySeconds, stops
     }
 
     init(from decoder: Decoder) throws {
@@ -104,7 +118,9 @@ enum JourneyLeg: Decodable, Hashable {
             arrival: (try? c.decode(String.self, forKey: .arrival)) ?? "",
             stopCount: try? c.decode(Int.self, forKey: .stopCount),
             agency: try? c.decode(String.self, forKey: .agency),
-            wheelchairAccessible: try? c.decode(Bool.self, forKey: .wheelchairAccessible)
+            wheelchairAccessible: try? c.decode(Bool.self, forKey: .wheelchairAccessible),
+            delaySeconds: try? c.decode(Double.self, forKey: .delaySeconds),
+            stops: (try? c.decode([JourneyStop].self, forKey: .stops)) ?? []
         ))
     }
 }
@@ -196,5 +212,57 @@ enum JourneyClock {
         return day > 0 ? text + " +1" : text
     }
 
+    /// Čas ze serveru pro zobrazení („24:03“ → „0:03 +1“); neznámý tvar zůstane beze změny.
+    static func display(_ text: String) -> String {
+        minutes(text).map(format) ?? text
+    }
+
     static func ceilMinutes(_ seconds: Double) -> Int { max(1, Int((seconds / 60).rounded(.up))) }
+}
+
+/// Pokyny krok za krokem v obyčejných větách. Nic si nedomýšlí: tlačítko STOP zmiňuje jen u autobusu,
+/// trolejbusu a tramvaje a „po odjezdu ze zastávky X“ jen když seznam zastávek X opravdu obsahuje.
+enum JourneyGuide {
+    static func steps(for journey: Journey) -> [String] {
+        var result: [String] = []
+        let firstRide = journey.legs.lazy.compactMap { leg -> JourneyRide? in
+            if case .ride(let ride) = leg { return ride }
+            return nil
+        }.first
+        if journey.walkToStart.seconds > 0, let stop = firstRide?.from.name {
+            result.append(L("Dojděte pěšky k zastávce \(stop) (\(formatDistance(journey.walkToStart.meters)))."))
+        }
+        for leg in journey.legs {
+            switch leg {
+            case .ride(let ride):
+                let departure = JourneyClock.display(ride.departure)
+                if ride.headsign.isEmpty {
+                    result.append(L("Na zastávce \(ride.from.name) nastupte do linky \(ride.lineLabel), odjezd \(departure)."))
+                } else {
+                    result.append(L("Na zastávce \(ride.from.name) nastupte do linky \(ride.lineLabel) směr \(ride.headsign), odjezd \(departure)."))
+                }
+                if ride.mayNeedStopButton {
+                    if let previous = ride.stopBeforeExit {
+                        result.append(L("Po odjezdu ze zastávky \(previous) stiskněte tlačítko STOP, pokud je vaše zastávka na znamení."))
+                    } else {
+                        result.append(L("Je-li vaše výstupní zastávka na znamení, stiskněte před ní včas tlačítko STOP."))
+                    }
+                }
+                let arrival = JourneyClock.display(ride.arrival)
+                if let count = ride.stopCount, count > 0 {
+                    result.append(L("Vystupte na zastávce \(ride.to.name) (\(String(count)). zastávka, příjezd \(arrival))."))
+                } else {
+                    result.append(L("Vystupte na zastávce \(ride.to.name), příjezd \(arrival)."))
+                }
+            case .walk(let walk):
+                if !(walk.from.name == walk.to.name && walk.seconds <= 90) {
+                    result.append(L("Přejděte pěšky na zastávku \(walk.to.name) (\(walk.seconds.routeDuration))."))
+                }
+            }
+        }
+        if journey.walkFromEnd.seconds > 0 {
+            result.append(L("Dojděte pěšky k cíli (\(formatDistance(journey.walkFromEnd.meters)))."))
+        }
+        return result
+    }
 }

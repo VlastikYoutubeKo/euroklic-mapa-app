@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import SwiftUI
 
@@ -71,6 +72,42 @@ final class ODFavoritesStore: ObservableObject {
             return true
         }
         return add(stop)
+    }
+
+    // MARK: Oprava názvů (server měl u části zastávek cizí název, 2026-11-27)
+
+    private static let namesCheckedKey = "od_fav_names_checked_v1"
+
+    /// Nový název jen pro stejné ID a stejné místo (do 200 m), jinak `nil` – nic nedomýšlíme.
+    static func repaired(_ stop: ODStop, candidates: [ODStop]) -> ODStop? {
+        guard let match = candidates.first(where: { $0.id == stop.id }),
+              !match.name.isEmpty, match.name != stop.name else { return nil }
+        let distance = CLLocation(latitude: stop.lat, longitude: stop.lng)
+            .distance(from: CLLocation(latitude: match.lat, longitude: match.lng))
+        guard distance <= 200 else { return nil }
+        return ODStop(id: stop.id, name: match.name, lat: stop.lat, lng: stop.lng, provider: stop.provider)
+    }
+
+    /// Jednorázově po aktualizaci porovná uložené názvy se serverem. Při chybě to zkusí příště.
+    @MainActor
+    func refreshNamesIfNeeded(api: ODAPIClient = .shared) async {
+        guard !UserDefaults.standard.bool(forKey: Self.namesCheckedKey), !stops.isEmpty else { return }
+        for stop in stops {
+            do {
+                let around = try await api.stops(
+                    minLat: stop.lat - 0.002, maxLat: stop.lat + 0.002,
+                    minLng: stop.lng - 0.003, maxLng: stop.lng + 0.003
+                )
+                if let fixed = Self.repaired(stop, candidates: around),
+                   let index = stops.firstIndex(where: { $0.id == stop.id }) {
+                    stops[index] = fixed
+                    save()
+                }
+            } catch {
+                return
+            }
+        }
+        UserDefaults.standard.set(true, forKey: Self.namesCheckedKey)
     }
 
     private func load() {

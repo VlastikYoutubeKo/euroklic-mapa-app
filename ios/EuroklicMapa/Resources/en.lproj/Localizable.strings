@@ -495,3 +495,15 @@
 "Spojení se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu." = "The connection could not be loaded. Check your connection and try again.";
 "Otevřít v Mapách" = "Open in Maps";
 "Trasa pěšky v Mapy.com" = "Walking route in Mapy.com";
+"Dojděte pěšky k zastávce %@ (%@)." = "Walk to the stop %@ (%@).";
+"Na zastávce %@ nastupte do linky %@, odjezd %@." = "At the stop %@ board line %@, departure %@.";
+"Na zastávce %@ nastupte do linky %@ směr %@, odjezd %@." = "At the stop %@ board line %@ towards %@, departure %@.";
+"Po odjezdu ze zastávky %@ stiskněte tlačítko STOP, pokud je vaše zastávka na znamení." = "After leaving the stop %@ press the STOP button if yours is a request stop.";
+"Je-li vaše výstupní zastávka na znamení, stiskněte před ní včas tlačítko STOP." = "If your stop is a request stop, press the STOP button in good time before it.";
+"Vystupte na zastávce %@ (%@. zastávka, příjezd %@)." = "Get off at the stop %@ (stop number %@ of your ride, arrival %@).";
+"Vystupte na zastávce %@, příjezd %@." = "Get off at the stop %@, arrival %@.";
+"Přejděte pěšky na zastávku %@ (%@)." = "Walk to the stop %@ (%@).";
+"Dojděte pěšky k cíli (%@)." = "Walk to your destination (%@).";
+"Pokyny krok za krokem" = "Step-by-step instructions";
+"Skrýt pokyny" = "Hide instructions";
+"Aktuální zpoždění ~%@ min" = "Currently delayed ~%@ min";

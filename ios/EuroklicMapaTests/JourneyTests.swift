@@ -67,3 +67,45 @@ final class JourneyTests: XCTestCase {
         XCTAssertTrue(text.contains("start=14.000000,50.000000"))
     }
 }
+
+final class JourneyGuideTests: XCTestCase {
+    private func journey(mode: String, stops: String) throws -> Journey {
+        let json = """
+        {"journeys":[{"departure":"23:56","arrival":"24:03","walkToStart":{"meters":100,"seconds":80},
+        "walkFromEnd":{"meters":200,"seconds":170},"legs":[{"kind":"ride","line":"135","mode":"\(mode)",
+        "headsign":"Florenc","from":{"name":"A"},"to":{"name":"C"},"departure":"23:56","arrival":"24:03",
+        "stopCount":2,"delaySeconds":185\(stops)}]}]}
+        """
+        return try XCTUnwrap(JourneyResult.decode(Data(json.utf8)).journeys.first)
+    }
+
+    private func ride(_ journey: Journey) throws -> JourneyRide {
+        guard case .ride(let ride) = try XCTUnwrap(journey.legs.first) else { throw XCTSkip("no ride") }
+        return ride
+    }
+
+    func testStopBeforeExitOnlyFromList() throws {
+        let with = try journey(mode: "bus", stops: #","stops":[{"name":"A"},{"name":"B"},{"name":"C"}]"#)
+        XCTAssertEqual(try ride(with).stopBeforeExit, "B")
+        XCTAssertEqual(try ride(with).delaySeconds, 185)
+        XCTAssertNil(try ride(journey(mode: "bus", stops: "")).stopBeforeExit)
+    }
+
+    func testStopButtonOnlyForRoadVehicles() throws {
+        XCTAssertTrue(try ride(journey(mode: "tram", stops: "")).mayNeedStopButton)
+        XCTAssertFalse(try ride(journey(mode: "train", stops: "")).mayNeedStopButton)
+        XCTAssertFalse(try ride(journey(mode: "metro", stops: "")).mayNeedStopButton)
+        XCTAssertEqual(JourneyGuide.steps(for: try journey(mode: "bus", stops: "")).count, 5)
+        XCTAssertEqual(JourneyGuide.steps(for: try journey(mode: "metro", stops: "")).count, 4)
+    }
+
+    func testFavoriteNameRepairNeedsSameIdAndPlace() {
+        let stored = ODStop(id: "CIS-1", name: "Cizí název", lat: 50.08, lng: 14.43, provider: "PID")
+        let same = ODStop(id: "CIS-1", name: "Na Smetance", lat: 50.0801, lng: 14.4301, provider: "PID")
+        XCTAssertEqual(ODFavoritesStore.repaired(stored, candidates: [same])?.name, "Na Smetance")
+        let far = ODStop(id: "CIS-1", name: "Jinde", lat: 49.8, lng: 18.2, provider: "ODIS")
+        XCTAssertNil(ODFavoritesStore.repaired(stored, candidates: [far]))
+        let other = ODStop(id: "CIS-2", name: "Na Smetance", lat: 50.08, lng: 14.43, provider: "PID")
+        XCTAssertNil(ODFavoritesStore.repaired(stored, candidates: [other]))
+    }
+}

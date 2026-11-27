@@ -179,6 +179,7 @@ enum MapyLink {
 private struct JourneyCard: View {
     let journey: Journey
     let placeName: String
+    @State private var showGuide = false
 
     private var times: (leave: String, arrive: String)? {
         guard let span = JourneyClock.span(departure: journey.departure, arrival: journey.arrival) else { return nil }
@@ -225,10 +226,33 @@ private struct JourneyCard: View {
                     detail: "\(formatDistance(journey.walkFromEnd.meters)) · \(journey.walkFromEnd.seconds.routeDuration)"
                 )
             }
+            guide
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(RoundedRectangle(cornerRadius: 16).fill(Color(.secondarySystemGroupedBackground)))
+    }
+
+    @ViewBuilder
+    private var guide: some View {
+        Button {
+            showGuide.toggle()
+        } label: {
+            Label(showGuide ? L("Skrýt pokyny") : L("Pokyny krok za krokem"), systemImage: "list.number")
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.bordered)
+        if showGuide {
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(Array(JourneyGuide.steps(for: journey).enumerated()), id: \.offset) { index, step in
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text("\(index + 1).").font(.callout.weight(.semibold))
+                        Text(step).font(.callout)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        }
     }
 
     private var header: some View {
@@ -281,8 +305,12 @@ private struct RideRow: View {
                 if !ride.headsign.isEmpty {
                     Text(ride.headsign).font(.subheadline.weight(.semibold))
                 }
-                Text("\(ride.from.name) \(ride.departure) → \(ride.to.name) \(ride.arrival)")
+                Text("\(ride.from.name) \(JourneyClock.display(ride.departure)) → \(ride.to.name) \(JourneyClock.display(ride.arrival))")
                     .font(.footnote)
+                if let delay = ride.delaySeconds, delay >= 60 {
+                    Text(L("Aktuální zpoždění ~\(String(Int(delay / 60))) min"))
+                        .font(.footnote.weight(.semibold))
+                }
                 if let stops = ride.stopCount {
                     Text(L("Zastávek: \(String(stops))")).font(.footnote).foregroundStyle(.secondary)
                 }

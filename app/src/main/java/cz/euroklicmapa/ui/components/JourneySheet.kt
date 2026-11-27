@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +41,7 @@ import cz.euroklicmapa.odjezdy.Journey
 import cz.euroklicmapa.odjezdy.JourneyClock
 import cz.euroklicmapa.odjezdy.JourneyLeg
 import cz.euroklicmapa.odjezdy.ODError
+import cz.euroklicmapa.odjezdy.journeyGuide
 import cz.euroklicmapa.odjezdy.mapyWalkingUrl
 import cz.euroklicmapa.odjezdy.sharedJourneyApi
 import cz.euroklicmapa.ui.theme.EuroklicTheme
@@ -215,6 +217,15 @@ private fun JourneyCard(journey: Journey) {
         if (journey.walkFromEnd.seconds > 0 && lastStop != null) {
             WalkRow(t("Pěšky od zastávky %s k místu", lastStop), walkDetail(journey.walkFromEnd.meters, journey.walkFromEnd.seconds))
         }
+        var showGuide by rememberSaveable(journey.departure, journey.arrival) { mutableStateOf(false) }
+        OutlinedButton(onClick = { showGuide = !showGuide }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Text(if (showGuide) t("Skrýt pokyny") else t("Pokyny krok za krokem"))
+        }
+        if (showGuide) {
+            journeyGuide(journey).forEachIndexed { index, step ->
+                Text("${index + 1}. $step", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
     }
 }
 
@@ -237,7 +248,17 @@ private fun RideRow(ride: JourneyLeg.Ride) {
         LineBadge(ride.lineLabel, ride.mode)
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             if (ride.headsign.isNotBlank()) Text(ride.headsign, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-            Text("${ride.from.name} ${ride.departure} → ${ride.to.name} ${ride.arrival}", style = MaterialTheme.typography.bodySmall)
+            Text(
+                "${ride.from.name} ${JourneyClock.display(ride.departure)} → ${ride.to.name} ${JourneyClock.display(ride.arrival)}",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            ride.delaySeconds?.takeIf { it >= 60 }?.let {
+                Text(
+                    t("Aktuální zpoždění ~%s min", (it / 60).toInt().toString()),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
             ride.stopCount?.let {
                 Text(t("Zastávek: %s", it.toString()), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

@@ -47,6 +47,7 @@ struct ODFavoritesTab: View {
                 }
             }
         }
+        .task { await favorites.refreshNamesIfNeeded() }
         .sheet(item: $sheetStop) { stop in
             ODStopSheet(stop: stop, onShowOnMap: { s in
                 sheetStop = nil

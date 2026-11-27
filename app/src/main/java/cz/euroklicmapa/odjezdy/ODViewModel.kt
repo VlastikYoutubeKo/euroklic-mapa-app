@@ -1,6 +1,7 @@
 package cz.euroklicmapa.odjezdy
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cz.euroklicmapa.util.t
@@ -70,6 +71,10 @@ class ODViewModel(app: Application) : AndroidViewModel(app) {
     private var departuresJob: Job? = null
     private var infoJob: Job? = null
     private val infoCache = HashMap<String, ODVehicleInfo>()
+
+    init {
+        viewModelScope.launch { repairFavoriteNames() }
+    }
 
     // ---- Map lifecycle -----------------------------------------------------------------------
 
@@ -205,6 +210,25 @@ class ODViewModel(app: Application) : AndroidViewModel(app) {
         }
 
     fun toggleFavorite(stop: ODStop) = favorites.toggle(stop)
+
+    /**
+     * Once after the update: the server had foreign names for some stops (fixed 2026-11-27), so saved
+     * favourites are compared with it. On an error the check runs again next time.
+     */
+    private suspend fun repairFavoriteNames() {
+        val prefs = getApplication<Application>().getSharedPreferences("od_flags", Context.MODE_PRIVATE)
+        val saved = favorites.stops.value
+        if (prefs.getBoolean("fav_names_checked_v1", false) || saved.isEmpty()) return
+        for (stop in saved) {
+            val around = try {
+                api.stopsIn(stop.lat - 0.002, stop.lat + 0.002, stop.lng - 0.003, stop.lng + 0.003)
+            } catch (e: ODError) {
+                return
+            }
+            repairedFavorite(stop, around)?.let(favorites::rename)
+        }
+        prefs.edit().putBoolean("fav_names_checked_v1", true).apply()
+    }
 
     fun describe(e: ODError): String = when (e) {
         ODError.Offline -> t("Bez připojení k internetu.")

@@ -7,6 +7,10 @@ a stejný soubor je zabalený i v aplikaci (Více → Co je nového; po aktualiz
 Nadpis sekce musí mít tvar `## <verze> — <datum>`, položky jsou odrážky `- `. Odrážka začínající
 `[Android]` nebo `[iOS]` se ukáže jen v dané aplikaci (značka se skryje), odrážky bez značky v obou.
 
+## 1.6.1 — 2026-11-27
+- Spojení MHD: nové pokyny krok za krokem v obyčejných větách (pěšky k zastávce, do které linky a kdy nastoupit, kde vystoupit). U autobusu, tramvaje a trolejbusu připomenou tlačítko STOP u zastávky na znamení. Když plánovač zná aktuální zpoždění, ukáže se.
+- Odjezdy: server měl u části zastávek cizí název. Aplikace jednou zkontroluje názvy oblíbených zastávek a opraví je.
+
 ## 1.6.0 — 2026-11-27
 - Spojení MHD: v detailu místa nové tlačítko „Spojení MHD“ najde cestu z vaší polohy k místu podle jízdních řádů odjezdy.online (autobusy, vlaky, tramvaje i metro po celé ČR). Ukáže, kdy vyjít, pěšky k zastávce, linky s číslem, směrem a časy, přestupy, pěšky k místu a kdy dorazíte. Chůze je odhad vzdušnou čarou a aplikace říká, že bezbariérovost cesty ani zastávek není ověřená. Pokud je spoj v datech jízdních řádů označen jako bezbariérový, aplikace to napíše. První hledání dne může trvat až minutu.
 - Nově v menu místa i v okně se spojením: „Trasa pěšky v Mapy.com“ otevře pěší trasu v Mapy.com (Mapy.com zvenku v režimu MHD otevřít nejdou).
